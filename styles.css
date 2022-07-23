@@ -1,3 +1,32 @@
 body {
     margin: 0;
 }
+
+#wrapper {
+    margin: 1em;
+}
+
+#parking-lot {
+    position: relative;
+    background-image: url(img/parkinglot.jpg);
+    width: 1385px;
+    height: 1035px;
+}
+
+#lot-overlay {
+    position: absolute;
+    width: 1385px;
+    height: 1035px;
+}
+
+.space {
+    position: absolute;
+}
+
+.car {
+    position: absolute;
+    /* left: 25px;
+    top: 20px; */
+    width: 197px;
+    height: 96px;
+}
