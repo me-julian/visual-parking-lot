@@ -19,14 +19,36 @@ body {
     height: 1035px;
 }
 
+.path-line {
+    position: absolute;
+    content: '';
+    background-color: blueviolet;
+}
+
 .space {
     position: absolute;
 }
 
 .car {
     position: absolute;
-    /* left: 25px;
-    top: 20px; */
-    width: 197px;
-    height: 96px;
+    width: 182px;
+    height: 182px;
+}
+
+.car > img {
+    position: relative;
+    top: 46px;
+    width: 182px;
+    height: 90px;
+}
+
+#hcar {
+    left: calc(20px);
+    top: calc(18px - 46px);
+}
+
+#vCar {
+    transform: rotate(270deg);
+    left: calc(228px + 47px - 46px);
+    top: calc(0px);
 }

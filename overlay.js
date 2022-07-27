@@ -1,6 +1,6 @@
 'use strict'
 
-function initParkingSpaces(overlayEl) {
+function initParkingSpaces() {
     let refPoint = {
         x: 20,
         y: 18,
@@ -37,6 +37,8 @@ function initParkingSpaces(overlayEl) {
     for (let space of unorderedSpaceList) {
         spacesEl.append(space)
     }
+
+    return unorderedSpaceList
 }
 
 function createSpacesColumn(refPoint, length, unorderedSpaceList) {
@@ -87,4 +89,36 @@ function createSpacesRow(refPoint, length, unorderedSpaceList) {
     return unorderedSpaceList
 }
 
-initParkingSpaces(document.getElementById('lot-overlay'))
+let unorderedSpaceList = initParkingSpaces(
+    document.getElementById('lot-overlay')
+)
+
+// Takes a list of space elements and appends them to a Map array in
+// order of distance (by path) from given point, lowest-highest.
+function orderSpaces(unorderedSpaceList, refPoint) {}
+
+function drawPaths(pathObject) {
+    let paths = document.createElement('div')
+    paths.id = 'path-lines'
+
+    for (let sect in pathObject.section) {
+        let sectionEl = document.createElement('div')
+        sectionEl.id = sect
+        sectionEl.classList.add('path-line')
+        let sectObj = pathObject.section[sect]
+        if (sectObj.horizontal) {
+            sectionEl.style.height = '2px'
+            sectionEl.style.width = sectObj.len + 'px'
+        } else {
+            sectionEl.style.height = sectObj.len + 'px'
+            sectionEl.style.width = '2px'
+        }
+        sectionEl.style.left = sectObj.x + 'px'
+        sectionEl.style.top = sectObj.y + 'px'
+        paths.append(sectionEl)
+    }
+
+    document.getElementById('lot-overlay').append(paths)
+}
+
+drawPaths(pathObject)
