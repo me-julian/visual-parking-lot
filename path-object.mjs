@@ -122,16 +122,16 @@ let pathObject = new PathObject(
     parkingLotSections.vertical.row2col2
 )
 
-function findCourses(pathObject, start, end) {
+function plotCourse(pathObject, start, end) {
     let courses = []
 
-    courses = plotCourse(pathObject, start, end, courses)
-    console.log(courses)
+    courses = findCoursesBySection(pathObject, start, end, courses)
+    cullBadCourses(courses)
 
     return courses
 }
 
-function plotCourse(pathObject, start, end, courses, course) {
+function findCoursesBySection(pathObject, start, end, courses, course) {
     let rowDiff = end.row - start.row
     let colDiff = end.col - start.col
 
@@ -157,7 +157,13 @@ function plotCourse(pathObject, start, end, courses, course) {
             }
         }
         for (let section of branches) {
-            courses = plotCourse(pathObject, section, end, courses, course)
+            courses = findCoursesBySection(
+                pathObject,
+                section,
+                end,
+                courses,
+                course
+            )
         }
 
         return courses
@@ -277,16 +283,36 @@ BranchHandler.prototype.getNextSection = function (section) {
     return this.pathObject.sections[type][sectionName]
 }
 
+function cullBadCourses(courses) {
+    let shortest = courses[0].length
+    do {
+        for (let i = 1; i < courses.length; ) {
+            if (courses[i].length > shortest) {
+                courses.splice(i, 1)
+                i += 1
+                continue
+            } else if (courses[i].length < shortest) {
+                shortest = courses[i].length
+                i = 0
+                continue
+            }
+            i += 1
+            continue
+        }
+    } while (
+        courses.every((course) => {
+            course.length <= shortest
+        })
+    )
+    return courses
+}
+
 function getCourseDist(course, start, end) {}
 
-// Bottom left to top-middle
-// console.log(
-//     plotCourse(
-//         pathObject,
-//         pathObject.sections.vertical.row2col0,
-//         pathObject.sections.horizontal.row0col1,
-//         []
-//     )
-// )
-
-export {pathObject, findCourses, plotCourse, BranchHandler}
+export {
+    pathObject,
+    plotCourse,
+    findCoursesBySection,
+    BranchHandler,
+    cullBadCourses,
+}
