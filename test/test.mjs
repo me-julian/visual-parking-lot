@@ -186,7 +186,7 @@ describe('BranchHandler tests', function () {
 describe('Course plotting algorithm tests.', function () {
     describe('entrance to parking-space-adjacent section', function () {
         describe('bottom-left to bottom-left (self)', function () {
-            it('given object is equal', function () {
+            it('one valid course (only start section)', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -198,7 +198,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-left to middle-left', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -215,7 +215,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-left to top-left', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -233,7 +233,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-left to bottom-middle', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -249,9 +249,9 @@ describe('Course plotting algorithm tests.', function () {
                 assert.deepEqual(courses, expected)
             })
         })
-        // NOTE/ISSUE: This is result is inordinary!
-        describe('bottom-left to top-middle', function () {
-            it('given object is equal', function () {
+        // NOTE: This is result is inordinary!
+        describe('OUTLIER: bottom-left to top-middle', function () {
+            it('one good course, one to be culled', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -259,12 +259,12 @@ describe('Course plotting algorithm tests.', function () {
                     []
                 )
                 let expected = [
-                    // [
-                    //     pathObject.sections.vertical.row2col0,
-                    //     pathObject.sections.horizontal.row1col1,
-                    //     pathObject.sections.vertical.row1col2,
-                    //     pathObject.sections.horizontal.row0col1,
-                    // ],
+                    [
+                        pathObject.sections.vertical.row2col0,
+                        pathObject.sections.horizontal.row1col1,
+                        pathObject.sections.vertical.row1col2,
+                        pathObject.sections.horizontal.row0col1,
+                    ],
                     [
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row1col0,
@@ -275,7 +275,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-left to bottom-right', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -293,7 +293,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-left to middle-right', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -311,7 +311,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-left to top-right', function () {
-            it('given object is equal', function () {
+            it('two valid courses', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -339,7 +339,7 @@ describe('Course plotting algorithm tests.', function () {
 
     describe('parking-space-adjacent section to exit', function () {
         describe('bottom-left to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -357,7 +357,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('middle-left to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row1col0,
@@ -375,7 +375,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('top-left to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('two valid courses', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row0col0,
@@ -400,7 +400,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-middle to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.horizontal.row1col1,
@@ -417,7 +417,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('top-middle to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.horizontal.row0col1,
@@ -435,7 +435,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('bottom-right to bottom-right (self)', function () {
-            it('given object is equal', function () {
+            it('one valid course (only start section)', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col2,
@@ -447,7 +447,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('middle-right to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row1col2,
@@ -464,7 +464,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('top-right to bottom-right.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row0col2,
@@ -482,9 +482,10 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
     })
+
     describe('superfluous routes', function () {
         describe('Top-right to top-left.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row0col2,
@@ -501,8 +502,32 @@ describe('Course plotting algorithm tests.', function () {
                 assert.deepEqual(courses, expected)
             })
         })
+        describe('OUTLIER: Bottom-right to top-middle.', function () {
+            it('one good course, one must be culled', function () {
+                let courses = plotCourse(
+                    pathObject,
+                    pathObject.sections.vertical.row2col2,
+                    pathObject.sections.horizontal.row0col1,
+                    []
+                )
+                let expected = [
+                    [
+                        pathObject.sections.vertical.row2col2,
+                        pathObject.sections.horizontal.row1col1,
+                        pathObject.sections.vertical.row1col2,
+                        pathObject.sections.horizontal.row0col1,
+                    ],
+                    [
+                        pathObject.sections.vertical.row2col2,
+                        pathObject.sections.vertical.row1col2,
+                        pathObject.sections.horizontal.row0col1,
+                    ],
+                ]
+                assert.deepEqual(courses, expected)
+            })
+        })
         describe('Bottom-right to top-left.', function () {
-            it('given object is equal', function () {
+            it('two valid courses', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col2,
@@ -527,7 +552,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('Bottom-right to bottom-left.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row2col0,
@@ -545,7 +570,7 @@ describe('Course plotting algorithm tests.', function () {
             })
         })
         describe('Middle-right to middle-left.', function () {
-            it('given object is equal', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.vertical.row1col0,
@@ -562,8 +587,8 @@ describe('Course plotting algorithm tests.', function () {
                 assert.deepEqual(courses, expected)
             })
         })
-        describe('Top-center to bottom-left.', function () {
-            it('given object is equal', function () {
+        describe('Top-middle to bottom-left.', function () {
+            it('one valid course', function () {
                 let courses = plotCourse(
                     pathObject,
                     pathObject.sections.horizontal.row0col1,
@@ -575,6 +600,43 @@ describe('Course plotting algorithm tests.', function () {
                         pathObject.sections.horizontal.row0col1,
                         pathObject.sections.vertical.row1col2,
                         pathObject.sections.vertical.row2col2,
+                    ],
+                ]
+                assert.deepEqual(courses, expected)
+            })
+        })
+        // NOTE: Only tries going east.
+        describe('Top-middle to bottom-middle.', function () {
+            it('one valid course', function () {
+                let courses = plotCourse(
+                    pathObject,
+                    pathObject.sections.horizontal.row0col1,
+                    pathObject.sections.horizontal.row1col1,
+                    []
+                )
+                let expected = [
+                    [
+                        pathObject.sections.horizontal.row0col1,
+                        pathObject.sections.vertical.row1col2,
+                        pathObject.sections.horizontal.row1col1,
+                    ],
+                ]
+                assert.deepEqual(courses, expected)
+            })
+        })
+        describe('Bottom-middle to top-middle.', function () {
+            it('one valid course', function () {
+                let courses = plotCourse(
+                    pathObject,
+                    pathObject.sections.horizontal.row1col1,
+                    pathObject.sections.horizontal.row0col1,
+                    []
+                )
+                let expected = [
+                    [
+                        pathObject.sections.horizontal.row1col1,
+                        pathObject.sections.vertical.row1col2,
+                        pathObject.sections.horizontal.row0col1,
                     ],
                 ]
                 assert.deepEqual(courses, expected)
