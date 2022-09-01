@@ -1,27 +1,32 @@
 'use strict'
 
-function PathObject(pathCoords, sections, entrance, exit) {
-    this.pathCoords = pathCoords
-    this.sections = sections
+/**
+ * PathObject section objects.
+ * @typedef {Object} section
+ * @property {number} row
+ * @property {number} column
+ * @property {Boolean} [horizontal]
+ * @property {number} len - length of section in pixels (coordinates/points).
+ * @property {number} x - x coordinate on page.
+ * @property {number} y - y coordinate on page.
+ * @property {Array} points - Array of x, y coordinates.
+ */
 
-    this.entrance = entrance
-    this.exit = exit
-}
-
-PathObject.prototype.getSectionPoints = (len, axis) => {
-    let points = []
-    for (let i = 0; i < len; i++) {
-        points.push(axis + i)
-    }
-    return points
-}
-
+//  Measurements for section initialization.
 let pathCoords = {
     col0: 228 + (184 - 90) / 2,
     col1: 971 + (170 - 90) / 2,
     row0: 18,
     row1: 18 + 232 + (155 - 90) / 2,
     row2: 18 + 232 + 379 + (167 - 90) / 2,
+}
+
+function getSectionPoints(len, axis) {
+    let points = []
+    for (let i = 0; i < len; i++) {
+        points.push(axis + i)
+    }
+    return points
 }
 
 let parkingLotSections = {
@@ -33,7 +38,7 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row0
 
-            let points = PathObject.prototype.getSectionPoints(len, y)
+            let points = getSectionPoints(len, y)
             return {row, col, len, x, y, points}
         })(),
         row0col2: (function () {
@@ -43,7 +48,7 @@ let parkingLotSections = {
             let x = pathCoords.col1
             let y = pathCoords.row0
 
-            let points = PathObject.prototype.getSectionPoints(len, y)
+            let points = getSectionPoints(len, y)
             return {row, col, len, x, y, points}
         })(),
         row1col0: (function () {
@@ -53,7 +58,7 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row1
 
-            let points = PathObject.prototype.getSectionPoints(len, y)
+            let points = getSectionPoints(len, y)
             return {row, col, len, x, y, points}
         })(),
         row1col2: (function () {
@@ -63,7 +68,7 @@ let parkingLotSections = {
             let x = pathCoords.col1
             let y = pathCoords.row1
 
-            let points = PathObject.prototype.getSectionPoints(len, y)
+            let points = getSectionPoints(len, y)
             return {row, col, len, x, y, points}
         })(),
         row2col0: (function () {
@@ -74,7 +79,7 @@ let parkingLotSections = {
             let y = pathCoords.row2
             let entrance = 'south'
 
-            let points = PathObject.prototype.getSectionPoints(len, y)
+            let points = getSectionPoints(len, y)
             return {row, col, len, x, y, points, entrance}
         })(),
         row2col2: (function () {
@@ -85,7 +90,7 @@ let parkingLotSections = {
             let y = pathCoords.row2
             let exit = 'south'
 
-            let points = PathObject.prototype.getSectionPoints(len, y)
+            let points = getSectionPoints(len, y)
             return {row, col, len, x, y, points, exit}
         })(),
     },
@@ -98,7 +103,7 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row1
 
-            let points = PathObject.prototype.getSectionPoints(len, x)
+            let points = getSectionPoints(len, x)
             return {horizontal, row, col, len, x, y, points}
         })(),
         row1col1: (function () {
@@ -109,17 +114,25 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row2
 
-            let points = PathObject.prototype.getSectionPoints(len, x)
+            let points = getSectionPoints(len, x)
             return {horizontal, row, col, len, x, y, points}
         })(),
     },
 }
 
-let pathObject = new PathObject(
-    pathCoords,
-    parkingLotSections,
-    parkingLotSections.vertical.row2col0,
-    parkingLotSections.vertical.row2col2
-)
+/**
+ * @property {Object} sections - Path sections divided by orientation.
+ * @property {Object} sections.horizontal
+ * @property {section} sections.horizontal.rowxcoly
+ * @property {Object} sections.vertical
+ * @property {section} sections.vertical.rowxcoly
+ * @property {section} entrance - Ref to section which is an entrance.
+ * @property {section} exit - Ref to section which is an exit.
+ */
+let pathObject = {
+    sections: parkingLotSections,
+    entrance: parkingLotSections.vertical.row2col0,
+    exit: parkingLotSections.vertical.row2col2,
+}
 
 export {pathObject}
