@@ -36,11 +36,17 @@ function ParkingLot(
         leaving: {},
         left: {},
     }
+
+    this.spawnCarCooldown = false
 }
 
 ParkingLot.prototype.simulate = function () {
-    if (this.trafficHandler.isEntranceClear()) {
+    if (!this.spawnCarCooldown && this.trafficHandler.isEntranceClear(this)) {
         this.spawnCar(this.carCount)
+        this.spawnCarCooldown = true
+        setTimeout(() => {
+            this.spawnCarCooldown = false
+        }, 10000)
     }
 
     for (let car in this.cars.leaving) {
@@ -58,13 +64,12 @@ ParkingLot.prototype.spawnCar = function () {
     let id = this.carCount
     this.carCount += 1
 
-    let newCar = new Car(id)
+    let newCar = new Car(id, this.trafficHandler)
     // ISSUE: Need to handle no spaces available.
     let assignedSpace = this.getHighestRankedSpace()
-    let entrance = this.pathObject.entrance
-    newCar.initialize(entrance, assignedSpace)
+    newCar.initialize(this, assignedSpace)
 
-    this.cars.parking.id = newCar
+    this.cars.parking[id] = newCar
 }
 
 ParkingLot.prototype.requestRoute = function (car) {
@@ -79,14 +84,27 @@ ParkingLot.prototype.requestRoute = function (car) {
         start.coord = car.coords.y
     }
 
-    let destination
+    let destination = {}
     if (car.parked) {
-        destination = this.pathObject.exit
+        destination.section = this.pathObject.exit
+        destination.coord = destination.section.exit.y
+        if (destination.section.exit === 'south') {
+            destination.coord += destination.section.len
+        }
     } else {
-        destination = car.assignedSpace
+        destination.section = car.assignedSpace.section
+        if (destination.section.horizontal) {
+            destination.coord = destination.assignedSpace.left
+        } else {
+            destination.coord = car.assignedSpace.top
+        }
     }
 
-    let route = this.routePlotter.createRoute(start, destination)
+    let route = this.routePlotter.createRoute(
+        this.routePlotter,
+        start,
+        destination
+    )
 
     return route
 }
