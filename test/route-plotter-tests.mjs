@@ -13,6 +13,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to bottom-left (self)', function () {
                 it('one valid route (only start section)', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row2col0,
                         []
@@ -24,6 +25,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to middle-left', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row1col0,
                         []
@@ -40,6 +42,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to top-left', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row0col0,
                         []
@@ -57,6 +60,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to bottom-middle', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.horizontal.row1col1,
                         []
@@ -74,6 +78,7 @@ describe('RoutePlotter tests', function () {
             describe('OUTLIER: bottom-left to top-middle', function () {
                 it('one good route, one to be culled', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.horizontal.row0col1,
                         []
@@ -97,6 +102,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to bottom-right', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -114,6 +120,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to middle-right', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row1col2,
                         []
@@ -131,6 +138,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to top-right', function () {
                 it('two valid routes', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row0col2,
                         []
@@ -158,6 +166,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-left to bottom-right.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -175,6 +184,7 @@ describe('RoutePlotter tests', function () {
             describe('middle-left to bottom-right.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row1col0,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -192,6 +202,7 @@ describe('RoutePlotter tests', function () {
             describe('top-left to bottom-right.', function () {
                 it('two valid routes', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row0col0,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -216,6 +227,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-middle to bottom-right.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.horizontal.row1col1,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -232,6 +244,7 @@ describe('RoutePlotter tests', function () {
             describe('top-middle to bottom-right.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.horizontal.row0col1,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -249,6 +262,7 @@ describe('RoutePlotter tests', function () {
             describe('bottom-right to bottom-right (self)', function () {
                 it('one valid route (only start section)', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col2,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -260,6 +274,7 @@ describe('RoutePlotter tests', function () {
             describe('middle-right to bottom-right.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row1col2,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -276,6 +291,7 @@ describe('RoutePlotter tests', function () {
             describe('top-right to bottom-right.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row0col2,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -296,6 +312,7 @@ describe('RoutePlotter tests', function () {
             describe('Top-right to top-left.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row0col2,
                         pathObject.sections.vertical.row0col0,
                         []
@@ -313,6 +330,7 @@ describe('RoutePlotter tests', function () {
             describe('OUTLIER: Bottom-right to top-middle.', function () {
                 it('one good route, one must be culled', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col2,
                         pathObject.sections.horizontal.row0col1,
                         []
@@ -336,6 +354,7 @@ describe('RoutePlotter tests', function () {
             describe('Bottom-right to top-left.', function () {
                 it('two valid routes', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col2,
                         pathObject.sections.vertical.row0col0,
                         []
@@ -360,6 +379,7 @@ describe('RoutePlotter tests', function () {
             describe('Bottom-right to bottom-left.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row2col0,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -377,6 +397,7 @@ describe('RoutePlotter tests', function () {
             describe('Middle-right to middle-left.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.vertical.row1col0,
                         pathObject.sections.vertical.row1col2,
                         []
@@ -394,6 +415,7 @@ describe('RoutePlotter tests', function () {
             describe('Top-middle to bottom-left.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.horizontal.row0col1,
                         pathObject.sections.vertical.row2col2,
                         []
@@ -412,6 +434,7 @@ describe('RoutePlotter tests', function () {
             describe('Top-middle to bottom-middle.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.horizontal.row0col1,
                         pathObject.sections.horizontal.row1col1,
                         []
@@ -429,6 +452,7 @@ describe('RoutePlotter tests', function () {
             describe('Bottom-middle to top-middle.', function () {
                 it('one valid route', function () {
                     let routes = routePlotter.findValidRoutesBySections(
+                        routePlotter,
                         pathObject.sections.horizontal.row1col1,
                         pathObject.sections.horizontal.row0col1,
                         []
@@ -538,6 +562,7 @@ describe('RoutePlotter tests', function () {
                 }
                 let expected = 367
                 let distance = routePlotter.getRouteDist(
+                    routePlotter,
                     route,
                     startRouteEnd,
                     destinationRouteEnd
@@ -560,6 +585,7 @@ describe('RoutePlotter tests', function () {
                 }
                 let expected = 10
                 let distance = routePlotter.getRouteDist(
+                    routePlotter,
                     route,
                     startRouteEnd,
                     destinationRouteEnd
@@ -586,6 +612,7 @@ describe('RoutePlotter tests', function () {
                 }
                 let expected = 1470
                 let distance = routePlotter.getRouteDist(
+                    routePlotter,
                     route,
                     startRouteEnd,
                     destinationRouteEnd
@@ -613,6 +640,7 @@ describe('RoutePlotter tests', function () {
                 }
                 let expected = 1553
                 let distance = routePlotter.getRouteDist(
+                    routePlotter,
                     route,
                     startRouteEnd,
                     destinationRouteEnd
@@ -639,6 +667,7 @@ describe('RoutePlotter tests', function () {
                 }
                 let expected = 988
                 let distance = routePlotter.getRouteDist(
+                    routePlotter,
                     route,
                     startRouteEnd,
                     destinationRouteEnd
