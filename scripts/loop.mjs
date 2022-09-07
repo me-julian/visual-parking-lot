@@ -1,15 +1,17 @@
 'use strict'
 
 import {pathObject} from './path-object.mjs'
-import {spaceInitializer} from './space-initializer.mjs'
+import {SpaceInitializer} from './space-initializer.mjs'
 import {RoutePlotter} from './routing/route-plotter.mjs'
 import {TrafficHandler} from './traffic-handler.mjs'
 import {ParkingLot} from './parking-lot.mjs'
 import {Overlay} from './overlay.mjs'
 
 function initializeSimulation() {
+    let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
+
     let routePlotter = new RoutePlotter(pathObject)
     let trafficHandler = new TrafficHandler(pathObject)
 
