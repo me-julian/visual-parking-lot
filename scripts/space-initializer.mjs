@@ -1,90 +1,151 @@
 'use strict'
 
-let spaceInitializer = {}
+let SpaceInitializer = function (pathObject) {
+    this.pathObject = pathObject
+}
 
 /**
  * @method
  * @returns {Object} unrankedSpaceList
  */
-spaceInitializer.initParkingSpaces = function () {
+SpaceInitializer.prototype.initParkingSpaces = function () {
     let unrankedSpaceList = {}
     let refPoint
-    // left column
+    // col0 vertical section's spaces
     refPoint = {
         x: 20,
         y: 18,
     }
-    unrankedSpaceList.leftCol = this.createSpacesColumn(refPoint, 208)
-    // right column
+    unrankedSpaceList.row0col0 = this.createSpacesColumn(
+        refPoint,
+        [100, 97, 100],
+        208,
+        this.pathObject.sections.vertical.row0col0,
+        'left'
+    )
+    unrankedSpaceList.row1col0 = this.createSpacesColumn(
+        refPoint,
+        [98, 100, 100],
+        208,
+        this.pathObject.sections.vertical.row0col0,
+        'left'
+    )
+    unrankedSpaceList.row2col0 = this.createSpacesColumn(
+        refPoint,
+        [100, 98, 100],
+        208,
+        this.pathObject.sections.vertical.row0col0,
+        'left'
+    )
+    // col2 vertical section's spaces
     refPoint = {
         x: 1140,
         y: 18,
     }
-    unrankedSpaceList.rightCol = this.createSpacesColumn(refPoint, 212)
-    // top-mid row
+    unrankedSpaceList.row0col2 = this.createSpacesColumn(
+        refPoint,
+        [100, 97, 100],
+        212,
+        this.pathObject.sections.vertical.row0col2,
+        'right'
+    )
+    unrankedSpaceList.row1col2 = this.createSpacesColumn(
+        refPoint,
+        [98, 100, 100],
+        212,
+        this.pathObject.sections.vertical.row0col2,
+        'right'
+    )
+    unrankedSpaceList.row2col2 = this.createSpacesColumn(
+        refPoint,
+        [100, 98, 100],
+        212,
+        this.pathObject.sections.vertical.row0col2,
+        'right'
+    )
+    // row0 horizontal section's top spaces
     refPoint = {
         x: 423,
         y: 28,
     }
-    unrankedSpaceList.topRow = this.createSpacesRow(refPoint, 212)
-    // mid-mid row
+    unrankedSpaceList.row0col1 = this.createSpacesRow(
+        refPoint,
+        [100, 100, 100, 100, 98],
+        212,
+        this.pathObject.sections.horizontal.row0col1,
+        'top'
+    )
+    // row0 horizontal section's bottom spaces
     refPoint = {
         x: 423,
         y: 395,
     }
-    unrankedSpaceList.midRow = this.createSpacesRow(refPoint, 210)
-    // bot-mid row
+    let row0col1BottomSpaces = this.createSpacesRow(
+        refPoint,
+        [100, 100, 100, 100, 98],
+        210,
+        this.pathObject.sections.horizontal.row0col1,
+        'bottom'
+    )
+    for (let space of row0col1BottomSpaces) {
+        unrankedSpaceList.row0col1.push(space)
+    }
+    // row1 horizontal section's bottom spaces
     refPoint = {
         x: 422,
         y: 786,
     }
-    unrankedSpaceList.bottRow = this.createSpacesRow(refPoint, 210)
+    unrankedSpaceList.row1col1 = this.createSpacesRow(
+        refPoint,
+        [100, 100, 100, 100, 98],
+        210,
+        this.pathObject.sections.horizontal.row1col1,
+        'bottom'
+    )
 
     return unrankedSpaceList
 }
 
-spaceInitializer.createSpacesColumn = function (refPoint, length) {
+SpaceInitializer.prototype.createSpacesColumn = function (
+    refPoint,
+    spaces,
+    length,
+    section,
+    side
+) {
     let column = []
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < spaces.length; i++) {
         let space = {}
         space.left = refPoint.x
         space.top = refPoint.y
         space.width = length
+        space.height = spaces[i]
+        space.side = side
+        space.section = section
 
-        switch (i) {
-            case 1:
-                space.height = 97
-                break
-            case 3:
-            case 7:
-                space.height = 98
-                break
-            default:
-                space.height = 100
-                break
-        }
         column.push(space)
 
         refPoint.y += space.height + 10
     }
     return column
 }
-spaceInitializer.createSpacesRow = function (refPoint, length) {
+SpaceInitializer.prototype.createSpacesRow = function (
+    refPoint,
+    spaces,
+    length,
+    section,
+    side
+) {
     let row = []
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < spaces.length; i++) {
         let space = {}
         space.left = refPoint.x
         space.top = refPoint.y
         space.height = length
+        space.width = spaces[i]
+        space.side = side
+        space.section = section
 
-        switch (i) {
-            case 4:
-                space.width = 98
-                break
-            default:
-                space.width = 100
-                break
-        }
         row.push(space)
 
         refPoint.x += space.width + 10
@@ -97,7 +158,7 @@ spaceInitializer.createSpacesRow = function (refPoint, length) {
  * @param {Object} unrankedSpaceList
  * @returns
  */
-spaceInitializer.rankSpaces = function (unrankedSpaceList) {
+SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
     let rankedSpaceList = []
 
     for (let line in unrankedSpaceList) {
@@ -115,4 +176,4 @@ spaceInitializer.rankSpaces = function (unrankedSpaceList) {
     return rankedSpaceList
 }
 
-export {spaceInitializer}
+export {SpaceInitializer}
