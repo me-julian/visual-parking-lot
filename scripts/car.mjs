@@ -4,23 +4,13 @@
  * @class
  * @typedef {Object} Car
  * @param {number} id
- * @param {TrafficHandler} trafficHandler
  * @property {string} img
  * @property {Object} coords
  * @property {number} coords.x
  * @property {number} coords.y
  * @property {string} direction
  * @property {number} orientation - Angle of page element's rotation.
- *
- * @property {string} status
- * @property {section} assignedSpace
- * @property {Object} route
- * @property {Object} nextRoutePartition - Unused.
- * @property {Number} parkingDuration - Time car will park for in ms.
- *
- * @property {Number} speed - Speed the car is currently moving in by pixels
- * @property {Number} maxSpeed
- * @property {Number} minStoppingDistance
+ * @property {Boolean} parked
  */
 function Car(id, trafficHandler) {
     this.id = id
@@ -33,15 +23,15 @@ function Car(id, trafficHandler) {
     this.direction = undefined
     this.orientation = undefined
 
-    this.status = undefined
     this.assignedSpace = undefined
+    this.status = undefined
     this.route = undefined
     this.nextRoutePartition = undefined
     this.parkingDuration = undefined
 
-    this.speed = undefined
+    this.currSpeed = 0
     this.maxSpeed = undefined
-    this.minStoppingDistance = undefined
+    this.acceleration = undefined
 }
 
 Car.prototype.images = [
@@ -120,36 +110,25 @@ Car.prototype.determineAction = function (parkingLot) {
 }
 
 Car.prototype.moveAlongRoute = function () {
-    // Should probably add directionVars as a property to car.
+    // if (!this.nextRoutePartition) {
+    //     this.nextRoutePartition = this.determineNextRoutePartition()
+    // }
+
+    // this.nextRoutePartition
+
+    this.moveForward()
+}
+
+// Car.prototype.determineNextRoutePartition = function () {}
+
+Car.prototype.wait = function () {}
+Car.prototype.moveForward = function () {
     let directionVars = this.getDirectionVars()
     let axis = directionVars.axis,
         symbol = directionVars.symbol,
         negation = directionVars.negation
-    let nextPathDestination = this.route[0].coord
 
-    let leadingEdge = this.coords[symbol]
-    // Get point opposite to top/left.
-    if (negation === 1) {
-        leadingEdge -= this.height
-    }
-
-    let distanceToNextPathDestination =
-        this.trafficHandler.returnDistanceBetween(
-            leadingEdge,
-            nextPathDestination
-        )
-
-    if (distanceToNextPathDestination > this.speed && !this.route[1].turn) {
-        this.moveForward(axis, symbol, negation)
-    } else {
-        console.log(
-            'Decide to park, turn or exit space. (reverse out of space?)'
-        )
-    }
-}
-
-Car.prototype.wait = function () {}
-Car.prototype.moveForward = function (axis, symbol, negation) {
+    // Check remaining distance to end goal first.
     let oneCarAhead = {
         x: this.coords.x,
         y: this.coords.y,
@@ -157,11 +136,11 @@ Car.prototype.moveForward = function (axis, symbol, negation) {
         h: this.height,
     }
     oneCarAhead[symbol] = this.coords[symbol] + this.height * negation
-    let carsOneCarLengthAhead = this.checkAhead(oneCarAhead)
+    let isOneCarLengthAheadOccupied = this.checkAhead(oneCarAhead)
 
     let newSpeed
-    if (carsOneCarLengthAhead.length != 0) {
-        // this.trafficHandler.returnDistanceBetween()
+    if (isOneCarLengthAheadOccupied !== []) {
+        this.returnDistanceBetween()
         newSpeed = this.calcDeceleration()
         this.advance(symbol, axis, negation, newSpeed)
         return
@@ -178,9 +157,9 @@ Car.prototype.moveForward = function (axis, symbol, negation) {
     minDistanceAhead[symbol] =
         this.coords[symbol] + minStoppingDistance * negation
 
-    let carsMinStoppingDistanceAhead = this.checkAhead(minDistanceAhead)
-    if (carsMinStoppingDistanceAhead.length != 0) {
-        // this.trafficHandler.returnDistanceBetween()
+    let isMinStoppingDistanceOccupied = checkAhead(minDistanceAhead)
+    if (isMinStoppingDistanceOccupied !== []) {
+        this.returnDistanceBetween()
         newSpeed = this.calcDeceleration()
         this.advance(symbol, axis, negation, newSpeed)
         return
@@ -218,9 +197,10 @@ Car.prototype.getDirectionVars = function () {
     return {axis: axis, symbol: symbol, negation: negation}
 }
 Car.prototype.checkAhead = function (areaAhead) {
-    let carsAhead = this.trafficHandler.returnCarsInArea(areaAhead, [this])
+    let carsAhead = this.trafficHandler.returnCarsInArea(areaAhead)
     return carsAhead
 }
+Car.prototype.returnDistanceBetween = function () {}
 
 Car.prototype.calcAcceleration = function () {
     let acceleratedSpeed = this.speed + this.maxSpeed / 10

@@ -13,6 +13,7 @@ function initializeSimulation() {
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
 
     let routePlotter = new RoutePlotter(pathObject)
+    let trafficHandler = new TrafficHandler(pathObject)
 
     let overlay = new Overlay()
     overlay.createSpaceOverlay(rankedSpaceList)
@@ -21,10 +22,10 @@ function initializeSimulation() {
     let parkingLot = new ParkingLot(
         pathObject,
         routePlotter,
+        trafficHandler,
         overlay,
         rankedSpaceList
     )
-    parkingLot.trafficHandler = new TrafficHandler(parkingLot)
 
     return parkingLot
 }
