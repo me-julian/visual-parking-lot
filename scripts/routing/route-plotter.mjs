@@ -212,9 +212,24 @@ function RoutePlotter(pathObject) {
     ) {
         let finishedRoute = []
 
+        let startSectionEnd
+        switch (start.direction) {
+            case 'north':
+                startSectionEnd = start.section.y
+                break
+            case 'south':
+                startSectionEnd = start.section.y + start.section.len
+                break
+            case 'east':
+                startSectionEnd = start.section.x + start.section.len
+                break
+            case 'west':
+                startSectionEnd = start.section.x
+                break
+        }
         finishedRoute.push({
             section: routeSections[0],
-            coord: start.coord,
+            coord: startSectionEnd,
             direction: start.direction,
         })
 
@@ -222,42 +237,45 @@ function RoutePlotter(pathObject) {
             for (let i = 1; i < routeSections.length; i++) {
                 let currentSection = routeSections[i - 1]
                 let nextSection = routeSections[i]
-                let direction = routePlotter.getDirectionAlongSection(
+                let directionalInfo = routePlotter.getDirectionalInfo(
                     currentSection,
                     nextSection
                 )
                 finishedRoute.push({
                     section: nextSection,
-                    direction: direction,
+                    direction: directionalInfo.direction,
+                    coord: directionalInfo.oppositeEndPoint,
                 })
-                if (nextSection === routeSections[routeSections.length - 1]) {
-                    finishedRoute[finishedRoute.length - 1].coord =
-                        destination.coord
-                }
             }
         }
+        // Overwrite last section's end point coord with destination's.
+        finishedRoute[finishedRoute.length - 1].coord = destination.coord
 
         return finishedRoute
     }
 
-    this.getDirectionAlongSection = function (next, current) {
-        let direction
+    this.getDirectionalInfo = function (current, next) {
+        let direction, oppositeEndPoint
 
         if (next.horizontal) {
             if (next.col > current.col) {
                 direction = 'east'
+                oppositeEndPoint = next.x + next.len
             } else {
                 direction = 'west'
+                oppositeEndPoint = next.x
             }
         } else {
-            if (next.row < current.row) {
+            if (next.row > current.row) {
                 direction = 'south'
+                oppositeEndPoint = next.y + next.len
             } else {
                 direction = 'north'
+                oppositeEndPoint = next.y
             }
         }
 
-        return direction
+        return {direction: direction, oppositeEndPoint: oppositeEndPoint}
     }
 
     this.determineSectionTurns = function (finishedRoute) {
