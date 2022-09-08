@@ -14,7 +14,7 @@
 
 /**
  * @class
- * @param {ParkingLOt} parkingLot
+ * @param {ParkingLot} parkingLot
  * @property {Rectangle} entranceArea
  */
 function TrafficHandler(parkingLot) {
@@ -30,10 +30,23 @@ function TrafficHandler(parkingLot) {
     }
 }
 
-TrafficHandler.prototype.returnCarsInArea = function (referenceArea) {
+TrafficHandler.prototype.returnDistanceBetween = function (point1, point2) {
+    return Math.abs(point1 - point2)
+}
+
+/**
+ * @method
+ * @param {Rectangle} referenceArea
+ * @param {Array} [exceptedCars]
+ * @returns {Array}
+ */
+TrafficHandler.prototype.returnCarsInArea = function (
+    referenceArea,
+    exceptedCars
+) {
     let cars = []
     for (let car in this.parkingLot.cars.leaving) {
-        car = this.parkingLot.cars[car]
+        car = this.parkingLot.cars.leaving[car]
         let carArea = {
             x: car.coords.x,
             y: car.coords.y,
@@ -45,7 +58,7 @@ TrafficHandler.prototype.returnCarsInArea = function (referenceArea) {
         }
     }
     for (let car in this.parkingLot.cars.parking) {
-        car = this.parkingLot.cars[car]
+        car = this.parkingLot.cars.parking[car]
         let carArea = {
             x: car.coords.x,
             y: car.coords.y,
@@ -57,6 +70,9 @@ TrafficHandler.prototype.returnCarsInArea = function (referenceArea) {
         }
     }
 
+    if (exceptedCars) {
+        cars = cars.filter((car) => !exceptedCars.includes(car))
+    }
     return cars
 }
 
@@ -64,7 +80,7 @@ TrafficHandler.prototype.returnCarsInArea = function (referenceArea) {
  * @method
  * @param {Rectangle} obj1
  * @param {Rectangle} obj2
- * @returns
+ * @returns {Boolean}
  */
 TrafficHandler.prototype.checkCollision = function (obj1, obj2) {
     if (
@@ -83,8 +99,10 @@ TrafficHandler.prototype.checkCollision = function (obj1, obj2) {
  * Checks if any active cars are within one car's length of the entrance.
  * @method
  * @param {ParkingLot} parkingLot
- * @returns
+ * @returns {Boolean}
  */
+// Possibly redundant with returnCarsInArea
+// (this returns as soon as one car is found, though.)
 TrafficHandler.prototype.isEntranceClear = function (parkingLot) {
     for (let car in parkingLot.cars.leaving) {
         car = parkingLot.cars.leaving[car]
