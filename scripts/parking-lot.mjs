@@ -9,6 +9,7 @@ import {Car} from './car.mjs'
  * @param {RoutePlotter} routePlotter
  * @param {Overlay} overlay
  * @param {Object} rankedSpaceList
+ * @property {TrafficHandler} trafficHandler
  * @property {number} carCount - Number of cars so far. Used for car IDs.
  * @property {Object} cars
  * @property {Object} cars.parking - Cars which haven't parked yet.
@@ -16,16 +17,9 @@ import {Car} from './car.mjs'
  * @property {Object} cars.leaving - Cars which are leaving the lot.
  * @property {Object} cars.left - Cars which have left the lot and scene.
  */
-function ParkingLot(
-    pathObject,
-    routePlotter,
-    trafficHandler,
-    overlay,
-    rankedSpaceList
-) {
+function ParkingLot(pathObject, routePlotter, overlay, rankedSpaceList) {
     this.pathObject = pathObject
     this.routePlotter = routePlotter
-    this.trafficHandler = trafficHandler
     this.overlay = overlay
     this.spaces = rankedSpaceList
 
