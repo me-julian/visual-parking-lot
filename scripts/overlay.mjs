@@ -8,6 +8,7 @@ function Overlay() {}
 /**
  * @method
  * @param {Object} rankedSpaceList
+ * @property {Car} focusedCar
  */
 Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     let spacesEl = document.getElementById('spaces')
@@ -56,6 +57,83 @@ Overlay.prototype.drawPaths = function (pathObject) {
     }
 
     document.getElementById('lot-overlay').append(paths)
+}
+
+/**
+ * @method
+ * @param {Object} box
+ * @param {Object} dimensions - Top, left, height, width vals (nums)
+ * @property {String} dimensions.x
+ * @param {Object} [styles] - Key = style name (str), val = value string w/ suffix
+ */
+Overlay.prototype.drawBox = function (box, dimensions, styles) {
+    box.style.top = dimensions.y + 'px'
+    box.style.left = dimensions.x + 'px'
+    box.style.height = dimensions.h + 'px'
+    box.style.width = dimensions.w + 'px'
+
+    for (let style in styles) {
+        box.style[style] = styles[style]
+    }
+}
+
+/**
+ *
+ * @param {Object} parent - HTML element
+ * @param {Array} [classes]
+ * @param {String} [id]
+ */
+Overlay.prototype.createBox = function (parent, classes, id) {
+    let newBox = document.createElement('div')
+    if (id) {
+        newBox.id = id
+    }
+    if (classes) {
+        newBox.classList.add(...classes)
+    }
+
+    parent.append(newBox)
+    return newBox
+}
+
+Overlay.prototype.toggleCarFocus = function (car) {
+    if (this.focusedCar === car) {
+        this.focusedCar.userFocus = false
+        this.focusedCar.pageWrapper.classList.remove('focused')
+        let space = document.getElementById(this.focusedCar.assignedSpace.rank)
+        space.style.background = 'none'
+        this.focusedCar = undefined
+    } else {
+        if (this.focusedCar) {
+            this.focusedCar.userFocus = false
+            this.focusedCar.pageWrapper.classList.remove('focused')
+            let space = document.getElementById(
+                this.focusedCar.assignedSpace.rank
+            )
+            space.style.background = 'none'
+        }
+
+        car.userFocus = true
+        this.focusedCar = car
+        this.focusedCar.pageWrapper.classList.add('focused')
+        let space = document.getElementById(this.focusedCar.assignedSpace.rank)
+        let spaceColor
+        if (this.focusedCar.hasParked) {
+            spaceColor = 'gray'
+        } else if (this.focusedCar.status === 'parked') {
+            spaceColor = 'red'
+        } else {
+            spaceColor = 'yellow'
+        }
+        space.style.background = spaceColor
+    }
+}
+
+Overlay.prototype.showElement = function (element) {
+    element.style.display = 'initial'
+}
+Overlay.prototype.hideElement = function (element) {
+    element.style.display = 'none'
 }
 
 export {Overlay}

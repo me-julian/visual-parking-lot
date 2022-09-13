@@ -17,6 +17,7 @@ body {
     position: absolute;
     width: 1385px;
     height: 1035px;
+    pointer-events: none;
 }
 
 .path-line {
@@ -27,6 +28,34 @@ body {
 
 .space {
     position: absolute;
+    opacity: 50%;
+    pointer-events: all;
+}
+
+.car-wrapper {
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    pointer-events: none;
+}
+.overlay-wrapper {
+    position: absolute;
+    width: inherit;
+    height: inherit;
+}
+
+.overlay-el {
+    display: none;
+}
+
+.focused .overlay-el {
+    display: initial;
+}
+
+.area-box {
+    position: absolute;
+    content: '';
+    opacity: 50%;
 }
 
 .car {
@@ -40,6 +69,7 @@ body {
     top: 46px;
     width: 182px;
     height: 90px;
+    pointer-events: all;
 }
 
 #hcar {

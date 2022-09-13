@@ -12,7 +12,7 @@ import {Car} from './car.mjs'
  * @property {TrafficHandler} trafficHandler
  * @property {number} carCount - Number of cars so far. Used for car IDs.
  * @property {Object} cars
- * @property {Object} cars.parking - Cars which haven't parked yet.
+ * @property {Object} cars.entering - Cars which haven't parked yet.
  * @property {Object} cars.parked - Cars which are currently parked.
  * @property {Object} cars.leaving - Cars which are leaving the lot.
  * @property {Object} cars.left - Cars which have left the lot and scene.
@@ -25,7 +25,7 @@ function ParkingLot(pathObject, routePlotter, overlay, rankedSpaceList) {
 
     this.carCount = 0
     this.cars = {
-        parking: {},
+        entering: {},
         parked: {},
         leaving: {},
         left: {},
@@ -46,8 +46,8 @@ ParkingLot.prototype.simulate = function () {
     for (let car in this.cars.leaving) {
         this.cars.leaving[car].determineAction(this)
     }
-    for (let car in this.cars.parking) {
-        this.cars.parking[car].determineAction(this)
+    for (let car in this.cars.entering) {
+        this.cars.entering[car].determineAction(this)
     }
     for (let car in this.cars.parked) {
         this.cars.parked[car].determineAction(this)
@@ -63,7 +63,7 @@ ParkingLot.prototype.spawnCar = function () {
     let assignedSpace = this.getHighestRankedSpace()
     newCar.initialize(this, assignedSpace)
 
-    this.cars.parking[id] = newCar
+    this.cars.entering[id] = newCar
 }
 
 ParkingLot.prototype.requestRoute = function (car) {

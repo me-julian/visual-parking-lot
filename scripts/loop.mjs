@@ -30,7 +30,7 @@ function initializeSimulation() {
 }
 
 let loop = {
-    LOOP_SPEED: 1000,
+    LOOP_SPEED: 100,
     running: false,
 
     startLoop: function (parkingLot) {
