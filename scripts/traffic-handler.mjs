@@ -107,8 +107,7 @@ TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
     if (!car.overlay.road) {
         car.overlay.road = this.parkingLot.overlay.createBox(
             car.overlayWrapper,
-            ['overlay-el', 'area-box'],
-            {'z-index': '21'}
+            ['overlay-el', 'area-box']
         )
     }
     this.parkingLot.overlay.drawBox(car.overlay.road, roadArea, {
@@ -118,7 +117,6 @@ TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
     return roadArea
 }
 TrafficHandler.prototype.getAreaBetweenDestination = function (car) {
-    let destination = car.route[0].coord
     let destinationArea = {
         x: car.coords.x,
         y: car.coords.y,
@@ -130,14 +128,21 @@ TrafficHandler.prototype.getAreaBetweenDestination = function (car) {
                 )
         ),
     }
-    destinationArea[car.symbol] = destination
+    destinationArea[car.symbol] = car.nextDestination
     destinationArea[car.oppSymbol] += car.baseWidth / 2
+
+    if ((car.route.length === 1 && !car.hasParked) || car.route[1].turn) {
+        if (car.symbol === 'y') {
+            destinationArea.h += car.turningRunup * car.negation
+        } else {
+            destinationArea.w += car.turningRunup * car.negation
+        }
+    }
 
     if (!car.overlay.betweenDestination) {
         car.overlay.betweenDestination = this.parkingLot.overlay.createBox(
             car.overlayWrapper,
-            ['overlay-el', 'area-box'],
-            {'z-index': '22'}
+            ['overlay-el', 'area-box']
         )
     }
     this.parkingLot.overlay.drawBox(
@@ -165,8 +170,7 @@ TrafficHandler.prototype.getAreaInStoppingDistance = function (car) {
     if (!car.overlay.stoppingDistance) {
         car.overlay.stoppingDistance = this.parkingLot.overlay.createBox(
             car.overlayWrapper,
-            ['overlay-el', 'area-box'],
-            {'z-index': '23'}
+            ['overlay-el', 'area-box']
         )
     }
     this.parkingLot.overlay.drawBox(

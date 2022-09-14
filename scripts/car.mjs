@@ -4,7 +4,7 @@
  * @class
  * @typedef {Object} Car
  * @param {number} id
- * @param {TrafficHandler} trafficHandler
+ * @param {ParkingLot} parkingLot
  * @property {string} img
  * @property {Object} coords
  * @property {number} coords.x
@@ -22,9 +22,9 @@
  * @property {Number} maxSpeed
  * @property {Number} minStoppingDistance
  */
-function Car(id, trafficHandler) {
+function Car(id, parkingLot) {
     this.id = id
-    this.trafficHandler = trafficHandler
+    this.parkingLot = parkingLot
 
     this.img = undefined
     this.orientation = undefined
@@ -61,6 +61,7 @@ function Car(id, trafficHandler) {
     this.speed = undefined
     this.maxSpeed = undefined
     this.minStoppingDistance = undefined
+    this.turningRunup = undefined
 }
 
 Car.prototype.images = [
@@ -143,16 +144,16 @@ Car.prototype.getDirectionVars = function () {
     this.negation = negation
 }
 
-Car.prototype.initialize = function (parkingLot, assignedSpace) {
+Car.prototype.initialize = function (assignedSpace) {
     this.status = 'entering'
     this.hasParked = false
     this.coords = {
-        x: parkingLot.pathObject.entrance.x - 90 / 2,
+        x: this.parkingLot.pathObject.entrance.x - 90 / 2,
         y:
-            parkingLot.pathObject.entrance.y +
-            parkingLot.pathObject.entrance.len,
+            this.parkingLot.pathObject.entrance.y +
+            this.parkingLot.pathObject.entrance.len,
     }
-    this.currentSection = parkingLot.pathObject.entrance
+    this.currentSection = this.parkingLot.pathObject.entrance
     this.assignedSpace = assignedSpace
 
     this.baseWidth = 90
@@ -172,22 +173,26 @@ Car.prototype.initialize = function (parkingLot, assignedSpace) {
         this.pageWrapper.getElementsByClassName('overlay-wrapper')[0]
     this.userFocus = false
     this.pageEl.firstElementChild.addEventListener('click', () => {
-        parkingLot.overlay.toggleCarFocus(this)
+        this.parkingLot.overlay.toggleCarFocus(this)
     })
 
-    this.route = parkingLot.requestRoute(this)
+    this.route = this.parkingLot.requestRoute(this)
     this.parkingDuration = 15000
 
     this.speed = 5
     this.maxSpeed = 15
     this.minStoppingDistance = 0
+    this.turningRunup = 30
+
+    this.nextDestination = this.getNextDestination()
 }
 
-Car.prototype.determineAction = function (parkingLot) {
+Car.prototype.determineAction = function () {
     switch (this.status) {
         case 'entering':
         case 'leaving':
             this.followRoute()
+            break
         case 'turning':
             this.turn()
             break
@@ -198,35 +203,43 @@ Car.prototype.determineAction = function (parkingLot) {
             this.reverseOutOfSpace()
             break
         case 'parked':
-            setTimeout(() => {
-                parkingLot.requestRoute(this)
-                this.status = 'leavingSpace'
-            }, this.parkingDuration)
+            this.wait()
+            break
     }
 }
 
 Car.prototype.followRoute = function () {
     this.getDirectionVars()
 
-    let distanceToNextDestination = this.getDistanceToNextDestination()
+    let nextPathDestination = this.getNextDestination()
+    if (nextPathDestination !== this.nextDestination) {
+        this.nextDestination = nextPathDestination
+    }
+
+    let distanceToNextDestination =
+        this.parkingLot.trafficHandler.returnDistanceBetween(
+            this.leadingEdge,
+            this.nextDestination
+        )
 
     this.minStoppingDistance = this.calcStoppingDistance()
     let stoppingDistanceArea =
-        this.trafficHandler.getAreaInStoppingDistance(this)
+        this.parkingLot.trafficHandler.getAreaInStoppingDistance(this)
     let carsInMinStoppingDistance = this.checkAhead(stoppingDistanceArea)
 
-    let destinationArea = this.trafficHandler.getAreaBetweenDestination(this)
+    let destinationArea =
+        this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
     let carsBetweenNextDestination = this.checkAhead(destinationArea)
 
-    // let roadArea = this.trafficHandler.getAreaAlongColOrRow(this)
+    // let roadArea = this.parkingLot.trafficHandler.getAreaAlongColOrRow(this)
     // let carsAheadOnRoad = this.checkAhead(roadArea)
 
     let clearAhead = true
-    if (carsInMinStoppingDistance.presence) {
+    if (carsInMinStoppingDistance.collision) {
         clearAhead = false
         // this.speed = this.calcDeceleration(carsInMinStoppingDistance.distance)
     }
-    if (carsBetweenNextDestination.presence) {
+    if (carsBetweenNextDestination.collision) {
         clearAhead = false
         // this.speed = this.calcDeceleration(carsBetweenNextDestination.distance)
     }
@@ -257,14 +270,17 @@ Car.prototype.followRoute = function () {
             if (this.status === 'leaving') {
                 this.exitScene(distanceToNextDestination)
                 return
-            } else if (this.status === 'entering' && clearAhead) {
-                this.status === 'parking'
+            } else if (
+                this.status === 'entering' &&
+                !carsBetweenNextDestination.presence
+            ) {
+                this.status = 'parking'
                 this.park(distanceToNextDestination)
                 return
             }
         }
-        if (this.route[1].turn && clearAhead) {
-            this.status === 'turning'
+        if (this.route[1].turn && !carsBetweenNextDestination.presence) {
+            this.status = 'turning'
             this.turn(distanceToNextDestination)
             return
         }
@@ -278,9 +294,7 @@ Car.prototype.followRoute = function () {
     }
 }
 
-Car.prototype.wait = function () {
-    console.log(this.id + ' is waiting.')
-}
+Car.prototype.wait = function () {}
 Car.prototype.moveForward = function (distanceToNextDestination) {
     this.advance(distanceToNextDestination, this.speed)
 }
@@ -297,14 +311,62 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
 }
 
 Car.prototype.turn = function () {}
-Car.prototype.park = function () {}
+Car.prototype.park = function () {
+    this.getDirectionVars()
+
+    if (!this.testParking) {
+        console.log('Starting park anim')
+        this.testParking = true
+        this.pageEl.style['animation-name'] = 'test-park'
+        this.pageEl.style['animation-duration'] = '4s'
+        this.pageEl.style['animation-iteration-count'] = '1'
+        this.pageEl.style['animation-timing-function'] =
+            'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+
+        this.pageEl.addEventListener('animationend', () => {
+            this.setParked(this)
+        })
+    }
+}
+Car.prototype.setParked = function (car) {
+    car.pageEl.style.left = '20px'
+    car.pageEl.style.top = 'calc(18px - 90px / 2)'
+    car.pageEl.style.transform = 'rotate(180deg)'
+    car.pageEl.style['animation-name'] = 'none'
+
+    car.parkingLot.cars.parked[car.id] = car
+    delete car.parkingLot.cars.entering[car.id]
+    car.status = 'parked'
+
+    this.parkingLot.overlay.highlightParkingSpace(
+        document.getElementById(car.assignedSpace.rank),
+        car
+    )
+    this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
+
+    setTimeout(() => {
+        this.parkingLot.requestRoute(this)
+
+        console.log(this.id + ' is ready to leave their space.')
+        this.status = 'leavingSpace'
+    }, this.parkingDuration)
+}
+
 Car.prototype.reverseOutOfSpace = function () {}
 Car.prototype.exitScene = function () {}
 
 Car.prototype.checkAhead = function (areaAhead) {
-    let carsAhead = this.trafficHandler.returnCarsInArea(areaAhead, [this])
     let presence = false,
+        collision = false,
         distance = 5000
+
+    let carsAhead = this.parkingLot.trafficHandler.returnCarsInArea(areaAhead, [
+        this,
+    ])
+
+    if (carsAhead.length != 0) {
+        presence = true
+    }
 
     // break to separate function
     for (let car of carsAhead) {
@@ -317,7 +379,7 @@ Car.prototype.checkAhead = function (areaAhead) {
             (this.direction === 'west' && car.direction === 'east') ||
             (this.direction === 'east' && car.direction === 'west')
         ) {
-            oncomingCar = isConcernablyClose(car)
+            // oncomingCar = UNKNOWN(car)
             if (oncomingCar.concernable) {
                 presence = true
                 if (oncomingCar.distance < distance)
@@ -334,40 +396,54 @@ Car.prototype.checkAhead = function (areaAhead) {
             // continue
             break
         }
-        let carAhead = car.isConcernablyClose(car)
-        if (carAhead.concernable) {
-            presence = true
-            if (carAhead.distance < distance) {
-                distance = carAhead.distance
+        let immediateCollision = this.willCollideAtCurrentSpeed(car)
+        if (immediateCollision.collision) {
+            collision = true
+            if (immediateCollision.distance < distance) {
+                distance = immediateCollision.distance
             }
         }
+        // let blockingDestination = this.isBlockingDestination(car)
+        // if (blockingDestination.collision) {
+        //     presence = true
+        //     if (blockingDestination.distance < distance) {
+        //         distance = blockingDestination.distance
+        //     }
+        // }
     }
     // break to separate function
 
-    return {presence: presence, distance: distance}
+    return {presence: presence, collision: collision, distance: distance}
 }
 
-Car.prototype.isConcernablyClose = function (car) {
+Car.prototype.willCollideAtCurrentSpeed = function (car) {
     let opposingEdge
     if (this.negation === -1) {
         opposingEdge = car.coords[this.symbol] + car.baseLength
     } else {
         opposingEdge = car.coords[this.symbol]
     }
-    let distance = this.trafficHandler.returnDistanceBetween(
+    let distance = this.parkingLot.trafficHandler.returnDistanceBetween(
         this.leadingEdge,
         opposingEdge
     )
 
-    let concernable
+    let collision
     if (this.leadingEdge + this.speed <= opposingEdge) {
-        concernable = true
+        collision = true
     } else {
-        concernable = false
+        collision = false
     }
 
-    return {concernable: concernable, distance: distance}
+    return {collision: collision, distance: distance}
 }
+// Car.prototype.isBlockingDestination(car) {
+//     let opposingEdge
+//     if (this.negation === -1) {
+//         opposingEdge = car.coords[this.symbol] + car.baseLength
+//     } else {
+//         opposingEdge = car.coords[this.symbol]
+//     }
 
 Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
     let closestCar
@@ -381,7 +457,7 @@ Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
             opposingEdge = car[this.symbol]
         }
 
-        let distance = this.trafficHandler.returnDistanceBetween(
+        let distance = this.parkingLot.trafficHandler.returnDistanceBetween(
             this.leadingEdge,
             opposingEdge
         )
@@ -395,22 +471,24 @@ Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
     return {car: closestCar, distance: closestDist}
 }
 
-Car.prototype.getDistanceToNextDestination = function () {
+Car.prototype.getNextDestination = function () {
     let nextPathDestination
-    if (this.route.length === 1) {
-        nextPathDestination = this.route[0].coord
+    if (this.route.length === 1 && this.hasParked === false) {
+        nextPathDestination =
+            this.route[0].coord - this.turningRunup * this.negation
+        if (
+            Math.abs(nextPathDestination - this.leadingEdge) < this.turningRunup
+        ) {
+            console.log('Less than ideal turning space to park.')
+            nextPathDestination = this.leadingEdge
+        }
     } else if (this.route[1].turn) {
         // Turning
     } else {
         nextPathDestination = this.route[0].coord
     }
 
-    let distanceToNextPathDestination =
-        this.trafficHandler.returnDistanceBetween(
-            this.leadingEdge,
-            nextPathDestination
-        )
-    return distanceToNextPathDestination
+    return nextPathDestination
 }
 
 Car.prototype.checkIntersection = function () {
@@ -432,12 +510,14 @@ Car.prototype.checkIntersection = function () {
             h: 90,
         }
     }
-    let carsNearIntersection = this.trafficHandler.returnCarsInArea(
+    let carsNearIntersection = this.parkingLot.trafficHandler.returnCarsInArea(
         intersectionArea,
         [this]
     )
 
-    return this.trafficHandler.checkIfCarsTurning(carsNearIntersection)
+    return this.parkingLot.trafficHandler.checkIfCarsTurning(
+        carsNearIntersection
+    )
 }
 
 Car.prototype.calcStoppingDistance = function () {
@@ -458,6 +538,6 @@ Car.prototype.calcDeceleration = function (stoppingDistance) {
 
     return deceleratedSpeed
 }
-Car.prototype.adjustSpeedToDestination = function (distanceToNextDestination) {}
+Car.prototype.adjustSpeedToDestination = function () {}
 
 export {Car}

@@ -52,7 +52,6 @@ let loop = {
     },
 
     iterate: function (parkingLot) {
-        console.log('Loop running.')
         parkingLot.simulate()
     },
 }

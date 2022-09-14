@@ -116,17 +116,32 @@ Overlay.prototype.toggleCarFocus = function (car) {
         car.userFocus = true
         this.focusedCar = car
         this.focusedCar.pageWrapper.classList.add('focused')
+
         let space = document.getElementById(this.focusedCar.assignedSpace.rank)
-        let spaceColor
-        if (this.focusedCar.hasParked) {
-            spaceColor = 'gray'
-        } else if (this.focusedCar.status === 'parked') {
-            spaceColor = 'red'
-        } else {
-            spaceColor = 'yellow'
-        }
-        space.style.background = spaceColor
+        this.highlightParkingSpace(space, this.focusedCar)
     }
+}
+
+Overlay.prototype.highlightParkingSpace = function (space, car) {
+    let spaceColor
+    if (car.hasParked) {
+        spaceColor = 'gray'
+    } else if (car.status === 'parked') {
+        spaceColor = 'red'
+    } else {
+        spaceColor = 'yellow'
+    }
+    space.style.background = spaceColor
+}
+
+Overlay.prototype.clearCollisionBoxes = function (wrapper) {
+    let boxes = wrapper.getElementsByClassName('area-box')
+    for (let box of boxes) {
+        this.clearCollisionBox(box)
+    }
+}
+Overlay.prototype.clearCollisionBox = function (box) {
+    box.style.background = 'none'
 }
 
 Overlay.prototype.showElement = function (element) {

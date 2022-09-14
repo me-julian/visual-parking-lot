@@ -44,13 +44,13 @@ ParkingLot.prototype.simulate = function () {
     }
 
     for (let car in this.cars.leaving) {
-        this.cars.leaving[car].determineAction(this)
+        this.cars.leaving[car].determineAction()
     }
     for (let car in this.cars.entering) {
-        this.cars.entering[car].determineAction(this)
+        this.cars.entering[car].determineAction()
     }
     for (let car in this.cars.parked) {
-        this.cars.parked[car].determineAction(this)
+        this.cars.parked[car].determineAction()
     }
 }
 
@@ -58,10 +58,10 @@ ParkingLot.prototype.spawnCar = function () {
     let id = this.carCount
     this.carCount += 1
 
-    let newCar = new Car(id, this.trafficHandler)
+    let newCar = new Car(id, this)
     // ISSUE: Need to handle no spaces available.
     let assignedSpace = this.getHighestRankedSpace()
-    newCar.initialize(this, assignedSpace)
+    newCar.initialize(assignedSpace)
 
     this.cars.entering[id] = newCar
 }
