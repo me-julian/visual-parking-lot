@@ -1,0 +1,24 @@
+/* Animations */
+
+/* Test CSS Animation */
+/* @keyframes test-park {
+    0% {
+    left: 230px;
+    top: 75px;
+    transform: rotate(270deg);
+}
+    20% {
+        left: calc(230px + 90px / 5);
+        top: calc(18px + 182px / 20);
+        transform: rotate(275deg);
+    }
+    60% {
+        top: calc(18px - 30px);
+        transform: rotate(215deg);
+    }
+    100% {
+    left: 20px;
+    top: calc(18px - 90px / 2);
+    transform: rotate(180deg);
+    }
+} */

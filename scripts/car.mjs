@@ -13,7 +13,7 @@
  * @property {number} orientation - Angle of page element's rotation.
  *
  * @property {string} status
- * @property {section} assignedSpace
+ * @property {space} assignedSpace
  * @property {Object} route
  * @property {Object} nextRoutePartition - Unused.
  * @property {Number} parkingDuration - Time car will park for in ms.
@@ -317,7 +317,9 @@ Car.prototype.park = function () {
     if (!this.testParking) {
         console.log('Starting park anim')
         this.testParking = true
-        this.pageEl.style['animation-name'] = 'test-park'
+        let animation =
+            this.parkingLot.animationHandler.createAnimationRule(this)
+        this.pageEl.style['animation-name'] = animation.name
         this.pageEl.style['animation-duration'] = '4s'
         this.pageEl.style['animation-iteration-count'] = '1'
         this.pageEl.style['animation-timing-function'] =
@@ -329,9 +331,13 @@ Car.prototype.park = function () {
     }
 }
 Car.prototype.setParked = function (car) {
-    car.pageEl.style.left = '20px'
-    car.pageEl.style.top = 'calc(18px - 90px / 2)'
-    car.pageEl.style.transform = 'rotate(180deg)'
+    car.pageEl.style.left = car.assignedSpace.x + 'px'
+    car.pageEl.style.top =
+        car.assignedSpace.y -
+        car.baseWidth / 2 +
+        (car.assignedSpace.height - car.baseWidth) / 2 +
+        'px'
+    car.pageEl.style.transform = 'rotate(' + 180 + 'deg)'
     car.pageEl.style['animation-name'] = 'none'
 
     car.parkingLot.cars.parked[car.id] = car

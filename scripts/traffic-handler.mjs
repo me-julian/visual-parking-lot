@@ -111,7 +111,7 @@ TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
         )
     }
     this.parkingLot.overlay.drawBox(car.overlay.road, roadArea, {
-        background: 'pink',
+        backgroundColor: 'pink',
     })
 
     return roadArea
@@ -149,7 +149,7 @@ TrafficHandler.prototype.getAreaBetweenDestination = function (car) {
         car.overlay.betweenDestination,
         destinationArea,
         {
-            background: 'purple',
+            backgroundColor: 'purple',
         }
     )
 
@@ -177,7 +177,7 @@ TrafficHandler.prototype.getAreaInStoppingDistance = function (car) {
         car.overlay.stoppingDistance,
         stoppingDistanceArea,
         {
-            background: 'red',
+            backgroundColor: 'red',
         }
     )
 

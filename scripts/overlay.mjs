@@ -17,8 +17,8 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
         spaceEl.classList.add('space', 'overlay-el')
         spaceEl.id = space.rank
 
-        spaceEl.style.left = space.left + 'px'
-        spaceEl.style.top = space.top + 'px'
+        spaceEl.style.left = space.x + 'px'
+        spaceEl.style.top = space.y + 'px'
         spaceEl.style.height = space.height + 'px'
         spaceEl.style.width = space.width + 'px'
 
@@ -152,7 +152,7 @@ Overlay.prototype.clearCollisionBoxes = function (wrapper) {
     }
 }
 Overlay.prototype.clearCollisionBox = function (box) {
-    box.style['background-color'] = 'none'
+    box.style['background-color'] = 'initial'
 }
 
 Overlay.prototype.toggleElement = function (element) {

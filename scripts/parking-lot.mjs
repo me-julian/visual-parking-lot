@@ -9,6 +9,7 @@ import {Car} from './car.mjs'
  * @param {RoutePlotter} routePlotter
  * @param {Overlay} overlay
  * @param {Object} rankedSpaceList
+ * @param {AnimationHandler} animationHandler
  * @property {TrafficHandler} trafficHandler
  * @property {number} carCount - Number of cars so far. Used for car IDs.
  * @property {Object} cars
@@ -17,11 +18,18 @@ import {Car} from './car.mjs'
  * @property {Object} cars.leaving - Cars which are leaving the lot.
  * @property {Object} cars.left - Cars which have left the lot and scene.
  */
-function ParkingLot(pathObject, routePlotter, overlay, rankedSpaceList) {
+function ParkingLot(
+    pathObject,
+    routePlotter,
+    overlay,
+    animationHandler,
+    rankedSpaceList
+) {
     this.pathObject = pathObject
     this.routePlotter = routePlotter
     this.overlay = overlay
     this.spaces = rankedSpaceList
+    this.animationHandler = animationHandler
 
     this.carCount = 0
     this.cars = {
@@ -55,20 +63,28 @@ ParkingLot.prototype.simulate = function () {
 }
 
 ParkingLot.prototype.spawnCar = function () {
-    let id = this.carCount
-    this.carCount += 1
-
-    let newCar = new Car(id, this)
-    // ISSUE: Need to handle no spaces available.
     let assignedSpace = this.getHighestRankedSpace()
-    assignedSpace.reserved = true
-    this.overlay.updateSpaceColor(
-        document.getElementById(assignedSpace.rank),
-        newCar
-    )
-    newCar.initialize(assignedSpace)
+    if (assignedSpace) {
+        let id = this.carCount
+        this.carCount += 1
 
-    this.cars.entering[id] = newCar
+        let newCar = new Car(id, this)
+
+        assignedSpace.reserved = true
+        this.overlay.updateSpaceColor(
+            document.getElementById(assignedSpace.rank),
+            newCar
+        )
+        newCar.initialize(assignedSpace)
+
+        this.cars.entering[id] = newCar
+    } else {
+        console.log('No spaces available.')
+        this.spawnCarCooldown = true
+        setTimeout(() => {
+            this.spawnCarCooldown = false
+        }, 5000)
+    }
 }
 
 ParkingLot.prototype.requestRoute = function (car) {
@@ -93,9 +109,9 @@ ParkingLot.prototype.requestRoute = function (car) {
     } else {
         destination.section = car.assignedSpace.section
         if (destination.section.horizontal) {
-            destination.coord = car.assignedSpace.left
+            destination.coord = car.assignedSpace.x
         } else {
-            destination.coord = car.assignedSpace.top
+            destination.coord = car.assignedSpace.y
         }
     }
 
