@@ -338,7 +338,7 @@ Car.prototype.setParked = function (car) {
     delete car.parkingLot.cars.entering[car.id]
     car.status = 'parked'
 
-    this.parkingLot.overlay.highlightParkingSpace(
+    this.parkingLot.overlay.updateSpaceColor(
         document.getElementById(car.assignedSpace.rank),
         car
     )

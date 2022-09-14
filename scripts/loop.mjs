@@ -17,6 +17,7 @@ function initializeSimulation() {
     let overlay = new Overlay()
     overlay.createSpaceOverlay(rankedSpaceList)
     overlay.drawPaths(pathObject)
+    overlay.addGuiListeners()
 
     let parkingLot = new ParkingLot(
         pathObject,

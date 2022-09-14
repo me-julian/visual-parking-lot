@@ -61,6 +61,11 @@ ParkingLot.prototype.spawnCar = function () {
     let newCar = new Car(id, this)
     // ISSUE: Need to handle no spaces available.
     let assignedSpace = this.getHighestRankedSpace()
+    assignedSpace.reserved = true
+    this.overlay.updateSpaceColor(
+        document.getElementById(assignedSpace.rank),
+        newCar
+    )
     newCar.initialize(assignedSpace)
 
     this.cars.entering[id] = newCar
@@ -88,7 +93,7 @@ ParkingLot.prototype.requestRoute = function (car) {
     } else {
         destination.section = car.assignedSpace.section
         if (destination.section.horizontal) {
-            destination.coord = destination.assignedSpace.left
+            destination.coord = car.assignedSpace.left
         } else {
             destination.coord = car.assignedSpace.top
         }
@@ -105,7 +110,7 @@ ParkingLot.prototype.requestRoute = function (car) {
 
 ParkingLot.prototype.getHighestRankedSpace = function () {
     for (let space of this.spaces) {
-        if (!space.occupied) {
+        if (!space.reserved) {
             return space
         }
     }

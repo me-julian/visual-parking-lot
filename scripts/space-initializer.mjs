@@ -27,14 +27,14 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         refPoint,
         [98, 100, 100],
         208,
-        this.pathObject.sections.vertical.row0col0,
+        this.pathObject.sections.vertical.row1col0,
         'left'
     )
     unrankedSpaceList.row2col0 = this.createSpacesColumn(
         refPoint,
         [100, 98, 100],
         208,
-        this.pathObject.sections.vertical.row0col0,
+        this.pathObject.sections.vertical.row2col0,
         'left'
     )
     // col2 vertical section's spaces
@@ -53,14 +53,14 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         refPoint,
         [98, 100, 100],
         212,
-        this.pathObject.sections.vertical.row0col2,
+        this.pathObject.sections.vertical.row1col2,
         'right'
     )
     unrankedSpaceList.row2col2 = this.createSpacesColumn(
         refPoint,
         [100, 98, 100],
         212,
-        this.pathObject.sections.vertical.row0col2,
+        this.pathObject.sections.vertical.row2col2,
         'right'
     )
     // row0 horizontal section's top spaces

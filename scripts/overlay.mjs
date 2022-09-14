@@ -14,7 +14,7 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     let spacesEl = document.getElementById('spaces')
     for (let space of rankedSpaceList) {
         let spaceEl = document.createElement('div')
-        spaceEl.classList.add('space')
+        spaceEl.classList.add('space', 'overlay-el')
         spaceEl.id = space.rank
 
         spaceEl.style.left = space.left + 'px'
@@ -24,6 +24,12 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
 
         spacesEl.append(spaceEl)
     }
+}
+
+Overlay.prototype.addGuiListeners = function () {
+    document
+        .getElementById('show-spaces-button')
+        .addEventListener('click', this.toggleShowSpacesStatus)
 }
 
 /**
@@ -96,12 +102,16 @@ Overlay.prototype.createBox = function (parent, classes, id) {
     return newBox
 }
 
+Overlay.prototype.toggleShowSpacesStatus = function () {
+    document.getElementById('spaces').classList.toggle('show-overlay-children')
+}
+
 Overlay.prototype.toggleCarFocus = function (car) {
     if (this.focusedCar === car) {
         this.focusedCar.userFocus = false
         this.focusedCar.pageWrapper.classList.remove('focused')
         let space = document.getElementById(this.focusedCar.assignedSpace.rank)
-        space.style.background = 'none'
+        this.toggleElement(space)
         this.focusedCar = undefined
     } else {
         if (this.focusedCar) {
@@ -110,7 +120,7 @@ Overlay.prototype.toggleCarFocus = function (car) {
             let space = document.getElementById(
                 this.focusedCar.assignedSpace.rank
             )
-            space.style.background = 'none'
+            this.toggleElement(space)
         }
 
         car.userFocus = true
@@ -118,11 +128,12 @@ Overlay.prototype.toggleCarFocus = function (car) {
         this.focusedCar.pageWrapper.classList.add('focused')
 
         let space = document.getElementById(this.focusedCar.assignedSpace.rank)
-        this.highlightParkingSpace(space, this.focusedCar)
+        this.updateSpaceColor(space, this.focusedCar)
+        this.toggleElement(space)
     }
 }
 
-Overlay.prototype.highlightParkingSpace = function (space, car) {
+Overlay.prototype.updateSpaceColor = function (space, car) {
     let spaceColor
     if (car.hasParked) {
         spaceColor = 'gray'
@@ -131,7 +142,7 @@ Overlay.prototype.highlightParkingSpace = function (space, car) {
     } else {
         spaceColor = 'yellow'
     }
-    space.style.background = spaceColor
+    space.style['background-color'] = spaceColor
 }
 
 Overlay.prototype.clearCollisionBoxes = function (wrapper) {
@@ -141,14 +152,23 @@ Overlay.prototype.clearCollisionBoxes = function (wrapper) {
     }
 }
 Overlay.prototype.clearCollisionBox = function (box) {
-    box.style.background = 'none'
+    box.style['background-color'] = 'none'
 }
 
+Overlay.prototype.toggleElement = function (element) {
+    element.classList.toggle('visible')
+}
 Overlay.prototype.showElement = function (element) {
-    element.style.display = 'initial'
+    if (element.classList.includes('hidden')) {
+        element.classList.remove('hidden')
+    }
+    element.classList.add('visible')
 }
 Overlay.prototype.hideElement = function (element) {
-    element.style.display = 'none'
+    if (element.classList.includes('visible')) {
+        element.classList.remove('visible')
+    }
+    element.classList.add('hidden')
 }
 
 export {Overlay}

@@ -29,6 +29,7 @@ body {
 .space {
     position: absolute;
     opacity: 50%;
+    background-color: grey;
     pointer-events: all;
 }
 
@@ -38,18 +39,27 @@ body {
     height: inherit;
     pointer-events: none;
 }
+
+/* Overlay Elements */
 .overlay-wrapper {
     position: absolute;
     width: inherit;
     height: inherit;
 }
-
+.show-overlay-children .overlay-el {
+    display: initial;
+}
 .overlay-el {
     display: none;
 }
-
 .focused .overlay-el {
     display: initial;
+}
+.visible {
+    display: initial;
+}
+.hidden {
+    display: none;
 }
 
 .area-box {
@@ -72,6 +82,7 @@ body {
     pointer-events: all;
 }
 
+/* Test Elements */
 #hcar {
     display: none;
     left: calc(20px);
@@ -84,7 +95,6 @@ body {
     left: calc(228px + 47px - 46px);
     top: calc(0px);
 }
-
 
 /* Animations */
 
