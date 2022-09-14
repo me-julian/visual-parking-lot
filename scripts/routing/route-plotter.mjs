@@ -144,7 +144,7 @@ function RoutePlotter(pathObject) {
         //         end.coord
         //     )
         // }
-        let routeSections = chooseRoute(routePlotter, routes)
+        let routeSections = this.chooseRoute(routePlotter, routes)
         return routeSections
     }
 
@@ -183,7 +183,7 @@ function RoutePlotter(pathObject) {
      * @returns {Array}
      */
     this.chooseRoute = function (routePlotter, routes) {
-        return route
+        return routes[0]
     }
 
     this.initializeRouteMetaInfo = function (
