@@ -134,7 +134,7 @@ Car.prototype.getDirectionVars = function () {
     let leadingEdge = this.coords[symbol]
     // Get point opposite to top/left.
     if (negation === 1) {
-        leadingEdge -= this.height
+        leadingEdge += this.baseLength
     }
 
     this.leadingEdge = leadingEdge
@@ -293,6 +293,7 @@ Car.prototype.moveForward = function (distanceToNextDestination) {
 Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
     this.speed = newSpeed
 
+    // Potentially move this when doing proper intersection/following dest checking.
     if (this.speed >= distanceToNextDestination) {
         this.setToNextSection()
     }
@@ -310,16 +311,16 @@ Car.prototype.turn = function () {
         let animation = this.parkingLot.animationHandler.createAnimation(this)
         this.pageEl.style.animationDuration = '3s'
         this.pageEl.style.animationIterationCount = '1'
-        // this.pageEl.style.animationTimingFunction = 'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+        this.pageEl.style.animationTimingFunction = 'initial'
 
         this.pageEl.style.animationName = animation.ruleObject.name
 
         this.pageEl.addEventListener('animationend', () => {
-            this.endTurn(this, animation.endVals)
+            this.endTurn(animation.endVals)
         })
     }
 }
-Car.prototype.endTurn = function (car, endVals) {
+Car.prototype.endTurn = function (endVals) {
     console.log('turn over')
     if (this.hasParked) {
         this.status = 'leaving'
@@ -327,12 +328,11 @@ Car.prototype.endTurn = function (car, endVals) {
         this.status = 'entering'
     }
 
-    car.pageEl.style.left = endVals.x + 'px'
-    car.pageEl.style.top = endVals.y + 'px'
-    car.pageEl.style.transform = 'rotate(' + endVals.orientation + 'deg)'
-    car.pageEl.style.animationName = 'none'
-
     this.setToNextSection()
+    this.updateCollisionBox()
+    this.updatePositionalValues(endVals)
+
+    this.pageEl.style.animationName = 'none'
 }
 Car.prototype.park = function () {
     if (this.status !== 'parking') {
@@ -348,23 +348,21 @@ Car.prototype.park = function () {
         this.pageEl.style.animationName = animation.ruleObject.name
 
         this.pageEl.addEventListener('animationend', () => {
-            this.setParked(this, animation.endVals)
+            this.setParked(animation.endVals)
         })
     }
 }
-Car.prototype.setParked = function (car, endVals) {
-    car.pageEl.style.left = endVals.x + 'px'
-    car.pageEl.style.top = endVals.y + 'px'
-    car.pageEl.style.transform = 'rotate(' + endVals.orientation + 'deg)'
-    car.pageEl.style.animationName = 'none'
+Car.prototype.setParked = function (endVals) {
+    this.updatePositionalValues(endVals)
+    this.pageEl.style.animationName = 'none'
 
-    car.parkingLot.cars.parked[car.id] = car
-    delete car.parkingLot.cars.entering[car.id]
-    car.status = 'parked'
+    this.parkingLot.cars.parked[this.id] = this
+    delete this.parkingLot.cars.entering[this.id]
+    this.status = 'parked'
 
     this.parkingLot.overlay.updateSpaceColor(
-        document.getElementById(car.assignedSpace.rank),
-        car
+        document.getElementById(this.assignedSpace.rank),
+        this
     )
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
 
@@ -381,12 +379,53 @@ Car.prototype.setParked = function (car, endVals) {
 
 Car.prototype.reverseOutOfSpace = function () {}
 Car.prototype.exitScene = function () {}
+
 Car.prototype.setToNextSection = function () {
     this.route.splice(0, 1)
     this.nextDestination = null
     this.currentSection = this.route[0]
     this.currentSection.coord
+    this.direction = this.currentSection.direction
 }
+Car.prototype.updatePositionalValues = function (newVals) {
+    this.coords.x = newVals.x
+    this.coords.y = newVals.y
+    this.orientation = newVals.orientation
+
+    this.pageEl.style.left = this.coords.x + 'px'
+    this.pageEl.style.top = this.coords.y + 'px'
+    this.pageEl.style.transform = 'rotate(' + this.orientation + 'deg)'
+}
+
+Car.prototype.updateCollisionBox = function () {
+    //   Need to handle intersections
+    switch (this.status) {
+        case 'turning':
+            break
+        case 'parking':
+            break
+        case 'leavingSpace':
+            break
+        case 'entering':
+        case 'leaving':
+            this.flipCollisionBox()
+    }
+}
+Car.prototype.flipCollisionBox = function () {
+    switch (this.direction) {
+        case 'north':
+        case 'south':
+            this.collisionBox.height = this.baseLength
+            this.collisionBox.width = this.baseWidth
+            break
+        case 'west':
+        case 'east':
+            this.collisionBox.height = this.baseWidth
+            this.collisionBox.width = this.baseLength
+            break
+    }
+}
+
 Car.prototype.checkAhead = function (areaAhead) {
     let presence = false,
         collision = false,
