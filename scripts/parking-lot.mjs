@@ -100,7 +100,9 @@ ParkingLot.prototype.requestRoute = function (car) {
     }
 
     let destination = {}
-    if (car.parked) {
+    if (car.hasParked) {
+        start.coord = car.assignedSpace[car.symbol]
+
         destination.section = this.pathObject.exit
         destination.coord = destination.section.exit.y
         if (destination.section.exit === 'south') {

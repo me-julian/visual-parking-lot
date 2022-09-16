@@ -201,7 +201,7 @@ TrafficHandler.prototype.returnCarsInArea = function (
             x: car.coords.x,
             y: car.coords.y,
             w: car.collisionBox.width,
-            h: car.collsionBox.height,
+            h: car.collisionBox.height,
         }
         if (this.checkCollision(referenceArea, carArea)) {
             cars.push(car)

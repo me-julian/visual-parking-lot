@@ -310,36 +310,39 @@ function RoutePlotter(pathObject) {
             if (currentAxis === nextAxis) {
                 finishedRoute[i].turn = false
                 continue
+            } else {
+                finishedRoute[i].turn =
+                    current.direction + 'to' + next.direction
             }
 
             // these could be pos or negative changes in degrees
             // (rotation of the car/facing)
-            switch (current.direction) {
-                case 'north':
-                    if (nextAxis === 'west') {
-                        finishedRoute[i].turn = 'left'
-                    } else {
-                        finishedRoute[i].turn = 'right'
-                    }
-                case 'south':
-                    if (nextAxis === 'west') {
-                        finishedRoute[i].turn = 'right'
-                    } else {
-                        finishedRoute[i].turn = 'left'
-                    }
-                case 'east':
-                    if (nextAxis === 'north') {
-                        finishedRoute[i].turn = 'left'
-                    } else {
-                        finishedRoute[i].turn = 'right'
-                    }
-                case 'west':
-                    if (nextAxis === 'north') {
-                        finishedRoute[i].turn = 'right'
-                    } else {
-                        finishedRoute[i].turn = 'left'
-                    }
-            }
+            // switch (current.direction) {
+            // case 'north':
+            //     if (nextAxis === 'west') {
+            //         finishedRoute[i].turn = 'left'
+            //     } else {
+            //         finishedRoute[i].turn = 'right'
+            //     }
+            // case 'south':
+            //     if (nextAxis === 'west') {
+            //         finishedRoute[i].turn = 'right'
+            //     } else {
+            //         finishedRoute[i].turn = 'left'
+            //     }
+            // case 'east':
+            //     if (nextAxis === 'north') {
+            //         finishedRoute[i].turn = 'left'
+            //     } else {
+            //         finishedRoute[i].turn = 'right'
+            //     }
+            // case 'west':
+            //     if (nextAxis === 'north') {
+            //         finishedRoute[i].turn = 'right'
+            //     } else {
+            //         finishedRoute[i].turn = 'left'
+            //     }
+            // }
         }
 
         return finishedRoute

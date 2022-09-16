@@ -21,21 +21,21 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         [100, 97, 100],
         208,
         this.pathObject.sections.vertical.row0col0,
-        'right'
+        'west'
     )
     unrankedSpaceList.row1col0 = this.createSpacesColumn(
         refPoint,
         [98, 100, 100],
         208,
         this.pathObject.sections.vertical.row1col0,
-        'right'
+        'west'
     )
     unrankedSpaceList.row2col0 = this.createSpacesColumn(
         refPoint,
         [100, 98, 100],
         208,
         this.pathObject.sections.vertical.row2col0,
-        'right'
+        'west'
     )
     // col2 vertical section's spaces
     refPoint = {
@@ -47,21 +47,21 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         [100, 97, 100],
         212,
         this.pathObject.sections.vertical.row0col2,
-        'left'
+        'east'
     )
     unrankedSpaceList.row1col2 = this.createSpacesColumn(
         refPoint,
         [98, 100, 100],
         212,
         this.pathObject.sections.vertical.row1col2,
-        'left'
+        'east'
     )
     unrankedSpaceList.row2col2 = this.createSpacesColumn(
         refPoint,
         [100, 98, 100],
         212,
         this.pathObject.sections.vertical.row2col2,
-        'left'
+        'east'
     )
     // row0 horizontal section's top spaces
     refPoint = {
@@ -73,7 +73,7 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         [100, 100, 100, 100, 98],
         212,
         this.pathObject.sections.horizontal.row0col1,
-        'bottom'
+        'north'
     )
     // row0 horizontal section's bottom spaces
     refPoint = {
@@ -85,7 +85,7 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         [100, 100, 100, 100, 98],
         210,
         this.pathObject.sections.horizontal.row0col1,
-        'top'
+        'south'
     )
     for (let space of row0col1BottomSpaces) {
         unrankedSpaceList.row0col1.push(space)
@@ -100,7 +100,7 @@ SpaceInitializer.prototype.initParkingSpaces = function () {
         [100, 100, 100, 100, 98],
         210,
         this.pathObject.sections.horizontal.row1col1,
-        'bottom'
+        'south'
     )
 
     return unrankedSpaceList
@@ -111,7 +111,7 @@ SpaceInitializer.prototype.createSpacesColumn = function (
     spaces,
     length,
     section,
-    entranceSide
+    facing
 ) {
     let column = []
     for (let i = 0; i < spaces.length; i++) {
@@ -120,8 +120,9 @@ SpaceInitializer.prototype.createSpacesColumn = function (
         space.y = refPoint.y
         space.width = length
         space.height = spaces[i]
-        space.entranceSide = entranceSide
+        space.facing = facing
         space.section = section
+        space.animations = {}
 
         column.push(space)
 
@@ -143,8 +144,9 @@ SpaceInitializer.prototype.createSpacesRow = function (
         space.y = refPoint.y
         space.height = length
         space.width = spaces[i]
-        space.entranceSide = entranceSide
+        space.facing = entranceSide
         space.section = section
+        space.animations = {}
 
         row.push(space)
 
@@ -163,7 +165,7 @@ SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
 
     for (let line in unrankedSpaceList) {
         for (let space of unrankedSpaceList[line]) {
-            space.score = space.x + space.y
+            space.score = space.x * 0.65 + space.y
             rankedSpaceList.push(space)
         }
     }
