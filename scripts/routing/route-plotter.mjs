@@ -183,7 +183,11 @@ function RoutePlotter(pathObject) {
      * @returns {Array}
      */
     this.chooseRoute = function (routePlotter, routes) {
-        return routes[0]
+        if (routes.length > 1) {
+            return routes[1]
+        } else {
+            return routes[0]
+        }
     }
 
     this.initializeRouteMetaInfo = function (
