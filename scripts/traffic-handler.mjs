@@ -34,6 +34,8 @@ TrafficHandler.prototype.returnDistanceBetween = function (point1, point2) {
     return Math.abs(point1 - point2)
 }
 
+// NOTE: Area boxes seem to always be drawn after the car moves, so they
+// will essentially lag behind by one movement.
 TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
     let roadArea
     let axis = car.axis,
@@ -116,28 +118,40 @@ TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
 
     return roadArea
 }
+
 TrafficHandler.prototype.getAreaBetweenDestination = function (car) {
     let destinationArea = {
         x: car.coords.x,
         y: car.coords.y,
         w: car.baseWidth,
-        h: Math.abs(
-            car.route[0].coord -
+        h: car.baseWidth,
+    }
+
+    // x coord will either be the destination or the start of the car.
+    if (car.negation === -1) {
+        destinationArea[car.symbol] = car.nextDestination
+    } else {
+        destinationArea[car.symbol] = car.leadingEdge + car.minStoppingDistance
+    }
+
+    // Length and width of area need to correspond to the correct axes.
+    if (car.symbol === 'x') {
+        destinationArea.w = Math.abs(
+            car.nextDestination -
                 Math.abs(
                     car.leadingEdge + car.minStoppingDistance * car.negation
                 )
-        ),
+        )
+    } else {
+        destinationArea.h = Math.abs(
+            car.nextDestination -
+                Math.abs(
+                    car.leadingEdge + car.minStoppingDistance * car.negation
+                )
+        )
     }
-    destinationArea[car.symbol] = car.nextDestination
+    // Account for wrapper box vs image size discrepancy.
     destinationArea[car.oppSymbol] += car.baseWidth / 2
-
-    if ((car.route.length === 1 && !car.hasParked) || car.route[1].turn) {
-        if (car.symbol === 'y') {
-            destinationArea.h += car.turningRunup * car.negation
-        } else {
-            destinationArea.w += car.turningRunup * car.negation
-        }
-    }
 
     if (!car.overlay.betweenDestination) {
         car.overlay.betweenDestination = this.parkingLot.overlay.createBox(
@@ -159,11 +173,20 @@ TrafficHandler.prototype.getAreaInStoppingDistance = function (car) {
     let stoppingDistanceArea = {
         x: car.coords.x,
         y: car.coords.y,
-        w: car.baseWidth,
-        h: car.baseLength + car.minStoppingDistance,
+        w: car.collisionBox.width,
+        h: car.collisionBox.height,
     }
-    stoppingDistanceArea[car.symbol] =
-        car.coords[car.symbol] + car.minStoppingDistance * car.negation
+
+    if (car.negation === -1) {
+        stoppingDistanceArea[car.symbol] =
+            car.coords[car.symbol] + car.minStoppingDistance * car.negation
+    }
+
+    if (car.symbol === 'x') {
+        stoppingDistanceArea.w += car.minStoppingDistance
+    } else {
+        stoppingDistanceArea.h += car.minStoppingDistance
+    }
 
     stoppingDistanceArea[car.oppSymbol] += car.baseWidth / 2
 
