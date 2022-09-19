@@ -153,7 +153,6 @@ Car.prototype.initialize = function (assignedSpace) {
             this.parkingLot.pathObject.entrance.y +
             this.parkingLot.pathObject.entrance.len,
     }
-    this.currentSection = this.parkingLot.pathObject.entrance
     this.assignedSpace = assignedSpace
 
     this.baseWidth = 90
@@ -175,8 +174,13 @@ Car.prototype.initialize = function (assignedSpace) {
     this.pageEl.firstElementChild.addEventListener('click', () => {
         this.parkingLot.overlay.toggleCarFocus(this)
     })
-
+    //
+    this.currentSection = this.parkingLot.pathObject.entrance
+    //
     this.route = this.parkingLot.requestRoute(this)
+    // Should restructure this.
+    this.currentSection = this.route[0]
+    //
     this.parkingDuration = 15000
 
     this.speed = 5
@@ -206,6 +210,7 @@ Car.prototype.determineAction = function () {
 Car.prototype.followRoute = function () {
     this.getDirectionVars()
 
+    // Could be combined
     let nextPathDestination = this.getNextDestination(
         this.currentSection,
         this.route[1]
@@ -213,6 +218,7 @@ Car.prototype.followRoute = function () {
     if (!this.nextDestination) {
         this.nextDestination = nextPathDestination
     }
+    //
 
     this.minStoppingDistance = this.calcStoppingDistance()
 
@@ -306,7 +312,6 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
 Car.prototype.turn = function () {
     if (this.status !== 'turning') {
         this.status = 'turning'
-        console.log('starting turn anim')
 
         let animation = this.parkingLot.animationHandler.createAnimation(this)
         this.pageEl.style.animationDuration = '3s'
@@ -315,13 +320,16 @@ Car.prototype.turn = function () {
 
         this.pageEl.style.animationName = animation.ruleObject.name
 
-        this.pageEl.addEventListener('animationend', () => {
+        // Could/should this be set indefinitely? Generic event funct
+        // that checks status for endTurn/setParked?
+        let endTurnEventFunct = () => {
             this.endTurn(animation.endVals)
-        })
+            this.pageEl.removeEventListener('animationend', endTurnEventFunct)
+        }
+        this.pageEl.addEventListener('animationend', endTurnEventFunct)
     }
 }
 Car.prototype.endTurn = function (endVals) {
-    console.log('turn over')
     if (this.hasParked) {
         this.status = 'leaving'
     } else {
@@ -337,7 +345,6 @@ Car.prototype.endTurn = function (endVals) {
 Car.prototype.park = function () {
     if (this.status !== 'parking') {
         this.status = 'parking'
-        console.log('Starting park anim')
 
         let animation = this.parkingLot.animationHandler.createAnimation(this)
         this.pageEl.style.animationDuration = '4s'
@@ -384,7 +391,6 @@ Car.prototype.setToNextSection = function () {
     this.route.splice(0, 1)
     this.nextDestination = null
     this.currentSection = this.route[0]
-    this.currentSection.coord
     this.direction = this.currentSection.direction
 }
 Car.prototype.updatePositionalValues = function (newVals) {
@@ -444,20 +450,20 @@ Car.prototype.checkAhead = function (areaAhead) {
         // Check direction for head-on collisions
         // Possibly check for turning cars
         // Check whether they're going slower than this car.
-        if (
-            (this.direction === 'south' && car.direction === 'north') ||
-            (this.direction === 'north' && car.direction === 'south') ||
-            (this.direction === 'west' && car.direction === 'east') ||
-            (this.direction === 'east' && car.direction === 'west')
-        ) {
-            // oncomingCar = UNKNOWN(car)
-            if (oncomingCar.concernable) {
-                presence = true
-                if (oncomingCar.distance < distance)
-                    distance = oncomingCar.distance
-            }
-            continue
-        }
+        // if (
+        //     (this.direction === 'south' && car.direction === 'north') ||
+        //     (this.direction === 'north' && car.direction === 'south') ||
+        //     (this.direction === 'west' && car.direction === 'east') ||
+        //     (this.direction === 'east' && car.direction === 'west')
+        // ) {
+        //     // oncomingCar = UNKNOWN(car)
+        //     if (oncomingCar.concernable) {
+        //         presence = true
+        //         if (oncomingCar.distance < distance)
+        //             distance = oncomingCar.distance
+        //     }
+        //     continue
+        // }
         let immediateCollision = this.willCollideAtCurrentSpeed(car)
         if (immediateCollision.collision) {
             collision = true
@@ -490,11 +496,21 @@ Car.prototype.willCollideAtCurrentSpeed = function (car) {
         opposingEdge
     )
 
-    let collision
-    if (this.leadingEdge + this.speed <= opposingEdge) {
-        collision = true
+    let collision = false
+    if (this.negation === '1') {
+        if (
+            this.leadingEdge + this.minStoppingDistance * this.negation >=
+            opposingEdge
+        ) {
+            collision = true
+        }
     } else {
-        collision = false
+        if (
+            this.leadingEdge + this.minStoppingDistance * this.negation <=
+            opposingEdge
+        ) {
+            collision = true
+        }
     }
 
     return {collision: collision, distance: distance}
@@ -567,17 +583,18 @@ Car.prototype.checkFollowingDestination = function () {
             this.route[2]
         )
 
-        if (!this.route[2].turn) {
-            if (this.negation === 1) {
-                if (followingDestination < this.nextDestination) {
-                    this.nextDestination = followingDestination
-                }
-            } else {
-                if (followingDestination > this.nextDestination) {
-                    this.nextDestination = followingDestination
-                }
-            }
-        }
+        // This doesn't work when combined with turns
+        // if (!this.route[2].turn) {
+        //     if (this.negation === 1) {
+        //         if (followingDestination < this.nextDestination) {
+        //             this.nextDestination = followingDestination
+        //         }
+        //     } else {
+        //         if (followingDestination > this.nextDestination) {
+        //             this.nextDestination = followingDestination
+        //         }
+        //     }
+        // }
     }
     // else if (this.route.length === 2) {
     //     followingDestination = this.getNextDestination(

@@ -31,7 +31,6 @@ function AnimationHandler() {
 }
 
 AnimationHandler.prototype.createAnimation = function (car) {
-    // Make sure no duplicate animNames are created.
     let ruleObject
 
     let animName = this.getAnimationName(car)
@@ -44,7 +43,6 @@ AnimationHandler.prototype.createAnimation = function (car) {
         let keyframes = this.buildRuleString(car, animName, endVals)
         this.styleSheet.insertRule(keyframes, this.styleSheet.cssRules.length)
 
-        console.log(this.styleSheet)
         // set properties on object like start/end points for checking?
         ruleObject = this.getAnimationRule(animName)
 
@@ -110,7 +108,6 @@ AnimationHandler.prototype.buildTwentyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
-        case 'north':
             leftVal = car.coords.x + car.baseWidth / 5
 
             topVal = car.coords.y - car.baseLength / 7
@@ -118,10 +115,24 @@ AnimationHandler.prototype.buildTwentyKeyframe = function (car, endVals) {
             orientationVal = car.orientation - endVals.orientationMod / 15
             break
         case 'east':
-        case 'south':
             leftVal = car.coords.x - car.baseWidth / 5
 
-            topVal = car.coords.y + car.baseLength / 7
+            topVal = car.coords.y + (car.baseLength / 7) * car.negation
+
+            orientationVal =
+                car.orientation - (endVals.orientationMod / 15) * car.negation
+            break
+        case 'north':
+            leftVal = car.coords.x + car.baseLength / 7
+
+            topVal = car.coords.y + car.baseWidth / 5
+
+            orientationVal = car.orientation - endVals.orientationMod / 15
+            break
+        case 'south':
+            leftVal = car.coords.x + car.baseWidth / 5
+
+            topVal = car.coords.y - car.baseLength / 7
 
             orientationVal = car.orientation + endVals.orientationMod / 15
             break
@@ -138,25 +149,41 @@ AnimationHandler.prototype.buildTwentyKeyframe = function (car, endVals) {
     return twenty
 }
 AnimationHandler.prototype.buildSixtyKeyframe = function (car, endVals) {
-    let topVal, orientationVal
+    let forwardAxis, val, orientationVal
     switch (endVals.direction) {
         case 'west':
-        case 'north':
-            topVal = endVals.y + car.baseWidth / 2 - car.baseLength / 5
+            val = endVals.y + car.baseWidth / 2 - car.baseLength / 5
+            forwardAxis = 'top: ' + val
 
             orientationVal = car.orientation + endVals.orientationMod / 1.65
             break
         case 'east':
+            val =
+                endVals.y +
+                car.baseWidth / 2 -
+                (car.baseLength / 5) * (car.negation * -1)
+            forwardAxis = 'top: ' + val
+
+            orientationVal =
+                car.orientation + (endVals.orientationMod / 1.65) * car.negation
+            break
+        case 'north':
+            val = endVals.x - car.baseWidth / 2 + car.baseLength / 5
+            forwardAxis = 'left: ' + val
+
+            orientationVal = car.orientation + endVals.orientationMod / 1.65
+            break
         case 'south':
-            topVal = endVals.y - car.baseWidth / 2 + car.baseLength / 5
+            val = endVals.x - car.baseWidth / 2 + car.baseLength / 5
+            forwardAxis = 'left: ' + val
 
             orientationVal = car.orientation - endVals.orientationMod / 1.65
             break
     }
 
     let sixty =
-        '60% {top: ' +
-        topVal +
+        '60% {' +
+        forwardAxis +
         'px;transform: rotate(' +
         orientationVal +
         'deg);}'
@@ -187,6 +214,9 @@ AnimationHandler.prototype.getEndVals = function (car) {
     } else if (car.status === 'turning') {
         endVals[car.oppSymbol] = car.route[1].section[car.oppSymbol]
         endVals[car.symbol] = car.route[1].section[car.symbol]
+        if (endVals.direction === 'north' || endVals.direction === 'west') {
+            endVals[car.oppSymbol] += car.route[1].section.len
+        }
     }
 
     endVals = this.getAdjustedEndCoords(car, endVals)
@@ -204,17 +234,17 @@ AnimationHandler.prototype.getEndOrientationAndDirection = function (car) {
     }
 
     switch (endDirection) {
-        case 'east':
-            endOrientation = 0
-            break
         case 'west':
             endOrientation = 180
             break
-        case 'south':
-            endOrientation = 90
+        case 'east':
+            endOrientation = 0
             break
         case 'north':
             endOrientation = 270
+            break
+        case 'south':
+            endOrientation = 90
             break
     }
 
@@ -239,22 +269,53 @@ AnimationHandler.prototype.getAdjustedEndCoords = function (car, endVals) {
     if (car.status === 'parking') {
         switch (endVals.direction) {
             case 'west':
-            case 'north':
                 endVals.x = endVals.x
                 endVals.y -=
                     car.baseWidth / 2 -
                     (car.assignedSpace.height - car.baseWidth) / 2
 
                 endVals.orientation = car.orientation + endVals.orientationMod
+
+                endVals.x += 10
                 break
             case 'east':
-            case 'south':
-                endVals.x += endVals.x
-                endVals.y +=
+                endVals.x =
+                    endVals.x + (car.assignedSpace.width - car.baseLength)
+
+                endVals.y -=
                     car.baseWidth / 2 -
                     (car.assignedSpace.height - car.baseWidth) / 2
 
+                // East facing spots are the only in the lot which may
+                // be approached from two different directions.
+                // Orientation change direction may not yet be correct.
+                endVals.orientation =
+                    car.orientation + endVals.orientationMod * car.negation
+
+                endVals.x -= 10
+                break
+            case 'north':
+                endVals.x -=
+                    car.baseWidth / 2 -
+                    (car.assignedSpace.width - car.baseWidth) / 2
+
+                endVals.y = endVals.y
+
+                endVals.orientation = car.orientation + endVals.orientationMod
+
+                endVals.y += 10
+                break
+            case 'south':
+                endVals.x -=
+                    car.baseWidth / 2 -
+                    (car.assignedSpace.width - car.baseWidth) / 2
+
+                endVals.y =
+                    endVals.y + (car.assignedSpace.height - car.baseLength)
+
                 endVals.orientation = car.orientation - endVals.orientationMod
+
+                endVals.y -= 10
                 break
         }
     } else if (car.status === 'turning') {
@@ -266,8 +327,6 @@ AnimationHandler.prototype.getAdjustedEndCoords = function (car, endVals) {
 
                 endVals.orientation = car.orientation + endVals.orientationMod
                 break
-            case 'north':
-                break
             case 'east':
                 endVals.x = endVals.x + car.baseLength / 2
 
@@ -275,7 +334,19 @@ AnimationHandler.prototype.getAdjustedEndCoords = function (car, endVals) {
 
                 endVals.orientation = car.orientation - endVals.orientationMod
                 break
+            case 'north':
+                endVals.x = endVals.x - car.baseWidth / 2
+
+                endVals.y = endVals.y - car.baseLength
+
+                endVals.orientation = car.orientation + endVals.orientationMod
+                break
             case 'south':
+                endVals.x = endVals.x - car.baseWidth / 2
+
+                endVals.y = endVals.y + car.baseWidth
+
+                endVals.orientation = car.orientation - endVals.orientationMod
                 break
         }
     }

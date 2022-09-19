@@ -112,6 +112,8 @@ ParkingLot.prototype.requestRoute = function (car) {
         destination.section = car.assignedSpace.section
         if (destination.section.horizontal) {
             destination.coord = car.assignedSpace.x
+            // All horizontal spaces are approached from the left
+            destination.coord += car.assignedSpace.width
         } else {
             destination.coord = car.assignedSpace.y
         }
