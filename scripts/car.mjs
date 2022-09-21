@@ -250,8 +250,12 @@ Car.prototype.followRoute = function () {
     //     clearAhead = false
     // }
 
-    let followingDestinationIminent
-    this.checkFollowingDestination()
+    if (
+        distanceToNextDestination <
+        this.turningRunup + this.minStoppingDistance
+    ) {
+        this.checkFollowingDestination()
+    }
 
     if (distanceToNextDestination <= this.minStoppingDistance) {
         if (this.checkIntersection()) {
@@ -275,7 +279,7 @@ Car.prototype.followRoute = function () {
         }
     }
 
-    if (clearAhead && !followingDestinationIminent) {
+    if (clearAhead) {
         this.moveForward(distanceToNextDestination)
     } else {
         this.wait()
@@ -313,7 +317,10 @@ Car.prototype.turn = function () {
     if (this.status !== 'turning') {
         this.status = 'turning'
 
-        let animation = this.parkingLot.animationHandler.createAnimation(this)
+        let animation = this.parkingLot.animationHandler.getAnimation(
+            this,
+            'normalTurn'
+        )
         this.pageEl.style.animationDuration = '3s'
         this.pageEl.style.animationIterationCount = '1'
         this.pageEl.style.animationTimingFunction = 'initial'
@@ -322,12 +329,63 @@ Car.prototype.turn = function () {
 
         // Could/should this be set indefinitely? Generic event funct
         // that checks status for endTurn/setParked?
-        let endTurnEventFunct = () => {
+        let endAnimEventFunct = () => {
             this.endTurn(animation.endVals)
-            this.pageEl.removeEventListener('animationend', endTurnEventFunct)
+            this.pageEl.removeEventListener('animationend', endAnimEventFunct)
         }
-        this.pageEl.addEventListener('animationend', endTurnEventFunct)
+        this.pageEl.addEventListener('animationend', endAnimEventFunct)
     }
+}
+Car.prototype.park = function () {
+    if (this.status !== 'parking') {
+        this.status = 'parking'
+
+        let animation = this.parkingLot.animationHandler.getAnimation(
+            this,
+            'normalPark'
+        )
+
+        this.pageEl.style.animationDuration = '4s'
+        this.pageEl.style.animationIterationCount = '1'
+        this.pageEl.style.animationTimingFunction =
+            'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+
+        this.pageEl.style.animationName = animation.ruleObject.name
+
+        this.pageEl.addEventListener('animationend', () => {
+            this.setParked(animation.endVals)
+        })
+
+        let endAnimEventFunct = () => {
+            this.setParked(animation.endVals)
+            this.pageEl.removeEventListener('animationend', endAnimEventFunct)
+        }
+        this.pageEl.addEventListener('animationend', endAnimEventFunct)
+    }
+}
+Car.prototype.parkFromTurn = function () {
+    if (this.status !== 'parking') {
+        this.status = 'parking'
+    }
+
+    let animationType =
+        this.parkingLot.animationHandler.determineSpecialAnimationType(this)
+
+    let animation = this.parkingLot.animationHandler.getAnimation(
+        this,
+        animationType
+    )
+    this.pageEl.style.animationDuration = '5s'
+    this.pageEl.style.animationIterationCount = '1'
+    this.pageEl.style.animationTimingFunction = 'initial'
+
+    this.pageEl.style.animationName = animation.ruleObject.name
+
+    let endAnimEventFunct = () => {
+        this.setParked(animation.endVals)
+        this.pageEl.removeEventListener('animationend', endAnimEventFunct)
+    }
+    this.pageEl.addEventListener('animationend', endAnimEventFunct)
 }
 Car.prototype.endTurn = function (endVals) {
     if (this.hasParked) {
@@ -342,36 +400,20 @@ Car.prototype.endTurn = function (endVals) {
 
     this.pageEl.style.animationName = 'none'
 }
-Car.prototype.park = function () {
-    if (this.status !== 'parking') {
-        this.status = 'parking'
-
-        let animation = this.parkingLot.animationHandler.createAnimation(this)
-        this.pageEl.style.animationDuration = '4s'
-        this.pageEl.style.animationIterationCount = '1'
-        this.pageEl.style.animationTimingFunction =
-            'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
-
-        this.pageEl.style.animationName = animation.ruleObject.name
-
-        this.pageEl.addEventListener('animationend', () => {
-            this.setParked(animation.endVals)
-        })
-    }
-}
 Car.prototype.setParked = function (endVals) {
     this.updatePositionalValues(endVals)
-    this.pageEl.style.animationName = 'none'
-
-    this.parkingLot.cars.parked[this.id] = this
-    delete this.parkingLot.cars.entering[this.id]
-    this.status = 'parked'
 
     this.parkingLot.overlay.updateSpaceColor(
         document.getElementById(this.assignedSpace.rank),
         this
     )
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
+
+    this.pageEl.style.animationName = 'none'
+
+    this.parkingLot.cars.parked[this.id] = this
+    delete this.parkingLot.cars.entering[this.id]
+    this.status = 'parked'
 
     // setTimeout(() => {
     //     // Requesting route from parking space doesn't work.
@@ -554,12 +596,6 @@ Car.prototype.getNextDestination = function (currentSection, nextSection) {
     if (this.route.length === 1 && this.hasParked === false) {
         nextPathDestination =
             currentSection.coord - this.turningRunup * this.negation
-        if (
-            Math.abs(nextPathDestination - this.leadingEdge) < this.turningRunup
-        ) {
-            console.log('Less than ideal turning space to park.')
-            nextPathDestination = this.leadingEdge
-        }
     } else if (nextSection.turn) {
         nextPathDestination =
             currentSection.coord - this.turningRunup * this.negation
@@ -572,36 +608,87 @@ Car.prototype.getNextDestination = function (currentSection, nextSection) {
 
 // If just going forward, is following destination 'less' than next destination
 // If turning, is following destination 'less' than next destination + car length
-
-// Should probably change this.nextDestination to set to null
-// after crossing a boundary and check if (this.nextDestination)
 Car.prototype.checkFollowingDestination = function () {
     let followingDestination
-    if (this.route.length >= 3) {
-        followingDestination = this.getNextDestination(
-            this.route[1],
-            this.route[2]
-        )
-
-        // This doesn't work when combined with turns
-        // if (!this.route[2].turn) {
-        //     if (this.negation === 1) {
-        //         if (followingDestination < this.nextDestination) {
-        //             this.nextDestination = followingDestination
-        //         }
-        //     } else {
-        //         if (followingDestination > this.nextDestination) {
-        //             this.nextDestination = followingDestination
-        //         }
-        //     }
-        // }
+    if (this.route.length === 1) {
+        return
     }
-    // else if (this.route.length === 2) {
-    //     followingDestination = this.getNextDestination(
-    //         this.route[0],
-    //         this.route[1]
-    //     )
-    // }
+
+    followingDestination = this.route[1].coord
+    let nextSection = this.route[1]
+
+    // Turning case
+    if (nextSection.turn) {
+        switch (nextSection.direction) {
+            case 'north':
+                if (
+                    followingDestination + this.turningRunup >
+                    this.coords[this.oppSymbol] -
+                        this.baseLength / 2 -
+                        this.baseLength
+                ) {
+                    console.log('exceptional turn')
+                }
+                break
+            case 'south':
+                if (
+                    followingDestination - this.turningRunup <
+                    this.coords[this.oppSymbol] +
+                        this.baseLength / 2 +
+                        this.baseLength
+                ) {
+                    console.log('exceptional turn')
+                }
+                break
+            case 'east':
+                if (
+                    followingDestination - this.turningRunup <
+                    this.coords[this.oppSymbol] +
+                        this.baseLength / 2 +
+                        this.baseLength
+                ) {
+                    if (!this.route[2]) {
+                        this.parkFromTurn()
+                    }
+                }
+                break
+            case 'west':
+                if (
+                    followingDestination + this.turningRunup >
+                    this.coords[this.oppSymbol] -
+                        this.baseLength / 2 -
+                        this.baseLength
+                ) {
+                    console.log('exceptional turn')
+                }
+                break
+        }
+    }
+    // Straight (parking/section) case
+    else {
+        switch (this.direction) {
+            case 'north':
+                if (followingDestination > this.nextDestination) {
+                    this.nextDestination = followingDestination
+                }
+                break
+            case 'south':
+                if (followingDestination < this.nextDestination) {
+                    this.nextDestination = followingDestination
+                }
+                break
+            case 'east':
+                if (followingDestination < this.nextDestination) {
+                    this.nextDestination = followingDestination
+                }
+                break
+            case 'west':
+                if (followingDestination > this.nextDestination) {
+                    this.nextDestination = followingDestination
+                }
+                break
+        }
+    }
 }
 Car.prototype.checkIntersection = function () {
     // Good point to add an overlay element.

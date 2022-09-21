@@ -18,7 +18,7 @@
 // a case-by-case basis or just be wonky. (CSS animations will be wonky
 // but won't require the same bezier point initialization.)
 
-function AnimationHandler() {
+function AnimationHandler(animationTypes) {
     this.styleSheet = (() => {
         for (var i = 0; i < document.styleSheets.length; i++) {
             var sheet = document.styleSheets[i]
@@ -27,28 +27,117 @@ function AnimationHandler() {
             }
         }
     })()
+
+    this.animationTypes = animationTypes
+
     this.animations = {}
 }
 
-AnimationHandler.prototype.createAnimation = function (car) {
-    let ruleObject
+AnimationHandler.prototype.determineSpecialAnimationType = function (car) {
+    let type
+    let startDirection = car.direction
+    let endDirection = car.assignedSpace.facing
 
+    if (car.status === 'parking') {
+        if (
+            (startDirection === 'north' && endDirection === 'south') ||
+            (startDirection === 'south' && endDirection === 'north')
+        ) {
+            type = 'u-turn'
+        } else {
+            type = 'z-turn'
+        }
+    }
+
+    return type
+}
+AnimationHandler.prototype.getAnimation = function (car, type) {
     let animName = this.getAnimationName(car)
-    // Check if animation already exists.
+    // Return pre-existing animation if previously initialized.
     if (this.animations[animName]) {
         return this.animations[animName]
     } else {
-        let endVals = this.getEndVals(car)
+        let animation
+        switch (type) {
+            case 'normalTurn':
+                animation = new this.animationTypes.NormalTurn(this, animName)
+                break
+            case 'normalPark':
+                animation = new this.animationTypes.NormalPark(this, animName)
+                break
+            case 'z-turn':
+                animation = new this.animationTypes.ZTurn(this, animName)
+                break
+            case 'u-turn':
+                animation = new this.animationTypes.UTurn(this, animName)
+                break
+        }
 
-        let keyframes = this.buildRuleString(car, animName, endVals)
-        this.styleSheet.insertRule(keyframes, this.styleSheet.cssRules.length)
+        animation.buildSelf(car)
 
-        // set properties on object like start/end points for checking?
-        ruleObject = this.getAnimationRule(animName)
+        this.animations[animName] = animation
+        return animation
+    }
+}
 
-        this.animations[animName] = {ruleObject: ruleObject, endVals: endVals}
+// Order of getting all the keyframe values/the rule string
+// and what is in generic vs anim specific functions for initializing
+// all those values and varying keyframes.
 
-        return this.animations[animName]
+AnimationHandler.prototype.normalTurn = function (car, animName) {
+    let ruleObject
+    let endVals = this.getEndVals(car)
+
+    let ruleString = this.buildRuleString(car, animName, endVals)
+
+    this.styleSheet.insertRule(ruleString, this.styleSheet.cssRules.length)
+    ruleObject = this.getAnimationRule(animName)
+
+    return {
+        ruleObject: ruleObject,
+        endVals: endVals,
+    }
+}
+AnimationHandler.prototype.normalPark = function (car, animName) {
+    let ruleObject
+    let endVals = this.getEndVals(car)
+
+    let ruleString = this.buildRuleString(car, animName, endVals)
+
+    this.styleSheet.insertRule(ruleString, this.styleSheet.cssRules.length)
+    ruleObject = this.getAnimationRule(animName)
+
+    return {
+        ruleObject: ruleObject,
+        endVals: endVals,
+    }
+}
+AnimationHandler.prototype.zTurn = function (car, animName) {
+    let ruleObject
+    let endVals
+
+    let ruleString
+
+    this.styleSheet.insertRule(ruleString, this.styleSheet.cssRules.length)
+    ruleObject = this.getAnimationRule(animName)
+
+    return {
+        ruleObject: ruleObject,
+        endVals: endVals,
+    }
+}
+AnimationHandler.prototype.uTurn = function (car, animName) {
+    let ruleObject
+    let endVals
+
+    let ruleString
+
+    this.styleSheet.insertRule(ruleString, this.styleSheet.cssRules.length)
+    ruleObject = this.getAnimationRule(animName)
+
+    return {
+        ruleObject: ruleObject,
+        endVals: endVals,
     }
 }
 AnimationHandler.prototype.getAnimationName = function (car) {
@@ -248,6 +337,7 @@ AnimationHandler.prototype.getEndOrientationAndDirection = function (car) {
             break
     }
 
+    // Doesn't work for special animations (180 degree turns, etc.)
     let orientationMod
     if (
         endDirection < car.orientation ||

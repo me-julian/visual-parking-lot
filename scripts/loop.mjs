@@ -4,7 +4,7 @@ import {pathObject} from './path-object.mjs'
 import {SpaceInitializer} from './space-initializer.mjs'
 import {RoutePlotter} from './routing/route-plotter.mjs'
 import {TrafficHandler} from './traffic-handler.mjs'
-import {AnimationHandler} from './animation-handler.mjs'
+import * as animation from './animation/index.mjs'
 import {Overlay} from './overlay.mjs'
 import {ParkingLot} from './parking-lot.mjs'
 
@@ -15,7 +15,9 @@ function initializeSimulation() {
 
     let routePlotter = new RoutePlotter(pathObject)
 
-    let animationHandler = new AnimationHandler()
+    let animationHandler = new animation.AnimationHandler(
+        animation.animationTypes
+    )
 
     let overlay = new Overlay()
     overlay.createSpaceOverlay(rankedSpaceList)
