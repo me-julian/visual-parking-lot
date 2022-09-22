@@ -263,21 +263,25 @@ ZTurn.prototype.turnMetaValues = function (car) {
     }
 
     let crossNegation, closestEdge
+    // Check against true mid point of the car (license plate)
     if (
         car.route[1].coord >
-        car.coords[car.oppSymbol] + (car.baseLength - car.baseWidth / 2)
+        car.coords[car.oppSymbol] +
+            (car.baseLength - car.baseWidth) / 2 +
+            car.baseWidth / 2
     ) {
         crossNegation = 1
+        // Opposite side of wrapper
         closestEdge =
             car.coords[car.oppSymbol] +
-            car.baseWidth +
-            (car.baseLength - car.baseWidth / 2)
+            car.baseLength -
+            (car.baseLength - car.baseWidth) / 2
     } else {
         crossNegation = -1
+        // Normal side of wrapper
         closestEdge =
-            car.coords[car.oppSymbol] + (car.baseLength - car.baseWidth / 2)
+            car.coords[car.oppSymbol] + (car.baseLength - car.baseWidth) / 2
     }
-
     let crossDistance = Math.abs(car.route[1].coord - closestEdge)
 
     let spaceEntrance = car.assignedSpace[car.symbol]

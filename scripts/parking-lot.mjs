@@ -125,6 +125,14 @@ ParkingLot.prototype.requestRoute = function (car) {
         destination
     )
 
+    // Should be handled elsewhere
+    destination = route[route.length - 1]
+    if (destination.direction === 'south') {
+        destination.coord += car.assignedSpace.height
+    } else if (destination.direction === 'west') {
+        destination.coord += car.assignedSpace.width
+    }
+
     return route
 }
 
