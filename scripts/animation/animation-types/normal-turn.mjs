@@ -145,6 +145,7 @@ NormalTurn.prototype.buildHundredKeyframe = function (endVals) {
 NormalTurn.prototype.getEndVals = function (car) {
     let endVals = {}
 
+    // Should be refactored to match z/u turns
     let orientationAndDirection = this.getEndOrientationAndDirection(car)
     endVals.orientationMod = orientationAndDirection.orientationMod
     endVals.endOrientation = orientationAndDirection.endOrientation

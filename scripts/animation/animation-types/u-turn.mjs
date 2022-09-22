@@ -54,33 +54,20 @@ UTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
-            leftVal = car.coords.x + car.baseWidth / 5
-
-            topVal = car.coords.y - car.baseLength / 7
-
-            orientationVal = car.orientation - endVals.orientationMod / 15
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'east':
-            leftVal = car.coords.x - car.baseWidth / 5
-
-            topVal = car.coords.y + (car.baseLength / 7) * car.negation
-
-            orientationVal =
-                car.orientation - (endVals.orientationMod / 15) * car.negation
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'north':
-            leftVal = car.coords.x + car.baseLength / 7
-
-            topVal = car.coords.y + car.baseWidth / 5
-
-            orientationVal = car.orientation - endVals.orientationMod / 15
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'south':
-            leftVal = car.coords.x + car.baseWidth / 5
+            leftVal = 0
 
-            topVal = car.coords.y - car.baseLength / 7
+            topVal = 0
 
-            orientationVal = car.orientation + endVals.orientationMod / 15
+            orientationVal = 0
             break
     }
 
@@ -95,33 +82,21 @@ UTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
     return twenty
 }
 UTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
-    let forwardAxis, val, orientationVal
+    let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
-            val = endVals.y + car.baseWidth / 2 - car.baseLength / 5
-            forwardAxis = 'top: ' + val
-
-            orientationVal = car.orientation + endVals.orientationMod / 1.65
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'east':
-            val =
-                endVals.y +
-                car.baseWidth / 2 -
-                (car.baseLength / 5) * (car.negation * -1)
-            forwardAxis = 'top: ' + val
-
-            orientationVal =
-                car.orientation + (endVals.orientationMod / 1.65) * car.negation
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'north':
-            val = endVals.x - car.baseWidth / 2 + car.baseLength / 5
-            forwardAxis = 'left: ' + val
-
-            orientationVal = car.orientation + endVals.orientationMod / 1.65
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'south':
-            val = endVals.x - car.baseWidth / 2 + car.baseLength / 5
-            forwardAxis = 'left: ' + val
+            leftVal = 0
+
+            topVal = 0
 
             orientationVal = car.orientation - endVals.orientationMod / 1.65
             break
@@ -129,7 +104,10 @@ UTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
 
     let sixty =
         '60% {' +
-        forwardAxis +
+        'left: ' +
+        leftVal +
+        'px;top: ' +
+        topVal +
         'px;transform: rotate(' +
         orientationVal +
         'deg);}'
@@ -150,10 +128,12 @@ UTurn.prototype.buildHundredKeyframe = function (endVals) {
 UTurn.prototype.getEndVals = function (car) {
     let endVals = {}
 
-    let orientationAndDirection = this.getEndOrientationAndDirection(car)
-    endVals.orientationMod = orientationAndDirection.orientationMod
-    endVals.endOrientation = orientationAndDirection.endOrientation
-    endVals.direction = orientationAndDirection.direction
+    let metaValues = this.turnMetaValues(car)
+    endVals.orientationMod = metaValues.orientationMod
+    endVals.endOrientation = metaValues.endOrientation
+    endVals.direction = metaValues.direction
+    endVals.crossNegation = metaValues.crossNegation
+    endVals.crossDistance = metaValues.crossDistance
 
     endVals.y = car.assignedSpace.y
     endVals.x = car.assignedSpace.x
@@ -162,19 +142,21 @@ UTurn.prototype.getEndVals = function (car) {
 
     return endVals
 }
-UTurn.prototype.getEndOrientationAndDirection = function (car) {
+UTurn.prototype.turnMetaValues = function (car) {
     let endOrientation
     let endDirection = car.assignedSpace.facing
 
+    // Only handling cases present in current parking lot.
+
     switch (endDirection) {
         case 'west':
-            endOrientation = 180
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'east':
-            endOrientation = 0
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'north':
-            endOrientation = 270
+            console.err('Unexpected State/Unhandled Case!')
             break
         case 'south':
             endOrientation = 90
@@ -182,58 +164,82 @@ UTurn.prototype.getEndOrientationAndDirection = function (car) {
     }
 
     let orientationMod
-    if (
-        endDirection < car.orientation ||
-        car.orientation - endDirection >= 270
-    ) {
-        orientationMod = 90
-    } else {
-        orientationMod = -90
+    switch (car.direction) {
+        case 'west':
+            console.err('Unexpected State/Unhandled Case!')
+            break
+        case 'east':
+            console.err('Unexpected State/Unhandled Case!')
+            break
+        case 'north':
+            if (endDirection === 'south') {
+                orientationMod = 180
+            }
+            break
+        case 'south':
+            console.err('Unexpected State/Unhandled Case!')
+            break
     }
+
+    let crossNegation, closestEdge
+    if (car.route[1].coord > car.coords[car.oppSymbol]) {
+        crossNegation = 1
+        closestEdge = car.coords[car.oppSymbol] + car.baseWidth
+    } else {
+        crossNegation = -1
+        closestEdge = car.coords[car.oppSymbol]
+    }
+
+    let crossDistance = Math.abs(car.route[1].coord - closestEdge)
 
     return {
         orientationMod: orientationMod,
         endOrientation: endOrientation,
         direction: endDirection,
+        crossNegation: crossNegation,
+        crossDistance: crossDistance,
     }
 }
 UTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
     switch (endVals.direction) {
         case 'west':
-            endVals.x = endVals.x
-            endVals.y -=
-                car.baseWidth / 2 -
-                (car.assignedSpace.height - car.baseWidth) / 2
+            console.err('Unexpected State/Unhandled Case!')
+            //     endVals.x = endVals.x
+            //     endVals.y -=
+            //         car.baseWidth / 2 -
+            //         (car.assignedSpace.height - car.baseWidth) / 2
 
-            endVals.orientation = car.orientation + endVals.orientationMod
+            //     endVals.orientation = car.orientation + endVals.orientationMod
 
-            endVals.x += 10
+            //     endVals.x += 10
             break
         case 'east':
-            endVals.x = endVals.x + (car.assignedSpace.width - car.baseLength)
+            console.err('Unexpected State/Unhandled Case!')
+            //     endVals.x = endVals.x + (car.assignedSpace.width - car.baseLength)
 
-            endVals.y -=
-                car.baseWidth / 2 -
-                (car.assignedSpace.height - car.baseWidth) / 2
+            //     endVals.y -=
+            //         car.baseWidth / 2 -
+            //         (car.assignedSpace.height - car.baseWidth) / 2
 
-            // East facing spots are the only in the lot which may
-            // be approached from two different directions.
-            // Orientation change direction may not yet be correct.
-            endVals.orientation =
-                car.orientation + endVals.orientationMod * car.negation
+            //     // East facing spots are the only in the lot which may
+            //     // be approached from two different directions.
+            //     // Orientation change direction may not yet be correct.
+            //     endVals.orientation =
+            //         car.orientation + endVals.orientationMod * car.negation
 
-            endVals.x -= 10
+            //     endVals.x -= 10
             break
         case 'north':
-            endVals.x -=
-                car.baseWidth / 2 -
-                (car.assignedSpace.width - car.baseWidth) / 2
+            console.err('Unexpected State/Unhandled Case!')
+            //     endVals.x -=
+            //         car.baseWidth / 2 -
+            //         (car.assignedSpace.width - car.baseWidth) / 2
 
-            endVals.y = endVals.y
+            //     endVals.y = endVals.y
 
-            endVals.orientation = car.orientation + endVals.orientationMod
+            //     endVals.orientation = car.orientation + endVals.orientationMod
 
-            endVals.y += 10
+            //     endVals.y += 10
             break
         case 'south':
             endVals.x -=
@@ -242,7 +248,7 @@ UTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
 
             endVals.y = endVals.y + (car.assignedSpace.height - car.baseLength)
 
-            endVals.orientation = car.orientation - endVals.orientationMod
+            endVals.orientation = car.orientation + endVals.orientationMod
 
             endVals.y -= 10
             break

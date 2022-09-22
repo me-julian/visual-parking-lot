@@ -377,7 +377,8 @@ Car.prototype.parkFromTurn = function () {
     )
     this.pageEl.style.animationDuration = '5s'
     this.pageEl.style.animationIterationCount = '1'
-    this.pageEl.style.animationTimingFunction = 'initial'
+    this.pageEl.style.animationTimingFunction =
+        'cubic-bezier(0.45, 0.05, 0.55, 0.95)'
 
     this.pageEl.style.animationName = animation.ruleObject.name
 
@@ -403,10 +404,6 @@ Car.prototype.endTurn = function (endVals) {
 Car.prototype.setParked = function (endVals) {
     this.updatePositionalValues(endVals)
 
-    this.parkingLot.overlay.updateSpaceColor(
-        document.getElementById(this.assignedSpace.rank),
-        this
-    )
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
 
     this.pageEl.style.animationName = 'none'
@@ -415,6 +412,10 @@ Car.prototype.setParked = function (endVals) {
     delete this.parkingLot.cars.entering[this.id]
     this.status = 'parked'
 
+    this.parkingLot.overlay.updateSpaceColor(
+        document.getElementById(this.assignedSpace.rank),
+        this
+    )
     // setTimeout(() => {
     //     // Requesting route from parking space doesn't work.
     //     // Need to initialize direction (can be different in unususal
@@ -627,7 +628,9 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength / 2 -
                         this.baseLength
                 ) {
-                    console.log('exceptional turn')
+                    if (!this.route[2]) {
+                        this.parkFromTurn()
+                    }
                 }
                 break
             case 'south':
@@ -637,7 +640,9 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength / 2 +
                         this.baseLength
                 ) {
-                    console.log('exceptional turn')
+                    if (!this.route[2]) {
+                        this.parkFromTurn()
+                    }
                 }
                 break
             case 'east':
@@ -659,7 +664,9 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength / 2 -
                         this.baseLength
                 ) {
-                    console.log('exceptional turn')
+                    if (!this.route[2]) {
+                        this.parkFromTurn()
+                    }
                 }
                 break
         }
@@ -692,6 +699,7 @@ Car.prototype.checkFollowingDestination = function () {
 }
 Car.prototype.checkIntersection = function () {
     // Good point to add an overlay element.
+    // Toggleable persistent area box with status colors
     let intersectionPoint = this.route[0].coord
     let intersectionArea
     if (this.direction === 'north' || this.direction === 'south') {
