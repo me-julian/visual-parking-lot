@@ -1,11 +1,14 @@
 'use strict'
 
+// Not certain cars would animate correctly when moving in the
+// directions not present in the assignment lot.
+
 /**
  * @class
  * @param {AnimationHandler} animationHandler
  * @param {String} animName
  */
-function NormalPark(animationHandler, animName) {
+function RightAnglePark(animationHandler, animName) {
     this.animationHandler = animationHandler
     this.name = animName
 
@@ -13,7 +16,7 @@ function NormalPark(animationHandler, animName) {
     this.endVals = undefined
 }
 
-NormalPark.prototype.buildSelf = function (car) {
+RightAnglePark.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
     let ruleString = this.buildRuleString(car, this.name, this.endVals)
@@ -25,11 +28,8 @@ NormalPark.prototype.buildSelf = function (car) {
     this.ruleObject = this.animationHandler.getAnimationRule(this.name)
 }
 
-NormalPark.prototype.buildRuleString = function (car, name, endVals) {
-    let zero,
-        twenty = '',
-        sixty = '',
-        hundred
+RightAnglePark.prototype.buildRuleString = function (car, name, endVals) {
+    let zero, twenty, sixty, hundred
     let declaration = '@keyframes '
     zero = this.buildZeroKeyframe(car)
     twenty = this.buildTwentyKeyframe(car, endVals)
@@ -39,7 +39,7 @@ NormalPark.prototype.buildRuleString = function (car, name, endVals) {
     return declaration + name + zero + twenty + sixty + hundred
 }
 
-NormalPark.prototype.buildZeroKeyframe = function (car) {
+RightAnglePark.prototype.buildZeroKeyframe = function (car) {
     let zero =
         '{0% {left: ' +
         car.coords.x +
@@ -50,7 +50,7 @@ NormalPark.prototype.buildZeroKeyframe = function (car) {
         'deg);}'
     return zero
 }
-NormalPark.prototype.buildTwentyKeyframe = function (car, endVals) {
+RightAnglePark.prototype.buildTwentyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -59,6 +59,7 @@ NormalPark.prototype.buildTwentyKeyframe = function (car, endVals) {
             topVal = car.coords.y - car.baseLength / 7
 
             orientationVal = car.orientation - endVals.orientationMod / 15
+
             break
         case 'east':
             leftVal = car.coords.x - car.baseWidth / 5
@@ -94,7 +95,7 @@ NormalPark.prototype.buildTwentyKeyframe = function (car, endVals) {
         'deg);}'
     return twenty
 }
-NormalPark.prototype.buildSixtyKeyframe = function (car, endVals) {
+RightAnglePark.prototype.buildSixtyKeyframe = function (car, endVals) {
     let forwardAxis, val, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -104,10 +105,7 @@ NormalPark.prototype.buildSixtyKeyframe = function (car, endVals) {
             orientationVal = car.orientation + endVals.orientationMod / 1.65
             break
         case 'east':
-            val =
-                endVals.y +
-                car.baseWidth / 2 -
-                (car.baseLength / 5) * (car.negation * -1)
+            val = endVals.y + car.baseWidth / 2 - car.baseLength / 5
             forwardAxis = 'top: ' + val
 
             orientationVal =
@@ -135,7 +133,7 @@ NormalPark.prototype.buildSixtyKeyframe = function (car, endVals) {
         'deg);}'
     return sixty
 }
-NormalPark.prototype.buildHundredKeyframe = function (endVals) {
+RightAnglePark.prototype.buildHundredKeyframe = function (endVals) {
     let hundred =
         '100% {left: ' +
         endVals.x +
@@ -147,14 +145,13 @@ NormalPark.prototype.buildHundredKeyframe = function (endVals) {
     return hundred
 }
 
-NormalPark.prototype.getEndVals = function (car) {
+RightAnglePark.prototype.getEndVals = function (car) {
     let endVals = {}
 
-    // Should be refactored to match z/u turns
-    let orientationAndDirection = this.getEndOrientationAndDirection(car)
-    endVals.orientationMod = orientationAndDirection.orientationMod
-    endVals.endOrientation = orientationAndDirection.endOrientation
-    endVals.direction = orientationAndDirection.direction
+    let relationalValues = this.getRelationalValues(car)
+    endVals.orientationMod = relationalValues.orientationMod
+    endVals.endOrientation = relationalValues.endOrientation
+    endVals.direction = relationalValues.direction
 
     endVals.y = car.assignedSpace.y
     endVals.x = car.assignedSpace.x
@@ -163,7 +160,7 @@ NormalPark.prototype.getEndVals = function (car) {
 
     return endVals
 }
-NormalPark.prototype.getEndOrientationAndDirection = function (car) {
+RightAnglePark.prototype.getRelationalValues = function (car) {
     let endOrientation
     let endDirection = car.assignedSpace.facing
 
@@ -198,7 +195,7 @@ NormalPark.prototype.getEndOrientationAndDirection = function (car) {
         direction: endDirection,
     }
 }
-NormalPark.prototype.getAdjustedEndCoords = function (car, endVals) {
+RightAnglePark.prototype.getAdjustedEndCoords = function (car, endVals) {
     switch (endVals.direction) {
         case 'west':
             endVals.x = endVals.x
@@ -217,9 +214,6 @@ NormalPark.prototype.getAdjustedEndCoords = function (car, endVals) {
                 car.baseWidth / 2 -
                 (car.assignedSpace.height - car.baseWidth) / 2
 
-            // East facing spots are the only in the lot which may
-            // be approached from two different directions.
-            // Orientation change direction may not yet be correct.
             endVals.orientation =
                 car.orientation + endVals.orientationMod * car.negation
 
@@ -252,4 +246,4 @@ NormalPark.prototype.getAdjustedEndCoords = function (car, endVals) {
     return endVals
 }
 
-export {NormalPark}
+export {RightAnglePark}

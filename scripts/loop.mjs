@@ -11,6 +11,12 @@ import {ParkingLot} from './parking-lot.mjs'
 function initializeSimulation() {
     let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
+
+    // TEST for z and u turn parking animations.
+    // let testUnrankedSpaceList = spaceInitializer.testExceptionSpaces(pathObject)
+    // let rankedSpaceList = spaceInitializer.rankSpaces(testUnrankedSpaceList)
+    //
+
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
 
     let routePlotter = new RoutePlotter(pathObject)

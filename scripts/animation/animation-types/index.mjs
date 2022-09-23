@@ -1,6 +1,6 @@
-import {NormalTurn} from './normal-turn.mjs'
-import {NormalPark} from './normal-park.mjs'
-import {UTurn} from './u-turn.mjs'
-import {ZTurn} from './z-turn.mjs'
+import {RightAngleTurn} from './right-angle-turn.mjs'
+import {RightAnglePark} from './right-angle-park.mjs'
+import {UPark} from './u-park.mjs'
+import {ZPark} from './z-park.mjs'
 
-export {NormalTurn, NormalPark, UTurn, ZTurn}
+export {RightAngleTurn, RightAnglePark, UPark, ZPark}

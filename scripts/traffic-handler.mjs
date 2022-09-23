@@ -277,7 +277,7 @@ TrafficHandler.prototype.checkIfCarsTurning = function (cars) {
     for (let car of cars) {
         if (
             car.status === 'turning' ||
-            car.status === 'leavingSpace' ||
+            car.status === 'leaving-space' ||
             car.status === 'parking'
         ) {
             return true

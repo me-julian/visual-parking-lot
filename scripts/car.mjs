@@ -199,7 +199,7 @@ Car.prototype.determineAction = function () {
             break
         case 'turning':
         case 'parking':
-        case 'leavingSpace':
+        case 'leaving-space':
             break
         case 'parked':
             this.wait()
@@ -319,7 +319,7 @@ Car.prototype.turn = function () {
 
         let animation = this.parkingLot.animationHandler.getAnimation(
             this,
-            'normalTurn'
+            'right-angle-turn'
         )
         this.pageEl.style.animationDuration = '3s'
         this.pageEl.style.animationIterationCount = '1'
@@ -342,7 +342,7 @@ Car.prototype.park = function () {
 
         let animation = this.parkingLot.animationHandler.getAnimation(
             this,
-            'normalPark'
+            'right-angle-park'
         )
 
         this.pageEl.style.animationDuration = '4s'
@@ -453,7 +453,7 @@ Car.prototype.updateCollisionBox = function () {
             break
         case 'parking':
             break
-        case 'leavingSpace':
+        case 'leaving-space':
             break
         case 'entering':
         case 'leaving':

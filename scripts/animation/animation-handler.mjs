@@ -43,9 +43,9 @@ AnimationHandler.prototype.determineSpecialAnimationType = function (car) {
             (startDirection === 'north' && endDirection === 'south') ||
             (startDirection === 'south' && endDirection === 'north')
         ) {
-            type = 'u-turn'
+            type = 'u-park'
         } else {
-            type = 'z-turn'
+            type = 'z-park'
         }
     }
 
@@ -59,17 +59,23 @@ AnimationHandler.prototype.getAnimation = function (car, type) {
     } else {
         let animation
         switch (type) {
-            case 'normalTurn':
-                animation = new this.animationTypes.NormalTurn(this, animName)
+            case 'right-angle-turn':
+                animation = new this.animationTypes.RightAngleTurn(
+                    this,
+                    animName
+                )
                 break
-            case 'normalPark':
-                animation = new this.animationTypes.NormalPark(this, animName)
+            case 'right-angle-park':
+                animation = new this.animationTypes.RightAnglePark(
+                    this,
+                    animName
+                )
                 break
-            case 'z-turn':
-                animation = new this.animationTypes.ZTurn(this, animName)
+            case 'z-park':
+                animation = new this.animationTypes.ZPark(this, animName)
                 break
-            case 'u-turn':
-                animation = new this.animationTypes.UTurn(this, animName)
+            case 'u-park':
+                animation = new this.animationTypes.UPark(this, animName)
                 break
         }
 
@@ -84,8 +90,8 @@ AnimationHandler.prototype.getAnimationName = function (car) {
     let animName
     if (car.status === 'parking') {
         animName = 'space-' + car.assignedSpace.rank + '-parking'
-    } else if (car.status === 'leavingSpace') {
-        animName = 'space-' + car.assignedSpace.rank + '-leavingSpace'
+    } else if (car.status === 'leaving-space') {
+        animName = 'space-' + car.assignedSpace.rank + '-leaving-space'
     } else if (car.status === 'turning') {
         animName =
             'row' +

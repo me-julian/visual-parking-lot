@@ -165,7 +165,7 @@ SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
 
     for (let line in unrankedSpaceList) {
         for (let space of unrankedSpaceList[line]) {
-            space.score = space.x * 0.65 + space.y
+            space.score = space.x * 0.4 + space.y
             rankedSpaceList.push(space)
         }
     }
@@ -176,6 +176,109 @@ SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
     }
 
     return rankedSpaceList
+}
+
+SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
+    let spaces = {}
+    let zTurn = [
+        {
+            x: 423,
+            y: 28,
+            width: 100,
+            height: 212,
+            facing: 'north',
+            section: this.pathObject.sections.horizontal.row0col1,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 18,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row0col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 128,
+            width: 212,
+            height: 97,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row0col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 235,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row0col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 563,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row1col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 673,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row2col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 783,
+            width: 212,
+            height: 98,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row2col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 891,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row2col2,
+            animations: {},
+        },
+    ]
+    let uTurn = [
+        {
+            x: 423,
+            y: 395,
+            width: 100,
+            height: 210,
+            facing: 'south',
+            section: this.pathObject.sections.horizontal.row0col1,
+            animations: {},
+        },
+        {
+            x: 422,
+            y: 786,
+            width: 100,
+            height: 210,
+            facing: 'south',
+            section: this.pathObject.sections.horizontal.row1col1,
+            animations: {},
+        },
+    ]
+
+    spaces.zTurn = zTurn
+    spaces.uTurn = uTurn
+
+    return spaces
 }
 
 export {SpaceInitializer}

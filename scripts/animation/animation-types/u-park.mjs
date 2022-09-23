@@ -5,7 +5,7 @@
  * @param {AnimationHandler} animationHandler
  * @param {String} animName
  */
-function UTurn(animationHandler, animName) {
+function UPark(animationHandler, animName) {
     this.animationHandler = animationHandler
     this.name = animName
 
@@ -13,7 +13,7 @@ function UTurn(animationHandler, animName) {
     this.endVals = undefined
 }
 
-UTurn.prototype.buildSelf = function (car) {
+UPark.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
     let ruleString = this.buildRuleString(car, this.name, this.endVals)
@@ -25,7 +25,7 @@ UTurn.prototype.buildSelf = function (car) {
     this.ruleObject = this.animationHandler.getAnimationRule(this.name)
 }
 
-UTurn.prototype.buildRuleString = function (car, name, endVals) {
+UPark.prototype.buildRuleString = function (car, name, endVals) {
     let zero,
         twenty = '',
         sixty = '',
@@ -39,7 +39,7 @@ UTurn.prototype.buildRuleString = function (car, name, endVals) {
     return declaration + name + zero + twenty + sixty + hundred
 }
 
-UTurn.prototype.buildZeroKeyframe = function (car) {
+UPark.prototype.buildZeroKeyframe = function (car) {
     let zero =
         '{0% {left: ' +
         car.coords.x +
@@ -50,7 +50,7 @@ UTurn.prototype.buildZeroKeyframe = function (car) {
         'deg);}'
     return zero
 }
-UTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
+UPark.prototype.buildTwentyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -63,11 +63,11 @@ UTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'south':
-            leftVal = 0
+            leftVal = car.coords.x - car.baseWidth / 2
 
-            topVal = 0
+            topVal = endVals.y - car.baseLength / 2
 
-            orientationVal = 0
+            orientationVal = car.orientation - endVals.orientationMod / 8
             break
     }
 
@@ -81,7 +81,7 @@ UTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
         'deg);}'
     return twenty
 }
-UTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
+UPark.prototype.buildSixtyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -94,11 +94,11 @@ UTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'south':
-            leftVal = 0
+            leftVal = car.coords.x + endVals.crossDistance / 1.75
 
-            topVal = 0
+            topVal = endVals.y - car.baseLength * 1.1
 
-            orientationVal = car.orientation - endVals.orientationMod / 1.65
+            orientationVal = car.orientation + endVals.orientationMod / 1.65
             break
     }
 
@@ -113,7 +113,7 @@ UTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
         'deg);}'
     return sixty
 }
-UTurn.prototype.buildHundredKeyframe = function (endVals) {
+UPark.prototype.buildHundredKeyframe = function (endVals) {
     let hundred =
         '100% {left: ' +
         endVals.x +
@@ -125,7 +125,7 @@ UTurn.prototype.buildHundredKeyframe = function (endVals) {
     return hundred
 }
 
-UTurn.prototype.getEndVals = function (car) {
+UPark.prototype.getEndVals = function (car) {
     let endVals = {}
 
     let metaValues = this.turnMetaValues(car)
@@ -142,7 +142,7 @@ UTurn.prototype.getEndVals = function (car) {
 
     return endVals
 }
-UTurn.prototype.turnMetaValues = function (car) {
+UPark.prototype.turnMetaValues = function (car) {
     let endOrientation
     let endDirection = car.assignedSpace.facing
 
@@ -172,9 +172,7 @@ UTurn.prototype.turnMetaValues = function (car) {
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'north':
-            if (endDirection === 'south') {
-                orientationMod = 180
-            }
+            orientationMod = 180
             break
         case 'south':
             console.err('Unexpected State/Unhandled Case!')
@@ -200,7 +198,7 @@ UTurn.prototype.turnMetaValues = function (car) {
         crossDistance: crossDistance,
     }
 }
-UTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
+UPark.prototype.getAdjustedEndCoords = function (car, endVals) {
     switch (endVals.direction) {
         case 'west':
             console.err('Unexpected State/Unhandled Case!')
@@ -257,4 +255,4 @@ UTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
     return endVals
 }
 
-export {UTurn}
+export {UPark}

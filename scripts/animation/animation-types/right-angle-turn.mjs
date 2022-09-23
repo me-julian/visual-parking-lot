@@ -5,7 +5,7 @@
  * @param {AnimationHandler} animationHandler
  * @param {String} animName
  */
-function NormalTurn(animationHandler, animName) {
+function RightAngleTurn(animationHandler, animName) {
     this.animationHandler = animationHandler
     this.name = animName
 
@@ -13,7 +13,7 @@ function NormalTurn(animationHandler, animName) {
     this.endVals = undefined
 }
 
-NormalTurn.prototype.buildSelf = function (car) {
+RightAngleTurn.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
     let ruleString = this.buildRuleString(car, this.name, this.endVals)
@@ -25,7 +25,7 @@ NormalTurn.prototype.buildSelf = function (car) {
     this.ruleObject = this.animationHandler.getAnimationRule(this.name)
 }
 
-NormalTurn.prototype.buildRuleString = function (car, name, endVals) {
+RightAngleTurn.prototype.buildRuleString = function (car, name, endVals) {
     let zero, hundred
     let declaration = '@keyframes '
     zero = this.buildZeroKeyframe(car)
@@ -34,7 +34,7 @@ NormalTurn.prototype.buildRuleString = function (car, name, endVals) {
     return declaration + name + zero + hundred
 }
 
-NormalTurn.prototype.buildZeroKeyframe = function (car) {
+RightAngleTurn.prototype.buildZeroKeyframe = function (car) {
     let zero =
         '{0% {left: ' +
         car.coords.x +
@@ -45,7 +45,7 @@ NormalTurn.prototype.buildZeroKeyframe = function (car) {
         'deg);}'
     return zero
 }
-NormalTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
+RightAngleTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -89,7 +89,7 @@ NormalTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
         'deg);}'
     return twenty
 }
-NormalTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
+RightAngleTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
     let forwardAxis, val, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -130,7 +130,7 @@ NormalTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
         'deg);}'
     return sixty
 }
-NormalTurn.prototype.buildHundredKeyframe = function (endVals) {
+RightAngleTurn.prototype.buildHundredKeyframe = function (endVals) {
     let hundred =
         '100% {left: ' +
         endVals.x +
@@ -142,14 +142,13 @@ NormalTurn.prototype.buildHundredKeyframe = function (endVals) {
     return hundred
 }
 
-NormalTurn.prototype.getEndVals = function (car) {
+RightAngleTurn.prototype.getEndVals = function (car) {
     let endVals = {}
 
-    // Should be refactored to match z/u turns
-    let orientationAndDirection = this.getEndOrientationAndDirection(car)
-    endVals.orientationMod = orientationAndDirection.orientationMod
-    endVals.endOrientation = orientationAndDirection.endOrientation
-    endVals.direction = orientationAndDirection.direction
+    let relationalValues = this.getRelationalValues(car)
+    endVals.orientationMod = relationalValues.orientationMod
+    endVals.endOrientation = relationalValues.endOrientation
+    endVals.direction = relationalValues.direction
 
     endVals[car.oppSymbol] = car.route[1].section[car.oppSymbol]
     endVals[car.symbol] = car.route[1].section[car.symbol]
@@ -161,7 +160,7 @@ NormalTurn.prototype.getEndVals = function (car) {
 
     return endVals
 }
-NormalTurn.prototype.getEndOrientationAndDirection = function (car) {
+RightAngleTurn.prototype.getRelationalValues = function (car) {
     let endOrientation
     let endDirection = car.route[1].direction
 
@@ -196,7 +195,7 @@ NormalTurn.prototype.getEndOrientationAndDirection = function (car) {
         direction: endDirection,
     }
 }
-NormalTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
+RightAngleTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
     switch (endVals.direction) {
         case 'west':
             endVals.x = endVals.x - car.baseLength / 2
@@ -231,4 +230,4 @@ NormalTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
     return endVals
 }
 
-export {NormalTurn}
+export {RightAngleTurn}
