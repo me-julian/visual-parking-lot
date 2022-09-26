@@ -17,6 +17,7 @@ import {Car} from './car.mjs'
  * @property {Object} cars.parked - Cars which are currently parked.
  * @property {Object} cars.leaving - Cars which are leaving the lot.
  * @property {Object} cars.left - Cars which have left the lot and scene.
+ * @property {Object} intersections
  */
 function ParkingLot(
     pathObject,
@@ -60,6 +61,18 @@ ParkingLot.prototype.simulate = function () {
     for (let car in this.cars.parked) {
         this.cars.parked[car].determineAction()
     }
+}
+
+ParkingLot.prototype.initializeIntersections = function () {
+    // Intersections are currently defined manually.
+    // It's assumed all intersections are on the ends of horizontal
+    // sections.
+    let horizontalSections = this.pathObject.sections.horizontal
+
+    this.intersections =
+        this.trafficHandler.getIntersections(horizontalSections)
+
+    this.overlay.createIntersectionOverlay(this.intersections)
 }
 
 ParkingLot.prototype.spawnCar = function () {

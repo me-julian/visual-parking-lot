@@ -3,7 +3,9 @@
 /**
  * @class
  */
-function Overlay() {}
+function Overlay() {
+    this.wrapper = document.getElementById('lot-overlay')
+}
 
 /**
  * @method
@@ -26,10 +28,56 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     }
 }
 
+// show intersections when a car checks then setInterval timer to hide
+// (so that it shows for more than a millisecond)
+
+// Figure out how cars are going to check against these static intersections
+// and how they'll target them (name from row/col pos., relative etc.)
+
+// Revamp car collision boxes and change them for reserving space.
+
+Overlay.prototype.createIntersectionOverlay = function (intersections) {
+    let allIntersectionsWrapper = document.getElementById('intersections')
+
+    for (let intersection in intersections) {
+        let intersectionObject = intersections[intersection]
+
+        let intersectionWrapper = this.createBox(
+            allIntersectionsWrapper,
+            ['intersection', 'overlay-el'],
+            intersection
+        )
+        let xBox = this.createBox(intersectionWrapper)
+        let yBox = this.createBox(intersectionWrapper)
+        intersectionWrapper.append(xBox, yBox)
+
+        this.drawBox(xBox, intersectionObject.area.xArea, {
+            backgroundColor: 'blue',
+        })
+        this.drawBox(yBox, intersectionObject.area.yArea, {
+            backgroundColor: 'blue',
+        })
+    }
+
+    this.wrapper.append(allIntersectionsWrapper)
+}
+
 Overlay.prototype.addGuiListeners = function () {
+    let spacesWrapper = document.getElementById('spaces')
+    let spacesFunct = () => {
+        this.toggleShowOverlayWrapperChildren(spacesWrapper)
+    }
     document
         .getElementById('show-spaces-button')
-        .addEventListener('click', this.toggleShowSpacesStatus)
+        .addEventListener('click', spacesFunct)
+
+    let intersectionsWrapper = document.getElementById('intersections')
+    let intersectionsFunct = () => {
+        this.toggleShowOverlayWrapperChildren(intersectionsWrapper)
+    }
+    document
+        .getElementById('show-intersections-button')
+        .addEventListener('click', intersectionsFunct)
 }
 
 /**
@@ -62,7 +110,7 @@ Overlay.prototype.drawPaths = function (pathObject) {
         }
     }
 
-    document.getElementById('lot-overlay').append(paths)
+    this.wrapper.append(paths)
 }
 
 /**
@@ -102,8 +150,8 @@ Overlay.prototype.createBox = function (parent, classes, id) {
     return newBox
 }
 
-Overlay.prototype.toggleShowSpacesStatus = function () {
-    document.getElementById('spaces').classList.toggle('show-overlay-children')
+Overlay.prototype.toggleShowOverlayWrapperChildren = function (wrapper) {
+    wrapper.classList.toggle('show-overlay-children')
 }
 
 Overlay.prototype.toggleCarFocus = function (car) {

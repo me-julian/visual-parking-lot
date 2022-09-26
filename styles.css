@@ -33,6 +33,11 @@ body {
     pointer-events: all;
 }
 
+.intersection > div {
+    position: absolute;
+    opacity: 25%;
+}
+
 .car-wrapper {
     position: absolute;
     width: inherit;

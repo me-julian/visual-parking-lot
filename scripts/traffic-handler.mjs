@@ -34,6 +34,55 @@ TrafficHandler.prototype.returnDistanceBetween = function (point1, point2) {
     return Math.abs(point1 - point2)
 }
 
+TrafficHandler.prototype.getIntersections = function (horizontalSections) {
+    let intersections = {}
+    for (let section in horizontalSections) {
+        section = horizontalSections[section]
+        let leftIntersection = {},
+            rightIntersection = {}
+
+        let leftName = 'row' + section.row + 'col' + (section.col - 1)
+        let rightName = 'row' + section.row + 'col' + section.col
+
+        leftIntersection.area = this.getIntersectionArea(section.x, section.y)
+        rightIntersection.area = this.getIntersectionArea(
+            section.x + section.len,
+            section.y
+        )
+
+        intersections[leftName] = leftIntersection
+        intersections[rightName] = rightIntersection
+    }
+    return intersections
+}
+TrafficHandler.prototype.getIntersectionArea = function (x, y) {
+    // Intersection areas are comprised of two boxes which extend
+    // further into the connecting roads of their respective axis.
+    let xArea, yArea
+
+    xArea = {
+        x: x - 45,
+        y: y - 40,
+        w: 182,
+        h: 150,
+    }
+    // Car turningSpace (30px) + 10px buffer in both directions
+    xArea.x -= 40
+    xArea.w += 80
+
+    yArea = {
+        x: x - 45,
+        y: y - 40,
+        w: 182,
+        h: 150,
+    }
+    // Car turningSpace (30px) + 10px buffer in both directions
+    yArea.y -= 40
+    yArea.h += 80
+
+    return {xArea: xArea, yArea: yArea}
+}
+
 // NOTE: Area boxes seem to always be drawn after the car moves, so they
 // will essentially lag behind by one movement.
 TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
@@ -205,6 +254,27 @@ TrafficHandler.prototype.getAreaInStoppingDistance = function (car) {
     )
 
     return stoppingDistanceArea
+}
+TrafficHandler.prototype.getParkingArea = function (car, animationType) {
+    let turnAreaForward = {
+        x: car.coords.x,
+        y: car.coords.y,
+        w: car.collisionBox.width,
+        h: car.collisionBox.height,
+    }
+    let turnAreaCross = {
+        x: 1,
+        y: 2,
+        w: 3,
+        h: 4,
+    }
+
+    // this.parkingLot.overlay.drawBox(el, stoppingDistanceArea, {backgroundColor: 'red',})
+
+    return turnArea
+}
+TrafficHandler.prototype.turnAreaClear = function (turnArea) {
+    return true
 }
 
 /**

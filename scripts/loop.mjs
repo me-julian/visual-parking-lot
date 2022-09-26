@@ -38,6 +38,7 @@ function initializeSimulation() {
         rankedSpaceList
     )
     parkingLot.trafficHandler = new TrafficHandler(parkingLot)
+    parkingLot.initializeIntersections()
 
     return parkingLot
 }
