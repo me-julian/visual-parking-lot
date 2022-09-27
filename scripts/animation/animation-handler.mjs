@@ -52,7 +52,7 @@ AnimationHandler.prototype.determineSpecialAnimationType = function (car) {
     return type
 }
 AnimationHandler.prototype.getAnimation = function (car, type) {
-    let animName = this.getAnimationName(car)
+    let animName = this.getAnimationName(car, type)
     // Return pre-existing animation if previously initialized.
     if (this.animations[animName]) {
         return this.animations[animName]
@@ -86,21 +86,27 @@ AnimationHandler.prototype.getAnimation = function (car, type) {
     }
 }
 
-AnimationHandler.prototype.getAnimationName = function (car) {
+AnimationHandler.prototype.getAnimationName = function (car, type) {
     let animName
-    if (car.status === 'parking') {
-        animName = 'space-' + car.assignedSpace.rank + '-parking'
-    } else if (car.status === 'leaving-space') {
-        animName = 'space-' + car.assignedSpace.rank + '-leaving-space'
-    } else if (car.status === 'turning') {
-        animName =
-            'row' +
-            car.route[0].section.row +
-            'col' +
-            car.route[0].section.col +
-            '-' +
-            car.route[1].turn
+    switch (type) {
+        case 'right-angle-park':
+        case 'u-park':
+        case 'z-park':
+            animName = 'space-' + car.assignedSpace.rank + '-parking'
+            break
+        // Add reversing out of space when implemented
+        // animName = 'space-' + car.assignedSpace.rank + '-leaving-space'
+        case 'right-angle-turn':
+            animName =
+                'row' +
+                car.route[0].section.row +
+                'col' +
+                car.route[0].section.col +
+                '-' +
+                car.route[1].turn
+            break
     }
+
     return animName
 }
 AnimationHandler.prototype.getAnimationRule = function (animName) {

@@ -42,12 +42,17 @@ function Car(id, parkingLot) {
     this.currentSection = undefined
     this.assignedSpace = undefined
     this.route = undefined
+    this.nextRoute = undefined
 
     this.baseWidth = undefined
     this.baseLength = undefined
-    this.collisionBox = {
-        width: undefined,
-        height: undefined,
+    this.collisionBoxes = {
+        car: {
+            x: undefined,
+            y: undefined,
+            h: undefined,
+            w: undefined,
+        },
     }
     this.direction = undefined
     this.leadingEdge = undefined
@@ -89,7 +94,7 @@ Car.prototype.getRandomImage = function () {
 
 Car.prototype.createPageElements = function () {
     let carFullPageWrapper = document.createElement('div')
-    carFullPageWrapper.id = this.id
+    carFullPageWrapper.id = 'car' + this.id
     carFullPageWrapper.classList.add('car-wrapper')
 
     let imgWrapper = document.createElement('div')
@@ -112,38 +117,6 @@ Car.prototype.createPageElements = function () {
     return carFullPageWrapper
 }
 
-Car.prototype.getDirectionVars = function () {
-    let symbol, oppSymbol, axis
-    let negation = 1
-    if (this.direction === 'north' || this.direction === 'south') {
-        symbol = 'y'
-        oppSymbol = 'x'
-        axis = 'top'
-        if (this.direction === 'north') {
-            negation = -1
-        }
-    } else {
-        symbol = 'x'
-        oppSymbol = 'y'
-        axis = 'left'
-        if (this.direction === 'west') {
-            negation = -1
-        }
-    }
-
-    let leadingEdge = this.coords[symbol]
-    // Get point opposite to top/left.
-    if (negation === 1) {
-        leadingEdge += this.baseLength
-    }
-
-    this.leadingEdge = leadingEdge
-    this.symbol = symbol
-    this.oppSymbol = oppSymbol
-    this.axis = axis
-    this.negation = negation
-}
-
 Car.prototype.initialize = function (assignedSpace) {
     this.status = 'entering'
     this.hasParked = false
@@ -157,12 +130,14 @@ Car.prototype.initialize = function (assignedSpace) {
 
     this.baseWidth = 90
     this.baseLength = 182
-    this.collisionBox = {
-        width: 90,
-        height: 182,
+    this.collisionBoxes.car = {
+        x: this.coords.x + 90 / 2,
+        y: this.coords.y,
+        w: 90,
+        h: 182,
     }
     this.direction = 'north'
-    this.getDirectionVars()
+    this.setPositionalVars()
 
     this.img = this.getRandomImage()
     this.orientation = 270
@@ -181,6 +156,7 @@ Car.prototype.initialize = function (assignedSpace) {
     // Should restructure this.
     this.currentSection = this.route[0]
     //
+    this.nextIntersection = this.route[0].section.topIntersection
     this.parkingDuration = 15000
 
     this.speed = 5
@@ -194,7 +170,7 @@ Car.prototype.initialize = function (assignedSpace) {
 Car.prototype.determineAction = function () {
     switch (this.status) {
         case 'entering':
-            // case 'leaving':
+        case 'leaving':
             this.followRoute()
             break
         case 'turning':
@@ -208,7 +184,7 @@ Car.prototype.determineAction = function () {
 }
 
 Car.prototype.followRoute = function () {
-    this.getDirectionVars()
+    this.setPositionalVars()
 
     // Could be combined
     let nextPathDestination = this.getNextDestination(
@@ -230,22 +206,27 @@ Car.prototype.followRoute = function () {
 
     let stoppingDistanceArea =
         this.parkingLot.trafficHandler.getAreaInStoppingDistance(this)
-    let carsInMinStoppingDistance = this.checkAhead(stoppingDistanceArea)
+    let carsInMinStoppingDistance =
+        this.checkStoppingDistanceArea(stoppingDistanceArea)
 
-    let destinationArea =
-        this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
-    let carsBetweenNextDestination = this.checkAhead(destinationArea)
+    // Do we use this to check for ability to turn/make other maneuvers
+    // or do we do that in the turn/park etc. function itself?
+    // let destinationArea =
+    //     this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
+    // let carsBetweenNextDestination = this.checkDestinationArea(destinationArea)
 
     // let roadArea = this.parkingLot.trafficHandler.getAreaAlongColOrRow(this)
-    // let carsAheadOnRoad = this.checkAhead(roadArea)
+    // let carsAheadOnRoad = this.checkRoadAheadArea(roadArea)
 
+    let carsBetweenNextDestination = false
     let clearAhead = true
     if (carsInMinStoppingDistance.collision) {
         clearAhead = false
+        carsBetweenNextDestination = true
     }
-    if (carsBetweenNextDestination.collision) {
-        clearAhead = false
-    }
+    // if (carsBetweenNextDestination.collision) {
+    //     clearAhead = false
+    // }
     // if (carsAheadOnRoad.presence) {
     //     clearAhead = false
     // }
@@ -257,10 +238,11 @@ Car.prototype.followRoute = function () {
         this.checkFollowingDestination()
     }
 
+    if (this.nextIntersection) {
+        this.checkIntersection()
+    }
+
     if (distanceToNextDestination <= this.minStoppingDistance) {
-        if (this.checkIntersection()) {
-            clearAhead = false
-        }
         if (this.route.length === 1) {
             if (this.status === 'leaving') {
                 this.exitScene(distanceToNextDestination)
@@ -314,26 +296,36 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
 }
 
 Car.prototype.turn = function () {
-    if (this.status !== 'turning') {
-        this.status = 'turning'
-
-        let animation = this.parkingLot.animationHandler.getAnimation(
+    if (!this.animation) {
+        this.animation = this.parkingLot.animationHandler.getAnimation(
             this,
             'right-angle-turn'
         )
+    }
+
+    let turnArea = this.parkingLot.trafficHandler.getTurnArea(
+        this,
+        this.animation.endVals
+    )
+    if (this.parkingLot.trafficHandler.turnAreaClear(turnArea)) {
+        this.status = 'turning'
+
         this.pageEl.style.animationDuration = '3s'
         this.pageEl.style.animationIterationCount = '1'
         this.pageEl.style.animationTimingFunction = 'initial'
 
-        this.pageEl.style.animationName = animation.ruleObject.name
+        this.pageEl.style.animationName = this.animation.ruleObject.name
 
         // Could/should this be set indefinitely? Generic event funct
         // that checks status for endTurn/setParked?
         let endAnimEventFunct = () => {
-            this.endTurn(animation.endVals)
+            this.endTurn(this.animation.endVals)
             this.pageEl.removeEventListener('animationend', endAnimEventFunct)
+            // this.parkingLot.overlay.clearCollisionBoxes()
         }
         this.pageEl.addEventListener('animationend', endAnimEventFunct)
+    } else {
+        this.wait()
     }
 }
 Car.prototype.park = function () {
@@ -397,12 +389,14 @@ Car.prototype.endTurn = function (endVals) {
 
     this.setToNextSection()
     this.updateCollisionBox()
-    this.updatePositionalValues(endVals)
+    this.updatePositionalVars(endVals)
 
     this.pageEl.style.animationName = 'none'
+    this.animation = undefined
 }
 Car.prototype.setParked = function (endVals) {
-    this.updatePositionalValues(endVals)
+    this.setPositionalVars()
+    this.updatePositionalVars(endVals)
 
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
 
@@ -412,10 +406,7 @@ Car.prototype.setParked = function (endVals) {
     delete this.parkingLot.cars.entering[this.id]
     this.status = 'parked'
 
-    this.parkingLot.overlay.updateSpaceColor(
-        document.getElementById(this.assignedSpace.rank),
-        this
-    )
+    this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
     // setTimeout(() => {
     //     // Requesting route from parking space doesn't work.
     //     // Need to initialize direction (can be different in unususal
@@ -435,15 +426,61 @@ Car.prototype.setToNextSection = function () {
     this.nextDestination = null
     this.currentSection = this.route[0]
     this.direction = this.currentSection.direction
+    this.getNextIntersection()
 }
-Car.prototype.updatePositionalValues = function (newVals) {
+
+Car.prototype.setPositionalVars = function () {
+    let symbol, oppSymbol, axis
+    let negation = 1
+    if (this.direction === 'north' || this.direction === 'south') {
+        symbol = 'y'
+        oppSymbol = 'x'
+        axis = 'top'
+        if (this.direction === 'north') {
+            negation = -1
+        }
+    } else {
+        symbol = 'x'
+        oppSymbol = 'y'
+        axis = 'left'
+        if (this.direction === 'west') {
+            negation = -1
+        }
+    }
+
+    let leadingEdge = this.coords[symbol]
+    // Get point opposite to top/left.
+    if (negation === 1) {
+        leadingEdge += this.baseLength
+    }
+
+    // ISSUE:
+    // This should be moved or this function should be called at the end
+    // of a car's action to ensure it isn't out of sync.
+    // Or is updatePositionalVars enough?
+    this.collisionBoxes.car.x = this.coords.x
+    this.collisionBoxes.car.y = this.coords.y
+    this.collisionBoxes.car[oppSymbol] += 90 / 2
+
+    this.leadingEdge = leadingEdge
+    this.symbol = symbol
+    this.oppSymbol = oppSymbol
+    this.axis = axis
+    this.negation = negation
+}
+Car.prototype.updatePositionalVars = function (newVals) {
     this.coords.x = newVals.x
     this.coords.y = newVals.y
     this.orientation = newVals.orientation
+    this.direction = newVals.direction
 
     this.pageEl.style.left = this.coords.x + 'px'
     this.pageEl.style.top = this.coords.y + 'px'
     this.pageEl.style.transform = 'rotate(' + this.orientation + 'deg)'
+
+    this.collisionBoxes.car.x = this.coords.x
+    this.collisionBoxes.car.y = this.coords.y
+    this.collisionBoxes.car[this.oppSymbol] += 90 / 2
 }
 
 Car.prototype.updateCollisionBox = function () {
@@ -464,31 +501,87 @@ Car.prototype.flipCollisionBox = function () {
     switch (this.direction) {
         case 'north':
         case 'south':
-            this.collisionBox.height = this.baseLength
-            this.collisionBox.width = this.baseWidth
+            this.collisionBoxes.car.h = this.baseLength
+            this.collisionBoxes.car.w = this.baseWidth
             break
         case 'west':
         case 'east':
-            this.collisionBox.height = this.baseWidth
-            this.collisionBox.width = this.baseLength
+            this.collisionBoxes.car.h = this.baseWidth
+            this.collisionBoxes.car.w = this.baseLength
             break
     }
 }
 
-Car.prototype.checkAhead = function (areaAhead) {
+Car.prototype.checkStoppingDistanceArea = function (areaAhead) {
+    let collision = false
+
+    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        areaAhead,
+        [this]
+    )
+
+    // Currently counting any car entering stopping distance as immediate
+    // cause to come to a full stop.
+    if (carsAhead.length != 0) {
+        collision = true
+    }
+
+    return {collision: collision}
+}
+Car.prototype.checkDestinationArea = function (areaAhead) {
     let presence = false,
         collision = false,
-        distance = 5000
+        distance = 9999
 
-    let carsAhead = this.parkingLot.trafficHandler.returnCarsInArea(areaAhead, [
-        this,
-    ])
+    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        areaAhead,
+        [this]
+    )
 
     if (carsAhead.length != 0) {
         presence = true
     }
 
-    // break to separate function
+    if (presence) {
+        let immediateCollision = this.checkForImmediateCollision(
+            carsAhead,
+            collision,
+            distance
+        )
+        collision = immediateCollision.collision
+        distance = immediateCollision.distance
+        // let blockingDestination = this.isBlockingDestination(car)
+        // if (blockingDestination.collision) {
+        //     presence = true
+        //     if (blockingDestination.distance < distance) {
+        //         distance = blockingDestination.distance
+        //     }
+        // }
+    }
+
+    return {presence: presence, collision: collision, distance: distance}
+}
+// Car.prototype.isBlockingDestination(car) {
+//     let opposingEdge
+//     if (this.negation === -1) {
+//         opposingEdge = car.coords[this.symbol] + car.baseLength
+//     } else {
+//         opposingEdge = car.coords[this.symbol]
+//     }
+Car.prototype.checkRoadAheadArea = function (areaAhead) {
+    let presence = false,
+        collision = false,
+        distance = 9999
+
+    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        areaAhead,
+        [this]
+    )
+
+    if (carsAhead.length != 0) {
+        presence = true
+    }
+
     for (let car of carsAhead) {
         // Check direction for head-on collisions
         // Possibly check for turning cars
@@ -507,13 +600,6 @@ Car.prototype.checkAhead = function (areaAhead) {
         //     }
         //     continue
         // }
-        let immediateCollision = this.willCollideAtCurrentSpeed(car)
-        if (immediateCollision.collision) {
-            collision = true
-            if (immediateCollision.distance < distance) {
-                distance = immediateCollision.distance
-            }
-        }
         // let blockingDestination = this.isBlockingDestination(car)
         // if (blockingDestination.collision) {
         //     presence = true
@@ -522,15 +608,43 @@ Car.prototype.checkAhead = function (areaAhead) {
         //     }
         // }
     }
-    // break to separate function
 
     return {presence: presence, collision: collision, distance: distance}
 }
 
+Car.prototype.checkForImmediateCollision = function (
+    cars,
+    collision,
+    distance
+) {
+    for (let car of cars) {
+        let collisionCheck = this.willCollideAtCurrentSpeed(car)
+        if (collisionCheck.collision) {
+            collision = true
+            if (collisionCheck.distance < distance) {
+                distance = collisionCheck.distance
+            }
+        }
+    }
+
+    return {collision, distance}
+}
 Car.prototype.willCollideAtCurrentSpeed = function (car) {
-    let opposingEdge
+    let opposingEdge, opposingCarLength
+
+    if ((this.axis = 'x')) {
+        opposingCarLength = 'width'
+    } else {
+        opposingCarLength = 'height'
+    }
+
+    // As it is this function is pointless/only useful for
+    // minStoppingDistanceArea checks?
+
+    // Going to need to check all collision boxes when implemented?
     if (this.negation === -1) {
-        opposingEdge = car.coords[this.symbol] + car.baseLength
+        opposingEdge =
+            car.coords[this.symbol] + car.collisionBoxes.car[opposingCarLength]
     } else {
         opposingEdge = car.coords[this.symbol]
     }
@@ -539,8 +653,10 @@ Car.prototype.willCollideAtCurrentSpeed = function (car) {
         opposingEdge
     )
 
+    // Change this to a check against an area and the opposing car's
+    // collision boxes?
     let collision = false
-    if (this.negation === '1') {
+    if (this.negation === 1) {
         if (
             this.leadingEdge + this.minStoppingDistance * this.negation >=
             opposingEdge
@@ -558,13 +674,6 @@ Car.prototype.willCollideAtCurrentSpeed = function (car) {
 
     return {collision: collision, distance: distance}
 }
-// Car.prototype.isBlockingDestination(car) {
-//     let opposingEdge
-//     if (this.negation === -1) {
-//         opposingEdge = car.coords[this.symbol] + car.baseLength
-//     } else {
-//         opposingEdge = car.coords[this.symbol]
-//     }
 
 Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
     let closestCar
@@ -697,34 +806,64 @@ Car.prototype.checkFollowingDestination = function () {
         }
     }
 }
+
+Car.prototype.getNextIntersection = function () {
+    // Assuming this won't ever be called unless nextIntersection = null
+    // so it remains null if there's no intersection ahead.
+    let thisSection = this.route[0].section
+    switch (this.direction) {
+        case 'north':
+            if (thisSection.topIntersection) {
+                this.nextIntersection = thisSection.topIntersection
+            }
+            break
+        case 'east':
+            if (thisSection.rightIntersection) {
+                this.nextIntersection = thisSection.rightIntersection
+            }
+            break
+        case 'south:':
+            if (thisSection.bottomIntersection) {
+                this.nextIntersection = thisSection.bottomIntersection
+            }
+            break
+        case 'west':
+            if (thisSection.leftIntersection) {
+                this.nextIntersection = thisSection.bottomIntersection
+            }
+            break
+    }
+}
+
+// Could check if there are any cars with the same intersection as
+// nextIntersection and moving in the opposite direction to car's
+// desired next direction for turns/parking maneuvers to ensure
+// cars don't turn onto the same section opposing one another.
 Car.prototype.checkIntersection = function () {
-    // Good point to add an overlay element.
-    // Toggleable persistent area box with status colors
-    let intersectionPoint = this.route[0].coord
-    let intersectionArea
-    if (this.direction === 'north' || this.direction === 'south') {
-        intersectionArea = {
-            x: this.coords.x - 182 / 2,
-            y: intersectionPoint + 90 / 2,
-            w: 90,
-            h: 90 + 182 * 2,
+    let intersection = this.parkingLot.intersections[this.nextIntersection]
+    let carArea = this.collisionBoxes.car
+    carArea[this.symbol] += this.speed * this.negation
+    if (
+        this.parkingLot.trafficHandler.checkCollision(
+            carArea,
+            intersection.areas.xArea
+        ) ||
+        this.parkingLot.trafficHandler.checkCollision(
+            carArea,
+            intersection.areas.yArea
+        )
+    ) {
+        if (this.userFocus) {
+            this.parkingLot.overlay.showIntersectionCheck(this)
         }
-    } else {
-        intersectionArea = {
-            x: intersectionPoint + 90 / 2,
-            y: this.coords.y - 182 / 2,
-            w: 90 + 182 * 2,
-            h: 90,
+
+        if (intersection.occupied) {
+            this.wait()
+        } else {
+            this.nextIntersection = null
+            this.parkingLot.trafficHandler.blockIntersection(this, intersection)
         }
     }
-    let carsNearIntersection = this.parkingLot.trafficHandler.returnCarsInArea(
-        intersectionArea,
-        [this]
-    )
-
-    return this.parkingLot.trafficHandler.checkIfCarsTurning(
-        carsNearIntersection
-    )
 }
 
 Car.prototype.calcStoppingDistance = function () {

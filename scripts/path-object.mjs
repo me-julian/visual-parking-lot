@@ -38,8 +38,20 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row0
 
+            let topIntersection = null
+            let bottomIntersection = 'row1col0Intersection'
+
             let points = getSectionPoints(len, y)
-            return {row, col, len, x, y, points}
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
         })(),
         row0col2: (function () {
             let row = 0
@@ -48,8 +60,20 @@ let parkingLotSections = {
             let x = pathCoords.col1
             let y = pathCoords.row0
 
+            let topIntersection = null
+            let bottomIntersection = 'row1col2Intersection'
+
             let points = getSectionPoints(len, y)
-            return {row, col, len, x, y, points}
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
         })(),
         row1col0: (function () {
             let row = 1
@@ -58,8 +82,20 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row1
 
+            let topIntersection = 'row1col0Intersection'
+            let bottomIntersection = 'row2col0Intersection'
+
             let points = getSectionPoints(len, y)
-            return {row, col, len, x, y, points}
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
         })(),
         row1col2: (function () {
             let row = 1
@@ -68,8 +104,20 @@ let parkingLotSections = {
             let x = pathCoords.col1
             let y = pathCoords.row1
 
+            let topIntersection = 'row1col2Intersection'
+            let bottomIntersection = 'row2col2Intersection'
+
             let points = getSectionPoints(len, y)
-            return {row, col, len, x, y, points}
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
         })(),
         row2col0: (function () {
             let row = 2
@@ -79,8 +127,21 @@ let parkingLotSections = {
             let y = pathCoords.row2
             let entrance = 'south'
 
+            let topIntersection = 'row2col0Intersection'
+            let bottomIntersection = null
+
             let points = getSectionPoints(len, y)
-            return {row, col, len, x, y, points, entrance}
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+                entrance,
+            }
         })(),
         row2col2: (function () {
             let row = 2
@@ -90,8 +151,21 @@ let parkingLotSections = {
             let y = pathCoords.row2
             let exit = 'south'
 
+            let topIntersection = 'row2col2Intersection'
+            let bottomIntersection = null
+
             let points = getSectionPoints(len, y)
-            return {row, col, len, x, y, points, exit}
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+                exit,
+            }
         })(),
     },
     horizontal: {
@@ -103,8 +177,21 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row1
 
+            let leftIntersection = 'row1col0Intersection'
+            let rightIntersection = 'row1col2Intersection'
+
             let points = getSectionPoints(len, x)
-            return {horizontal, row, col, len, x, y, points}
+            return {
+                horizontal,
+                row,
+                col,
+                len,
+                x,
+                y,
+                leftIntersection,
+                rightIntersection,
+                points,
+            }
         })(),
         row1col1: (function () {
             let row = 1
@@ -114,8 +201,21 @@ let parkingLotSections = {
             let x = pathCoords.col0
             let y = pathCoords.row2
 
+            let leftIntersection = 'row2col0Intersection'
+            let rightIntersection = 'row2col2Intersection'
+
             let points = getSectionPoints(len, x)
-            return {horizontal, row, col, len, x, y, points}
+            return {
+                horizontal,
+                row,
+                col,
+                len,
+                x,
+                y,
+                leftIntersection,
+                rightIntersection,
+                points,
+            }
         })(),
     },
 }
@@ -133,6 +233,12 @@ let pathObject = {
     sections: parkingLotSections,
     entrance: parkingLotSections.vertical.row2col0,
     exit: parkingLotSections.vertical.row2col2,
+    intersections: [
+        'row1col0Intersection',
+        'row1col2Intersection',
+        'row2col0Intersection',
+        'row2col2Intersection',
+    ],
 }
 
 export {pathObject}

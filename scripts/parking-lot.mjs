@@ -78,16 +78,14 @@ ParkingLot.prototype.initializeIntersections = function () {
 ParkingLot.prototype.spawnCar = function () {
     let assignedSpace = this.getHighestRankedSpace()
     if (assignedSpace) {
+        // Need to differentiate car and space page element ids.
         let id = this.carCount
         this.carCount += 1
 
         let newCar = new Car(id, this)
 
         assignedSpace.reserved = true
-        this.overlay.updateSpaceColor(
-            document.getElementById(assignedSpace.rank),
-            newCar
-        )
+        this.overlay.updateSpaceColor(assignedSpace.pageEl, newCar)
         newCar.initialize(assignedSpace)
 
         this.cars.entering[id] = newCar

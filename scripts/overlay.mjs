@@ -17,7 +17,7 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     for (let space of rankedSpaceList) {
         let spaceEl = document.createElement('div')
         spaceEl.classList.add('space', 'overlay-el')
-        spaceEl.id = space.rank
+        spaceEl.id = 'space' + space.rank
 
         spaceEl.style.left = space.x + 'px'
         spaceEl.style.top = space.y + 'px'
@@ -25,6 +25,8 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
         spaceEl.style.width = space.width + 'px'
 
         spacesEl.append(spaceEl)
+
+        space.pageEl = spaceEl
     }
 }
 
@@ -33,6 +35,9 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
 
 // Figure out how cars are going to check against these static intersections
 // and how they'll target them (name from row/col pos., relative etc.)
+//      Whenever a car calls their checkAhead function it checks
+//      (when relevant) whether it will conflict with an intersection
+//      ahead.
 
 // Revamp car collision boxes and change them for reserving space.
 
@@ -51,11 +56,11 @@ Overlay.prototype.createIntersectionOverlay = function (intersections) {
         let yBox = this.createBox(intersectionWrapper)
         intersectionWrapper.append(xBox, yBox)
 
-        this.drawBox(xBox, intersectionObject.area.xArea, {
-            backgroundColor: 'blue',
+        this.drawBox(xBox, intersectionObject.areas.xArea, {
+            backgroundColor: 'green',
         })
-        this.drawBox(yBox, intersectionObject.area.yArea, {
-            backgroundColor: 'blue',
+        this.drawBox(yBox, intersectionObject.areas.yArea, {
+            backgroundColor: 'green',
         })
     }
 
@@ -158,27 +163,36 @@ Overlay.prototype.toggleCarFocus = function (car) {
     if (this.focusedCar === car) {
         this.focusedCar.userFocus = false
         this.focusedCar.pageWrapper.classList.remove('focused')
-        let space = document.getElementById(this.focusedCar.assignedSpace.rank)
-        this.toggleElement(space)
+        this.toggleElement(this.focusedCar.assignedSpace.pageEl)
         this.focusedCar = undefined
     } else {
         if (this.focusedCar) {
             this.focusedCar.userFocus = false
             this.focusedCar.pageWrapper.classList.remove('focused')
-            let space = document.getElementById(
-                this.focusedCar.assignedSpace.rank
-            )
-            this.toggleElement(space)
+            this.toggleElement(this.focusedCar.assignedSpace.pageEl)
         }
 
         car.userFocus = true
         this.focusedCar = car
         this.focusedCar.pageWrapper.classList.add('focused')
 
-        let space = document.getElementById(this.focusedCar.assignedSpace.rank)
-        this.updateSpaceColor(space, this.focusedCar)
-        this.toggleElement(space)
+        this.updateSpaceColor(
+            this.focusedCar.assignedSpace.pageEl,
+            this.focusedCar
+        )
+        this.toggleElement(this.focusedCar.assignedSpace.pageEl)
     }
+}
+
+Overlay.prototype.showIntersectionCheck = function (car) {
+    // Override color to show green for if the focused car was able to
+    // get through?
+    let intersection = car.nextIntersection
+    document.getElementById(intersection).style.display = 'initial'
+
+    setTimeout(() => {
+        document.getElementById(intersection).style.display = ''
+    }, 1500)
 }
 
 Overlay.prototype.updateSpaceColor = function (space, car) {
@@ -191,6 +205,18 @@ Overlay.prototype.updateSpaceColor = function (space, car) {
         spaceColor = 'yellow'
     }
     space.style['background-color'] = spaceColor
+}
+Overlay.prototype.updateIntersectionColor = function (intersection) {
+    let intersectionBoxes = document.getElementById(intersection.name).children
+    if (intersection.occupied) {
+        for (let box of intersectionBoxes) {
+            box.style.backgroundColor = 'red'
+        }
+    } else {
+        for (let box of intersectionBoxes) {
+            box.style.backgroundColor = 'green'
+        }
+    }
 }
 
 Overlay.prototype.clearCollisionBoxes = function (wrapper) {
