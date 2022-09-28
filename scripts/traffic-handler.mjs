@@ -437,7 +437,7 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     // Currently blocking both areas of the intersection (x and y areas)
     // but could eventually granularize to check each individually
     // and set whether cross vs forward is free, but may be unnecessary.
-    this.parkingLot.overlay.updateIntersectionColor(intersection)
+    this.parkingLot.overlay.updateIntersectionColor(intersection, car)
 
     let isStillOccupied = () => {
         if (

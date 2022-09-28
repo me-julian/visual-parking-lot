@@ -206,8 +206,16 @@ Overlay.prototype.updateSpaceColor = function (space, car) {
     }
     space.style['background-color'] = spaceColor
 }
-Overlay.prototype.updateIntersectionColor = function (intersection) {
+Overlay.prototype.updateIntersectionColor = function (intersection, car) {
     let intersectionBoxes = document.getElementById(intersection.name).children
+    // If the car which is blocking the intersection is userFocus,
+    // keep the intersection green to show it's clear to them.
+    if (car) {
+        if (car.userFocus) {
+            return
+        }
+    }
+
     if (intersection.occupied) {
         for (let box of intersectionBoxes) {
             box.style.backgroundColor = 'red'
