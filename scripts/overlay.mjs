@@ -185,13 +185,61 @@ Overlay.prototype.toggleCarFocus = function (car) {
 }
 
 Overlay.prototype.showIntersectionCheck = function (car) {
-    // Override color to show green for if the focused car was able to
-    // get through?
-    let intersection = car.nextIntersection
+    let intersection = car.nextIntersection.name
     document.getElementById(intersection).style.display = 'initial'
 
     setTimeout(() => {
         document.getElementById(intersection).style.display = ''
+    }, 1500)
+}
+
+Overlay.prototype.showTurnCheck = function (car, turnArea, state) {
+    let intersection = car.atIntersection.name
+    document.getElementById(intersection).style.display = 'initial'
+    let maneuverWrapper = document.createElement('div')
+    car.pageWrapper.append(maneuverWrapper)
+
+    for (let area of turnArea) {
+        let areaEl = this.createBox(maneuverWrapper, [
+            'overlay-el',
+            'maneuver-box',
+        ])
+
+        let color
+        if (state === 'blocked') {
+            color = 'red'
+        } else {
+            color = 'green'
+        }
+        this.drawBox(areaEl, area, {backgroundColor: color})
+    }
+
+    setTimeout(() => {
+        document.getElementById(intersection).style.display = ''
+        maneuverWrapper.remove()
+    }, 1500)
+}
+Overlay.prototype.showParkingCheck = function (car, parkingArea, state) {
+    let maneuverWrapper = document.createElement('div')
+    car.pageWrapper.append(maneuverWrapper)
+
+    for (let area of parkingArea) {
+        let areaEl = this.createBox(maneuverWrapper, [
+            'overlay-el',
+            'maneuver-box',
+        ])
+
+        let color
+        if (state === 'blocked') {
+            color = 'red'
+        } else {
+            color = 'green'
+        }
+        this.drawBox(areaEl, area, {backgroundColor: color})
+    }
+
+    setTimeout(() => {
+        maneuverWrapper.remove()
     }, 1500)
 }
 

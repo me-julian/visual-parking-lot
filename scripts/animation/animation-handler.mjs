@@ -33,20 +33,18 @@ function AnimationHandler(animationTypes) {
     this.animations = {}
 }
 
-AnimationHandler.prototype.determineSpecialAnimationType = function (car) {
+AnimationHandler.prototype.determineExceptionalAnimationType = function (car) {
     let type
     let startDirection = car.direction
     let endDirection = car.assignedSpace.facing
 
-    if (car.status === 'parking') {
-        if (
-            (startDirection === 'north' && endDirection === 'south') ||
-            (startDirection === 'south' && endDirection === 'north')
-        ) {
-            type = 'u-park'
-        } else {
-            type = 'z-park'
-        }
+    if (
+        (startDirection === 'north' && endDirection === 'south') ||
+        (startDirection === 'south' && endDirection === 'north')
+    ) {
+        type = 'u-park'
+    } else {
+        type = 'z-park'
     }
 
     return type
@@ -81,6 +79,7 @@ AnimationHandler.prototype.getAnimation = function (car, type) {
 
         animation.buildSelf(car)
 
+        animation.type = type
         this.animations[animName] = animation
         return animation
     }

@@ -73,6 +73,11 @@ body {
     opacity: 50%;
 }
 
+.maneuver-box {
+    position: absolute;
+    opacity: 25%;
+}
+
 .car {
     position: absolute;
     width: 182px;

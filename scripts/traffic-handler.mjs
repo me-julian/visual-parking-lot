@@ -84,26 +84,201 @@ TrafficHandler.prototype.getIntersectionArea = function (x, y) {
 
     return {xArea: xArea, yArea: yArea}
 }
-TrafficHandler.prototype.getTurnArea = function (car, endVals) {
-    let turnArea = {}
 
-    turnArea.x = endVals.x
-    turnArea.y = endVals.y
-    turnArea.w = car.baseLength
-    turnArea.h = car.baseLength
+TrafficHandler.prototype.getManeuverArea = function (car) {
+    let maneuverArea
 
-    // let testDiv = document.createElement('div')
-    // testDiv.style.position = 'absolute'
-    // testDiv.style.left = turnArea.x + 'px'
-    // testDiv.style.top = turnArea.y + 'px'
-    // testDiv.style.width = turnArea.w + 'px'
-    // testDiv.style.height = turnArea.h + 'px'
+    switch (car.animation.type) {
+        case 'right-angle-turn':
+            maneuverArea = this.getTurnArea(car)
+            break
+        case 'right-angle-park':
+            maneuverArea = this.getRightAngleParkArea(car)
+            break
+        case 'z-park':
+            maneuverArea = this.getZParkArea(car)
+            break
+        case 'u-park':
+            maneuverArea = this.getUParkArea(car)
+            break
+    }
 
-    // testDiv.style.backgroundColor = 'orange'
-    // testDiv.style.opacity = '40%'
-    // car.pageWrapper.append(testDiv)
+    return maneuverArea
+}
+TrafficHandler.prototype.getTurnArea = function (car) {
+    let area = {}
 
-    return turnArea
+    area.x = car.animation.endVals.x
+    area.y = car.animation.endVals.y
+    area.w = car.baseLength
+    area.h = car.baseLength
+
+    let intersection = car.getNextIntersection()
+
+    let areas = [area]
+    // Technically will always be an intersection in this case.
+    if (intersection) {
+        areas.push(intersection.areas.xArea, intersection.areas.yArea)
+    } else {
+        console.error("Right angle turn didn't find an intersection to check.")
+    }
+    return areas
+}
+// Only handle cases present in assignment lot.
+TrafficHandler.prototype.getRightAngleParkArea = function (car) {
+    let area = {}
+
+    area = this.setRightAngleParkXAxis(area, car)
+    area = this.setRightAngleParkYAxis(area, car)
+
+    return [area]
+}
+TrafficHandler.prototype.getZParkArea = function (car) {
+    let area = {}
+
+    area = this.setZParkXAxis(area, car)
+    area = this.setZParkYAxis(area, car)
+
+    let intersection = car.getNextIntersection()
+
+    let areas = [area]
+    // Technically will always be an intersection in this case.
+    if (intersection) {
+        areas.push(intersection.areas.xArea, intersection.areas.yArea)
+    } else {
+        console.error("Z Park turn didn't find an intersection to check.")
+    }
+    return areas
+}
+TrafficHandler.prototype.getUParkArea = function (car) {
+    let area = {}
+
+    area = this.setUParkXAxis(area, car)
+    area = this.setUParkYAxis(area, car)
+
+    let intersection = car.getNextIntersection()
+
+    let areas = [area]
+    // Technically will always be an intersection in this case.
+    if (intersection) {
+        areas.push(intersection.areas.xArea, intersection.areas.yArea)
+    } else {
+        console.error("U Park turn didn't find an intersection to check.")
+    }
+    return areas
+}
+TrafficHandler.prototype.setRightAngleParkXAxis = function (area, car) {
+    switch (car.direction) {
+        case 'north':
+            area.x = car.assignedSpace.x + car.assignedSpace.width
+            area.w =
+                car.coords.x +
+                car.baseWidth +
+                (car.baseLength - car.baseWidth) / 2 -
+                area.x
+            break
+        case 'east':
+            area.x = car.leadingEdge
+            area.w = car.assignedSpace.x + car.assignedSpace.width - area.x
+            break
+        case 'south':
+            area.x = car.coords.x
+            area.w = car.assignedSpace.x - area.x
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setRightAngleParkYAxis = function (area, car) {
+    switch (car.direction) {
+        case 'north':
+            area.y = car.assignedSpace.y
+            area.h = car.coords.y - car.assignedSpace.y
+            break
+        case 'east':
+            if (car.assignedSpace.y < car.coords.y) {
+                area.y = car.assignedSpace.y + car.assignedSpace.height
+                area.h =
+                    area.y -
+                    car.coords.y +
+                    car.baseWidth +
+                    (car.baseLength - car.baseWidth) / 2
+            } else {
+                area.y = car.coords.y + (car.baseLength - car.baseWidth) / 2
+                area.h = car.assignedSpace.y - area.y
+            }
+            break
+        case 'south':
+            area.y = car.leadingEdge
+            area.h =
+                car.assignedSpace.y + car.assignedSpace.height - car.leadingEdge
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setZParkXAxis = function (area, car) {
+    switch (car.direction) {
+        case 'north':
+            area.x = car.coords.x + (car.baseLength - car.baseWidth) / 2
+            area.w = car.assignedSpace.x + car.assignedSpace.width - area.x
+            break
+        case 'east':
+            // Good
+            area.x = car.leadingEdge
+            area.w = car.animation.endVals.forwardDistance
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setZParkYAxis = function (area, car) {
+    switch (car.direction) {
+        case 'north':
+            // Good
+            area.y = car.assignedSpace.y + car.assignedSpace.height
+            area.h = car.animation.endVals.forwardDistance
+            break
+        case 'east':
+            if (car.assignedSpace.y < car.coords.y + car.baseLength / 2) {
+                area.y = car.assignedSpace.y
+                area.h = car.animation.endVals.crossDistance
+            } else {
+                area.y = car.coords.y + (car.baseLength - car.baseWidth) / 2
+                area.h = car.assignedSpace.y + car.assignedSpace.height - area.y
+            }
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setUParkXAxis = function (area, car) {
+    area.x = car.coords.x
+    area.w = car.assignedSpace.x - car.coords.x + car.assignedSpace.width
+
+    return area
+}
+TrafficHandler.prototype.setUParkYAxis = function (area, car) {
+    area.y = car.assignedSpace.y - car.baseLength
+    area.h = car.baseLength
+
+    return area
+}
+TrafficHandler.prototype.getOverlappingIntersections = function (areas) {
+    let intersections = this.parkingLot.intersections
+    let overlappingIntersections = []
+    for (let area of areas) {
+        for (let intersection in intersections) {
+            intersection = intersections[intersection]
+            if (
+                this.checkCollision(area, intersection.areas.xArea) ||
+                this.checkCollision(area, intersection.areas.yArea)
+            ) {
+                overlappingIntersections.push(intersection)
+            }
+        }
+    }
+    return overlappingIntersections
 }
 
 TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
@@ -286,24 +461,6 @@ TrafficHandler.prototype.getAreaInStoppingDistance = function (car) {
 
     return stoppingDistanceArea
 }
-TrafficHandler.prototype.getParkingArea = function (car, animationType) {
-    let turnAreaForward = {
-        x: car.coords.x,
-        y: car.coords.y,
-        w: car.collisionBoxes.car.w,
-        h: car.collisionBoxes.car.h,
-    }
-    let turnAreaCross = {
-        x: 1,
-        y: 2,
-        w: 3,
-        h: 4,
-    }
-
-    // this.parkingLot.overlay.drawBox(el, stoppingDistanceArea, {backgroundColor: 'red',})
-
-    return turnArea
-}
 
 /**
  * @method
@@ -420,15 +577,41 @@ TrafficHandler.prototype.isEntranceClear = function (parkingLot) {
     return true
 }
 
-TrafficHandler.prototype.turnAreaClear = function (turnArea) {
-    // if (checkIntersection()) {
-    // return false
-    // }
+TrafficHandler.prototype.turnAreaClear = function (car, turnArea) {
+    // Intersection checking later?
 
-    let cars = this.returnActiveCarsInArea(turnArea)
+    let cars = this.returnActiveCarsInArea(turnArea, [car])
     if (cars.length > 0) {
+        if (car.userFocus) {
+            this.parkingLot.overlay.showTurnCheck(car, turnArea, 'blocked')
+        }
         return false
     }
+
+    if (car.userFocus) {
+        this.parkingLot.overlay.showTurnCheck(car, turnArea, 'clear')
+    }
+
+    return true
+}
+TrafficHandler.prototype.parkingAreaClear = function (car, parkingArea) {
+    for (let box of parkingArea) {
+        if (this.returnActiveCarsInArea(box, [car]).length > 0) {
+            if (car.userFocus) {
+                this.parkingLot.overlay.showParkingCheck(
+                    car,
+                    parkingArea,
+                    'blocked'
+                )
+            }
+            return false
+        }
+    }
+
+    if (car.userFocus) {
+        this.parkingLot.overlay.showParkingCheck(car, parkingArea, 'clear')
+    }
+
     return true
 }
 
@@ -439,6 +622,22 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     // and set whether cross vs forward is free, but may be unnecessary.
     this.parkingLot.overlay.updateIntersectionColor(intersection, car)
 
+    // ISSUE: Is this breaking cars that do already start a turn or otherwise
+    // in the intersection? (at least the intersection color)
+    // + cars ending their occupation while another car is behind them?
+    let checkOccupationInterval
+    let hasEntered = () => {
+        if (
+            this.checkCollision(
+                car.collisionBoxes.car,
+                intersection.areas[car.symbol + 'Area']
+            )
+        ) {
+            clearInterval(hasEnteredInterval)
+            checkOccupationInterval = setInterval(isStillOccupied, 50)
+        }
+    }
+
     let isStillOccupied = () => {
         if (
             !this.checkCollision(
@@ -447,12 +646,17 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
             ) ||
             car.status === 'parked'
         ) {
+            if (intersection.name == car.atIntersection) {
+                car.atIntersection = null
+            }
             intersection.occupied = false
             this.parkingLot.overlay.updateIntersectionColor(intersection)
             clearInterval(checkOccupationInterval)
         }
     }
-    let checkOccupationInterval = setInterval(isStillOccupied, 50)
+    // Sync with loop speed? Having it faster seems to cause issues
+    // with collision boxes not being updated properly.
+    let hasEnteredInterval = setInterval(hasEntered, 75)
 }
 
 // Current route plotter will send cars to mid-right parking spaces

@@ -15,7 +15,6 @@
  * @property {string} status
  * @property {space} assignedSpace
  * @property {Object} route
- * @property {Object} nextRoutePartition - Unused.
  * @property {Number} parkingDuration - Time car will park for in ms.
  *
  * @property {Number} speed - Speed the car is currently moving in by pixels
@@ -42,7 +41,8 @@ function Car(id, parkingLot) {
     this.currentSection = undefined
     this.assignedSpace = undefined
     this.route = undefined
-    this.nextRoute = undefined
+    this.nextIntersection = undefined
+    this.atIntersection = undefined
 
     this.baseWidth = undefined
     this.baseLength = undefined
@@ -156,7 +156,7 @@ Car.prototype.initialize = function (assignedSpace) {
     // Should restructure this.
     this.currentSection = this.route[0]
     //
-    this.nextIntersection = this.route[0].section.topIntersection
+    this.nextIntersection = this.getNextIntersection()
     this.parkingDuration = 15000
 
     this.speed = 5
@@ -174,6 +174,8 @@ Car.prototype.determineAction = function () {
             this.followRoute()
             break
         case 'turning':
+            this.turn()
+            break
         case 'parking':
         case 'leaving-space':
             break
@@ -251,7 +253,7 @@ Car.prototype.followRoute = function () {
                 this.status === 'entering' &&
                 !carsBetweenNextDestination.presence
             ) {
-                this.park(distanceToNextDestination)
+                this.park(false)
                 return
             }
         }
@@ -293,6 +295,13 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
     this.coords[this.symbol] =
         this.coords[this.symbol] + this.speed * this.negation
     this.pageEl.style[this.axis] = this.coords[this.symbol] + 'px'
+
+    let elementValue = this.pageEl.style[this.axis]
+    let objectValue = this.coords[this.symbol]
+
+    if (elementValue != objectValue + 'px') {
+        console.error('Page/Object positional value mismatch.')
+    }
 }
 
 Car.prototype.turn = function () {
@@ -303,11 +312,14 @@ Car.prototype.turn = function () {
         )
     }
 
-    let turnArea = this.parkingLot.trafficHandler.getTurnArea(
+    let turnArea = this.parkingLot.trafficHandler.getManeuverArea(
         this,
-        this.animation.endVals
+        this.animation
     )
-    if (this.parkingLot.trafficHandler.turnAreaClear(turnArea)) {
+    if (
+        this.status !== 'turning' &&
+        this.parkingLot.trafficHandler.turnAreaClear(this, turnArea)
+    ) {
         this.status = 'turning'
 
         this.pageEl.style.animationDuration = '3s'
@@ -316,70 +328,95 @@ Car.prototype.turn = function () {
 
         this.pageEl.style.animationName = this.animation.ruleObject.name
 
+        // Intersection necessary when it's blocked anyway?
+        // If we do keep it, add the intersections in
+        // TrafficHandler.getManeuverArea() and need to account for it
+        // in Overlay.showTurnCheck()
+        this.collisionBoxes.maneuver = turnArea
+
         // Could/should this be set indefinitely? Generic event funct
         // that checks status for endTurn/setParked?
         let endAnimEventFunct = () => {
             this.endTurn(this.animation.endVals)
             this.pageEl.removeEventListener('animationend', endAnimEventFunct)
-            // this.parkingLot.overlay.clearCollisionBoxes()
         }
         this.pageEl.addEventListener('animationend', endAnimEventFunct)
     } else {
         this.wait()
     }
 }
-Car.prototype.park = function () {
-    if (this.status !== 'parking') {
+Car.prototype.park = function (exceptional) {
+    if (!this.animation) {
+        let animationType
+        if (exceptional) {
+            animationType =
+                this.parkingLot.animationHandler.determineExceptionalAnimationType(
+                    this
+                )
+        } else {
+            animationType = 'right-angle-park'
+        }
+
+        this.animation = this.parkingLot.animationHandler.getAnimation(
+            this,
+            animationType
+        )
+    }
+
+    let parkingArea = this.parkingLot.trafficHandler.getManeuverArea(
+        this,
+        this.animation
+    )
+    let blockIntersection = false
+    let overlappingIntersections =
+        this.parkingLot.trafficHandler.getOverlappingIntersections(parkingArea)
+    if (overlappingIntersections.length > 0) {
+        let intersectionAreas = []
+        for (let intersection of overlappingIntersections) {
+            intersectionAreas.push(intersection.areas.xArea)
+            intersectionAreas.push(intersection.areas.yArea)
+        }
+        parkingArea = parkingArea.concat(intersectionAreas)
+        blockIntersection = true
+    }
+
+    if (
+        this.status !== 'parking' &&
+        this.parkingLot.trafficHandler.parkingAreaClear(this, parkingArea)
+    ) {
         this.status = 'parking'
 
-        let animation = this.parkingLot.animationHandler.getAnimation(
-            this,
-            'right-angle-park'
-        )
+        if (blockIntersection) {
+            for (let intersection of overlappingIntersections) {
+                this.parkingLot.trafficHandler.blockIntersection(
+                    this,
+                    intersection
+                )
+            }
+        }
 
-        this.pageEl.style.animationDuration = '4s'
-        this.pageEl.style.animationIterationCount = '1'
-        this.pageEl.style.animationTimingFunction =
-            'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+        if ((this.animation.type = 'right-angle-park')) {
+            this.pageEl.style.animationDuration = '4s'
+            this.pageEl.style.animationIterationCount = '1'
+            this.pageEl.style.animationTimingFunction =
+                'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+        } else {
+            this.pageEl.style.animationDuration = '5s'
+            this.pageEl.style.animationIterationCount = '1'
+            this.pageEl.style.animationTimingFunction =
+                'cubic-bezier(0.45, 0.05, 0.55, 0.95)'
+        }
 
-        this.pageEl.style.animationName = animation.ruleObject.name
-
-        this.pageEl.addEventListener('animationend', () => {
-            this.setParked(animation.endVals)
-        })
+        this.pageEl.style.animationName = this.animation.ruleObject.name
 
         let endAnimEventFunct = () => {
-            this.setParked(animation.endVals)
+            this.setParked(this.animation.endVals)
             this.pageEl.removeEventListener('animationend', endAnimEventFunct)
         }
         this.pageEl.addEventListener('animationend', endAnimEventFunct)
     }
 }
-Car.prototype.parkFromTurn = function () {
-    if (this.status !== 'parking') {
-        this.status = 'parking'
-    }
 
-    let animationType =
-        this.parkingLot.animationHandler.determineSpecialAnimationType(this)
-
-    let animation = this.parkingLot.animationHandler.getAnimation(
-        this,
-        animationType
-    )
-    this.pageEl.style.animationDuration = '5s'
-    this.pageEl.style.animationIterationCount = '1'
-    this.pageEl.style.animationTimingFunction =
-        'cubic-bezier(0.45, 0.05, 0.55, 0.95)'
-
-    this.pageEl.style.animationName = animation.ruleObject.name
-
-    let endAnimEventFunct = () => {
-        this.setParked(animation.endVals)
-        this.pageEl.removeEventListener('animationend', endAnimEventFunct)
-    }
-    this.pageEl.addEventListener('animationend', endAnimEventFunct)
-}
 Car.prototype.endTurn = function (endVals) {
     if (this.hasParked) {
         this.status = 'leaving'
@@ -401,6 +438,7 @@ Car.prototype.setParked = function (endVals) {
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
 
     this.pageEl.style.animationName = 'none'
+    this.animation = undefined
 
     this.parkingLot.cars.parked[this.id] = this
     delete this.parkingLot.cars.entering[this.id]
@@ -426,7 +464,7 @@ Car.prototype.setToNextSection = function () {
     this.nextDestination = null
     this.currentSection = this.route[0]
     this.direction = this.currentSection.direction
-    this.getNextIntersection()
+    this.nextIntersection = this.getNextIntersection()
 }
 
 Car.prototype.setPositionalVars = function () {
@@ -738,7 +776,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.parkFromTurn()
+                        this.park(true)
                     }
                 }
                 break
@@ -750,7 +788,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.parkFromTurn()
+                        this.park(true)
                     }
                 }
                 break
@@ -762,7 +800,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.parkFromTurn()
+                        this.park(true)
                     }
                 }
                 break
@@ -774,7 +812,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.parkFromTurn()
+                        this.park(true)
                     }
                 }
                 break
@@ -814,25 +852,35 @@ Car.prototype.getNextIntersection = function () {
     switch (this.direction) {
         case 'north':
             if (thisSection.topIntersection) {
-                this.nextIntersection = thisSection.topIntersection
+                return this.parkingLot.intersections[
+                    thisSection.topIntersection
+                ]
             }
             break
         case 'east':
             if (thisSection.rightIntersection) {
-                this.nextIntersection = thisSection.rightIntersection
+                return this.parkingLot.intersections[
+                    thisSection.rightIntersection
+                ]
             }
             break
         case 'south:':
             if (thisSection.bottomIntersection) {
-                this.nextIntersection = thisSection.bottomIntersection
+                return this.parkingLot.intersections[
+                    thisSection.bottomIntersection
+                ]
             }
             break
         case 'west':
             if (thisSection.leftIntersection) {
-                this.nextIntersection = thisSection.bottomIntersection
+                return this.parkingLot.intersections[
+                    thisSection.bottomIntersection
+                ]
             }
             break
     }
+
+    return null
 }
 
 // Could check if there are any cars with the same intersection as
@@ -840,9 +888,9 @@ Car.prototype.getNextIntersection = function () {
 // desired next direction for turns/parking maneuvers to ensure
 // cars don't turn onto the same section opposing one another.
 Car.prototype.checkIntersection = function () {
-    let intersection = this.parkingLot.intersections[this.nextIntersection]
+    let intersection = this.nextIntersection
     let carArea = this.collisionBoxes.car
-    carArea[this.symbol] += this.speed * this.negation
+    carArea[this.symbol] += this.minStoppingDistance * this.negation
     if (
         this.parkingLot.trafficHandler.checkCollision(
             carArea,
@@ -860,6 +908,7 @@ Car.prototype.checkIntersection = function () {
         if (intersection.occupied) {
             this.wait()
         } else {
+            this.atIntersection = this.nextIntersection
             this.nextIntersection = null
             this.parkingLot.trafficHandler.blockIntersection(this, intersection)
         }
