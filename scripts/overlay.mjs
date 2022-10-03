@@ -30,17 +30,6 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     }
 }
 
-// show intersections when a car checks then setInterval timer to hide
-// (so that it shows for more than a millisecond)
-
-// Figure out how cars are going to check against these static intersections
-// and how they'll target them (name from row/col pos., relative etc.)
-//      Whenever a car calls their checkAhead function it checks
-//      (when relevant) whether it will conflict with an intersection
-//      ahead.
-
-// Revamp car collision boxes and change them for reserving space.
-
 Overlay.prototype.createIntersectionOverlay = function (intersections) {
     let allIntersectionsWrapper = document.getElementById('intersections')
 

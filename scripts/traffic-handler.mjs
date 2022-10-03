@@ -270,11 +270,13 @@ TrafficHandler.prototype.getOverlappingIntersections = function (areas) {
     for (let area of areas) {
         for (let intersection in intersections) {
             intersection = intersections[intersection]
-            if (
-                this.checkCollision(area, intersection.areas.xArea) ||
-                this.checkCollision(area, intersection.areas.yArea)
-            ) {
-                overlappingIntersections.push(intersection)
+            if (!overlappingIntersections.includes(intersection)) {
+                if (
+                    this.checkCollision(area, intersection.areas.xArea) ||
+                    this.checkCollision(area, intersection.areas.yArea)
+                ) {
+                    overlappingIntersections.push(intersection)
+                }
             }
         }
     }
@@ -541,7 +543,7 @@ TrafficHandler.prototype.checkIfCarsTurning = function (cars) {
 }
 
 /**
- * Checks if any active cars are within one car's length of the entrance.
+ * Checks if any active cars are within the entrance.
  * @method
  * @param {ParkingLot} parkingLot
  * @returns {Boolean}
@@ -622,41 +624,60 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     // and set whether cross vs forward is free, but may be unnecessary.
     this.parkingLot.overlay.updateIntersectionColor(intersection, car)
 
-    // ISSUE: Is this breaking cars that do already start a turn or otherwise
-    // in the intersection? (at least the intersection color)
-    // + cars ending their occupation while another car is behind them?
-    let checkOccupationInterval
+    // Cars may block an intersection within their minStoppingDistance
+    // then start a turn before actually entering the intersection.
+    // Parking/Parked checks ensure hasEntered won't block.
+
+    // Probably still need to work on intersectionBlocking.
+    let isStillOccupiedInterval, hasEnteredInterval
     let hasEntered = () => {
         if (
             this.checkCollision(
                 car.collisionBoxes.car,
                 intersection.areas[car.symbol + 'Area']
-            )
+            ) ||
+            car.status === 'parking'
         ) {
             clearInterval(hasEnteredInterval)
-            checkOccupationInterval = setInterval(isStillOccupied, 50)
+            isStillOccupiedInterval = setInterval(isStillOccupied, 75)
         }
     }
 
     let isStillOccupied = () => {
-        if (
+        if (car.status === 'parking' || car.status === 'parked') {
+            if (car.status === 'parked') {
+                if (intersection.name == car.atIntersection) {
+                    car.atIntersection = null
+                }
+                intersection.occupied = false
+                this.parkingLot.overlay.updateIntersectionColor(intersection)
+                clearInterval(isStillOccupiedInterval)
+            }
+        } else if (
             !this.checkCollision(
                 car.collisionBoxes.car,
                 intersection.areas[car.symbol + 'Area']
-            ) ||
-            car.status === 'parked'
+            )
         ) {
             if (intersection.name == car.atIntersection) {
                 car.atIntersection = null
             }
             intersection.occupied = false
             this.parkingLot.overlay.updateIntersectionColor(intersection)
-            clearInterval(checkOccupationInterval)
+            clearInterval(isStillOccupiedInterval)
         }
     }
-    // Sync with loop speed? Having it faster seems to cause issues
-    // with collision boxes not being updated properly.
-    let hasEnteredInterval = setInterval(hasEntered, 75)
+
+    // Skip straight to checking if parked when parking, as the car's
+    // collisionBox may never actually enter the intersection.
+    if (car.status === 'parking') {
+        isStillOccupiedInterval = setInterval(isStillOccupied, 75)
+    } else {
+        // Having this interval faster than loop speed seems to
+        // cause hasEntered to fire too soon and isStillOccupied
+        // to fire immediately after.
+        hasEnteredInterval = setInterval(hasEntered, 75)
+    }
 }
 
 // Current route plotter will send cars to mid-right parking spaces

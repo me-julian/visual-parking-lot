@@ -388,10 +388,12 @@ Car.prototype.park = function (exceptional) {
 
         if (blockIntersection) {
             for (let intersection of overlappingIntersections) {
-                this.parkingLot.trafficHandler.blockIntersection(
-                    this,
-                    intersection
-                )
+                if (!intersection.occupied) {
+                    this.parkingLot.trafficHandler.blockIntersection(
+                        this,
+                        intersection
+                    )
+                }
             }
         }
 

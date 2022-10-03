@@ -78,7 +78,6 @@ ParkingLot.prototype.initializeIntersections = function () {
 ParkingLot.prototype.spawnCar = function () {
     let assignedSpace = this.getHighestRankedSpace()
     if (assignedSpace) {
-        // Need to differentiate car and space page element ids.
         let id = this.carCount
         this.carCount += 1
 
