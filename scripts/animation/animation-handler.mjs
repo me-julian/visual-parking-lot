@@ -33,6 +33,21 @@ function AnimationHandler(animationTypes) {
     this.animations = {}
 }
 
+// Leaving Space Animations
+// Basic Normal:
+// Left column pull out S to flow with traffic
+// Horizontal pull out W, no reason to do otherwise
+// Right column pull out N, no reason to do otherwise
+// --- This shouldn't work with how routes are currently calculated
+
+// Special:
+// Top Left 2
+// Pull out South until able to turn right to head East
+// Bottom Left 2
+// Pull out North until able to turn left to head East
+// Top Right 2
+// Pull out South, turn into top horizontal, right turn to head South
+
 AnimationHandler.prototype.determineExceptionalAnimationType = function (car) {
     let type
     let startDirection = car.direction
@@ -75,6 +90,16 @@ AnimationHandler.prototype.getAnimation = function (car, type) {
             case 'u-park':
                 animation = new this.animationTypes.UPark(this, animName)
                 break
+            case 'right-angle-reverse':
+                animation = new this.animationTypes.RightAngleReverse(
+                    this,
+                    animName
+                )
+                break
+            case 'right-angle-far-reverse':
+                break
+            case 'right-angle-three-point-reverse':
+                break
         }
 
         animation.buildSelf(car)
@@ -104,6 +129,15 @@ AnimationHandler.prototype.getAnimationName = function (car, type) {
                 '-' +
                 car.route[1].turn
             break
+        case 'right-angle-reverse':
+            animName = 'space-' + car.assignedSpace.rank + '-leaving-space'
+            break
+        case 'right-angle-far-reverse':
+            //
+            break
+        case 'right-angle-three-point-reverse':
+            //
+            break
     }
 
     return animName
@@ -114,6 +148,38 @@ AnimationHandler.prototype.getAnimationRule = function (animName) {
         if (ruleList[i].name === animName) {
             return ruleList[i]
         }
+    }
+}
+
+AnimationHandler.prototype.getLeftOrRight = function (
+    startDirection,
+    endDirection
+) {
+    switch (startDirection) {
+        case 'north':
+            if (endDirection === 'east') {
+                return 'left'
+            } else {
+                return 'right'
+            }
+        case 'south':
+            if (endDirection === 'east') {
+                return 'right'
+            } else {
+                return 'left'
+            }
+        case 'east':
+            if (endDirection === 'north') {
+                return 'right'
+            } else {
+                return 'left'
+            }
+        case 'west':
+            if (endDirection === 'north') {
+                return 'left'
+            } else {
+                return 'right'
+            }
     }
 }
 

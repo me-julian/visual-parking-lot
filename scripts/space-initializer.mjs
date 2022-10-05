@@ -274,9 +274,87 @@ SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
             animations: {},
         },
     ]
+    let rightAngleReverse = [
+        // Left Column Sections
+        {
+            x: 20,
+            y: 235,
+            width: 208,
+            height: 100,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row0col0,
+            animations: {},
+        },
+        {
+            x: 20,
+            y: 453,
+            width: 208,
+            height: 100,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row1col0,
+            animations: {},
+        },
+        {
+            x: 20,
+            y: 673,
+            width: 208,
+            height: 100,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row2col0,
+            animations: {},
+        },
+        // // Horizontals
+        {
+            x: 533,
+            y: 28,
+            width: 100,
+            height: 212,
+            facing: 'north',
+            section: this.pathObject.sections.horizontal.row0col1,
+            animations: {},
+        },
+        {
+            x: 533,
+            y: 395,
+            width: 100,
+            height: 210,
+            facing: 'south',
+            section: this.pathObject.sections.horizontal.row0col1,
+            animations: {},
+        },
+        // Right column sections
+        {
+            x: 1140,
+            y: 235,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row0col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 453,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row1col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 673,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row2col2,
+            animations: {},
+        },
+    ]
 
-    spaces.zTurn = zTurn
-    spaces.uTurn = uTurn
+    // spaces.zTurn = zTurn
+    // spaces.uTurn = uTurn
+    spaces.rightAngleReverse = rightAngleReverse
 
     return spaces
 }

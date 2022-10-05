@@ -138,6 +138,7 @@ Car.prototype.initialize = function (assignedSpace) {
     }
     this.direction = 'north'
     this.setPositionalVars()
+    this.updateCollisionBox()
 
     this.img = this.getRandomImage()
     this.orientation = 270
@@ -152,12 +153,12 @@ Car.prototype.initialize = function (assignedSpace) {
     //
     this.currentSection = this.parkingLot.pathObject.entrance
     //
-    this.route = this.parkingLot.requestRoute(this)
+    this.route = this.parkingLot.requestRouteToSpace(this)
     // Should restructure this.
     this.currentSection = this.route[0]
     //
     this.nextIntersection = this.getNextIntersection()
-    this.parkingDuration = 15000
+    this.parkingDuration = 10000
 
     this.speed = 5
     this.maxSpeed = 15
@@ -180,13 +181,14 @@ Car.prototype.determineAction = function () {
         case 'leaving-space':
             break
         case 'parked':
-            this.wait()
+            this.attemptToLeaveSpace()
             break
     }
 }
 
 Car.prototype.followRoute = function () {
     this.setPositionalVars()
+    this.updateCollisionBox()
 
     // Could be combined
     let nextPathDestination = this.getNextDestination(
@@ -270,16 +272,7 @@ Car.prototype.followRoute = function () {
     }
 }
 
-Car.prototype.wait = function () {
-    if (this.status === 'parked') {
-        if (this.hasParked) {
-            // Check if clear
-            // this.reverseOutOfSpace()
-            // this.parkingLot.cars.leaving[this.id] = this
-            // delete this.parkingLot.cars.parked[this.id]
-        }
-    }
-}
+Car.prototype.wait = function () {}
 Car.prototype.moveForward = function (distanceToNextDestination) {
     this.advance(distanceToNextDestination, this.speed)
 }
@@ -295,13 +288,6 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
     this.coords[this.symbol] =
         this.coords[this.symbol] + this.speed * this.negation
     this.pageEl.style[this.axis] = this.coords[this.symbol] + 'px'
-
-    let elementValue = this.pageEl.style[this.axis]
-    let objectValue = this.coords[this.symbol]
-
-    if (elementValue != objectValue + 'px') {
-        console.error('Page/Object positional value mismatch.')
-    }
 }
 
 Car.prototype.turn = function () {
@@ -312,13 +298,18 @@ Car.prototype.turn = function () {
         )
     }
 
-    let turnArea = this.parkingLot.trafficHandler.getManeuverArea(
-        this,
-        this.animation
-    )
+    // ISSUE: maneuver areas with intersections unnecessary?
+    // If we do keep it, add the intersections in
+    // TrafficHandler.getManeuverArea() and need to account for it
+    // in Overlay.showTurnCheck()
+    this.collisionBoxes.maneuver =
+        this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
     if (
         this.status !== 'turning' &&
-        this.parkingLot.trafficHandler.turnAreaClear(this, turnArea)
+        this.parkingLot.trafficHandler.turnAreaClear(
+            this,
+            this.collisionBoxes.maneuver
+        )
     ) {
         this.status = 'turning'
 
@@ -328,14 +319,6 @@ Car.prototype.turn = function () {
 
         this.pageEl.style.animationName = this.animation.ruleObject.name
 
-        // Intersection necessary when it's blocked anyway?
-        // If we do keep it, add the intersections in
-        // TrafficHandler.getManeuverArea() and need to account for it
-        // in Overlay.showTurnCheck()
-        this.collisionBoxes.maneuver = turnArea
-
-        // Could/should this be set indefinitely? Generic event funct
-        // that checks status for endTurn/setParked?
         let endAnimEventFunct = () => {
             this.endTurn(this.animation.endVals)
             this.pageEl.removeEventListener('animationend', endAnimEventFunct)
@@ -363,26 +346,30 @@ Car.prototype.park = function (exceptional) {
         )
     }
 
-    let parkingArea = this.parkingLot.trafficHandler.getManeuverArea(
-        this,
-        this.animation
-    )
+    this.collisionBoxes.maneuver =
+        this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
     let blockIntersection = false
     let overlappingIntersections =
-        this.parkingLot.trafficHandler.getOverlappingIntersections(parkingArea)
+        this.parkingLot.trafficHandler.getOverlappingIntersections(
+            this.collisionBoxes.maneuver
+        )
     if (overlappingIntersections.length > 0) {
         let intersectionAreas = []
         for (let intersection of overlappingIntersections) {
             intersectionAreas.push(intersection.areas.xArea)
             intersectionAreas.push(intersection.areas.yArea)
         }
-        parkingArea = parkingArea.concat(intersectionAreas)
+        this.collisionBoxes.maneuver =
+            this.collisionBoxes.maneuver.concat(intersectionAreas)
         blockIntersection = true
     }
 
     if (
         this.status !== 'parking' &&
-        this.parkingLot.trafficHandler.parkingAreaClear(this, parkingArea)
+        this.parkingLot.trafficHandler.parkingAreaClear(
+            this,
+            this.collisionBoxes.maneuver
+        )
     ) {
         this.status = 'parking'
 
@@ -412,10 +399,52 @@ Car.prototype.park = function (exceptional) {
         this.pageEl.style.animationName = this.animation.ruleObject.name
 
         let endAnimEventFunct = () => {
-            this.setParked(this.animation.endVals)
+            this.endParking(this.animation.endVals)
             this.pageEl.removeEventListener('animationend', endAnimEventFunct)
         }
         this.pageEl.addEventListener('animationend', endAnimEventFunct)
+    }
+}
+Car.prototype.attemptToLeaveSpace = function () {
+    if (this.hasParked) {
+        if (!this.animation) {
+            // Create/retrieve an animation.
+            this.animation = this.parkingLot.animationHandler.getAnimation(
+                this,
+                'right-angle-reverse'
+            )
+        }
+
+        // if (!this.collisionBoxes.maneuver) {
+        //     this.collisionBoxes.manuever =
+        //         this.parkingLot.trafficHandler.getManeuverArea(this)
+        // }
+
+        let clear = true
+
+        if (clear) {
+            // (this.parkingLot.trafficHandler.leaveSpaceAreaClear(
+            //         this,
+            //         this.collisionBoxes.maneuver))
+            this.leaveSpace()
+        }
+    }
+}
+Car.prototype.leaveSpace = function () {
+    if (this.status === 'parked') {
+        this.status = 'leavingSpace'
+
+        this.pageEl.style.animationDuration = '4s'
+        this.pageEl.style.animationIterationCount = 'infinite'
+        this.pageEl.style.animationTimingFunction =
+            'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+        this.pageEl.style.animationName = this.animation.ruleObject.name
+
+        // let endAnimEventFunct = () => {
+        //     this.endLeavingSpace(this.animation.endVals)
+        //     this.pageEl.removeEventListener('animationend', endAnimEventFunct)
+        // }
+        // this.pageEl.addEventListener('animationend', endAnimEventFunct)
     }
 }
 
@@ -427,16 +456,21 @@ Car.prototype.endTurn = function (endVals) {
     }
 
     this.setToNextSection()
+    this.adjustPositionalVarsAfterAnim(endVals)
     this.updateCollisionBox()
-    this.updatePositionalVars(endVals)
+    this.adjustCollisionBoxFromAnim()
+    this.updateElementPosition()
 
     this.pageEl.style.animationName = 'none'
     this.animation = undefined
 }
-Car.prototype.setParked = function (endVals) {
+Car.prototype.endParking = function (endVals) {
+    this.adjustPositionalVarsAfterAnim(endVals)
     this.setPositionalVars()
-    this.updatePositionalVars(endVals)
+    this.updateCollisionBox()
+    this.updateElementPosition()
 
+    // Is this hiding collisionBoxes that need to be rotated?
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
 
     this.pageEl.style.animationName = 'none'
@@ -446,19 +480,30 @@ Car.prototype.setParked = function (endVals) {
     delete this.parkingLot.cars.entering[this.id]
     this.status = 'parked'
 
-    this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
-    // setTimeout(() => {
-    //     // Requesting route from parking space doesn't work.
-    //     // Need to initialize direction (can be different in unususal
-    //     // spaces), probably fix other things.
-    //     this.parkingLot.requestRoute(this)
+    this.currentSection = this.route[this.route.length - 1]
 
-    //     console.log(this.id + ' is ready to leave their space.')
-    //     this.hasParked = true
-    // }, this.parkingDuration)
+    this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
+
+    setTimeout(() => {
+        this.route = this.parkingLot.requestRouteFromSpace(this)
+
+        console.log(this.id + ' is ready to leave their space.')
+        this.hasParked = true
+    }, this.parkingDuration)
+}
+Car.prototype.endLeavingSpace = function (endVals) {
+    console.log('Ready to drive to exit.')
+    this.status === 'leaving'
+
+    this.adjustPositionalVarsAfterAnim(endVals)
+    this.setPositionalVars()
+    this.updateCollisionBox()
+    this.updateElementPosition()
+
+    this.pageEl.style.animationName = 'none'
+    this.animation = undefined
 }
 
-Car.prototype.reverseOutOfSpace = function () {}
 Car.prototype.exitScene = function () {}
 
 Car.prototype.setToNextSection = function () {
@@ -494,36 +539,30 @@ Car.prototype.setPositionalVars = function () {
         leadingEdge += this.baseLength
     }
 
-    // ISSUE:
-    // This should be moved or this function should be called at the end
-    // of a car's action to ensure it isn't out of sync.
-    // Or is updatePositionalVars enough?
-    this.collisionBoxes.car.x = this.coords.x
-    this.collisionBoxes.car.y = this.coords.y
-    this.collisionBoxes.car[oppSymbol] += 90 / 2
-
     this.leadingEdge = leadingEdge
     this.symbol = symbol
     this.oppSymbol = oppSymbol
     this.axis = axis
     this.negation = negation
 }
-Car.prototype.updatePositionalVars = function (newVals) {
+Car.prototype.adjustPositionalVarsAfterAnim = function (newVals) {
     this.coords.x = newVals.x
     this.coords.y = newVals.y
     this.orientation = newVals.orientation
     this.direction = newVals.direction
-
+}
+Car.prototype.updateElementPosition = function () {
     this.pageEl.style.left = this.coords.x + 'px'
     this.pageEl.style.top = this.coords.y + 'px'
     this.pageEl.style.transform = 'rotate(' + this.orientation + 'deg)'
+}
 
+Car.prototype.updateCollisionBox = function () {
     this.collisionBoxes.car.x = this.coords.x
     this.collisionBoxes.car.y = this.coords.y
     this.collisionBoxes.car[this.oppSymbol] += 90 / 2
 }
-
-Car.prototype.updateCollisionBox = function () {
+Car.prototype.adjustCollisionBoxFromAnim = function () {
     //   Need to handle intersections
     switch (this.status) {
         case 'turning':

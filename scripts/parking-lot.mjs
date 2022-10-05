@@ -97,7 +97,7 @@ ParkingLot.prototype.spawnCar = function () {
     }
 }
 
-ParkingLot.prototype.requestRoute = function (car) {
+ParkingLot.prototype.requestRouteToSpace = function (car) {
     let start = {
         section: car.currentSection,
         direction: car.direction,
@@ -110,23 +110,11 @@ ParkingLot.prototype.requestRoute = function (car) {
     }
 
     let destination = {}
-    if (car.hasParked) {
-        start.coord = car.assignedSpace[car.symbol]
-
-        destination.section = this.pathObject.exit
-        destination.coord = destination.section.exit.y
-        if (destination.section.exit === 'south') {
-            destination.coord += destination.section.len
-        }
+    destination.section = car.assignedSpace.section
+    if (destination.section.horizontal) {
+        destination.coord = car.assignedSpace.x
     } else {
-        destination.section = car.assignedSpace.section
-        if (destination.section.horizontal) {
-            destination.coord = car.assignedSpace.x
-            // All horizontal spaces are approached from the left
-            destination.coord += car.assignedSpace.width
-        } else {
-            destination.coord = car.assignedSpace.y
-        }
+        destination.coord = car.assignedSpace.y
     }
 
     let route = this.routePlotter.createRoute(
@@ -135,15 +123,104 @@ ParkingLot.prototype.requestRoute = function (car) {
         destination
     )
 
-    // Should be handled elsewhere
+    // Adjust to always make destination.coord the far side of a space.
     destination = route[route.length - 1]
     if (destination.direction === 'south') {
         destination.coord += car.assignedSpace.height
-    } else if (destination.direction === 'west') {
+    } else if (destination.direction === 'east') {
         destination.coord += car.assignedSpace.width
     }
 
     return route
+}
+ParkingLot.prototype.requestRouteFromSpace = function (car) {
+    // Vars:
+    // Previous route end coord (space's far edge along section)
+    // car.currentSection
+    // previous direction & current direction (space direction)
+    // Axis
+    // negation (which is opposite to what reversing will be)
+    // endVals
+
+    let start = {
+        section: car.assignedSpace.section,
+    }
+
+    start = this.determineSpaceExitLocation(car, start)
+
+    // Testing
+    if (start === null) {
+        console.log('Exceptional reverse situation, unhandled.')
+        return
+    } else if (start === undefined) {
+        console.error('Unexpected undefined start after determining direction.')
+        return
+    }
+    //
+
+    let destinationSection = this.pathObject.exit
+    let destination = {
+        section: destinationSection,
+        direction: 'south',
+        coord: destinationSection.y + destinationSection.len,
+    }
+
+    return this.routePlotter.createRoute(this.routePlotter, start, destination)
+}
+// Most likely move to another object.
+ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
+    switch (car.direction) {
+        // Check if cars are close enough to the edge to need to make
+        // a special maneuver.
+        case 'east':
+            if (car.route[car.route.length - 1].coord <= 228) {
+                // Pull out south then turn east
+                // Change coord and section itself
+                return null
+            } else if (car.route[car.route.length - 1].coord >= 783) {
+                // Pull out north then turn east
+                // Change coord and section itself
+                return null
+            }
+            break
+        case 'west':
+            if (car.route[car.route.length - 1].coord <= 228) {
+                // Pull out south then west then turn south
+                // Change coord and section itself
+                return null
+            }
+            break
+    }
+
+    switch (car.direction) {
+        // All horizontal cars pull out west to head east.
+        case 'north':
+        case 'south':
+            start.direction = 'east'
+            break
+        // all right column cars pull out north
+
+        case 'east':
+            start.direction = 'south'
+            break
+        // Left column - Give normal coord (maybe adjust for turn?)
+        // and check what the nextSection is, N/S (horizontal)
+
+        // middle section cars will pull out north (onto its own section)
+        // top section will pull out north (onto its own section)
+        // bottom section will pull out south (onto its own section)
+        case 'west':
+            // Only the top of the three bottom section spaces
+            // will pull out North.
+            if (car.assignedSpace.section.row === 2) {
+                start.direction = 'north'
+            } else {
+                start.direction = 'south'
+            }
+            break
+    }
+
+    return start
 }
 
 ParkingLot.prototype.getHighestRankedSpace = function () {

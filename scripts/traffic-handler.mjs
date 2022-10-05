@@ -264,6 +264,7 @@ TrafficHandler.prototype.setUParkYAxis = function (area, car) {
 
     return area
 }
+TrafficHandler.prototype.getLeavingSpaceArea = function () {}
 TrafficHandler.prototype.getOverlappingIntersections = function (areas) {
     let intersections = this.parkingLot.intersections
     let overlappingIntersections = []
@@ -616,6 +617,7 @@ TrafficHandler.prototype.parkingAreaClear = function (car, parkingArea) {
 
     return true
 }
+TrafficHandler.prototype.leaveSpaceAreaClear = function (car) {}
 
 TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     intersection.occupied = true
@@ -665,6 +667,7 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
             intersection.occupied = false
             this.parkingLot.overlay.updateIntersectionColor(intersection)
             clearInterval(isStillOccupiedInterval)
+            // Clear car.atIntersection?
         }
     }
 
