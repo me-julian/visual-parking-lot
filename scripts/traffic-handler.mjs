@@ -101,6 +101,8 @@ TrafficHandler.prototype.getManeuverArea = function (car) {
         case 'u-park':
             maneuverArea = this.getUParkArea(car)
             break
+        case 'right-angle-reverse':
+            maneuverArea = this.getRightAngleReverseArea(car)
     }
 
     return maneuverArea
@@ -264,7 +266,51 @@ TrafficHandler.prototype.setUParkYAxis = function (area, car) {
 
     return area
 }
-TrafficHandler.prototype.getLeavingSpaceArea = function () {}
+TrafficHandler.prototype.getRightAngleReverseArea = function (car) {
+    let area = {}
+
+    area = this.setRightAngleReverseXAxis(area, car)
+    area = this.setRightAngleReverseYAxis(area, car)
+
+    return [area]
+}
+TrafficHandler.prototype.setRightAngleReverseXAxis = function (area, car) {
+    switch (car.animation.endVals.direction) {
+        case 'north':
+            area.x = car.assignedSpace.section.x
+            area.w = car.baseWidth
+            break
+        case 'east':
+            area.x = car.animation.endVals.x
+            area.w = car.assignedSpace.x + car.assignedSpace.width + 10 - area.x
+            break
+        case 'south':
+            area.x = car.assignedSpace.section.x
+            area.w = car.baseWidth
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setRightAngleReverseYAxis = function (area, car) {
+    switch (car.animation.endVals.direction) {
+        case 'north':
+            area.y = car.assignedSpace.y - 10
+            area.h = car.animation.endVals.y - area.y + car.baseLength
+            break
+        case 'east':
+            area.y = car.assignedSpace.section.y
+            area.h = car.baseWidth
+            break
+        case 'south':
+            area.y = car.animation.endVals.y
+            area.h =
+                car.assignedSpace.y + car.assignedSpace.height + 10 - area.y
+            break
+    }
+
+    return area
+}
 TrafficHandler.prototype.getOverlappingIntersections = function (areas) {
     let intersections = this.parkingLot.intersections
     let overlappingIntersections = []
@@ -580,44 +626,22 @@ TrafficHandler.prototype.isEntranceClear = function (parkingLot) {
     return true
 }
 
-TrafficHandler.prototype.turnAreaClear = function (car, turnArea) {
-    // Intersection checking later?
-
-    let cars = this.returnActiveCarsInArea(turnArea, [car])
-    if (cars.length > 0) {
-        if (car.userFocus) {
-            this.parkingLot.overlay.showTurnCheck(car, turnArea, 'blocked')
-        }
-        return false
-    }
-
-    if (car.userFocus) {
-        this.parkingLot.overlay.showTurnCheck(car, turnArea, 'clear')
-    }
-
-    return true
-}
-TrafficHandler.prototype.parkingAreaClear = function (car, parkingArea) {
-    for (let box of parkingArea) {
+TrafficHandler.prototype.maneuverAreaClear = function (car, areas) {
+    for (let box of areas) {
         if (this.returnActiveCarsInArea(box, [car]).length > 0) {
             if (car.userFocus) {
-                this.parkingLot.overlay.showParkingCheck(
-                    car,
-                    parkingArea,
-                    'blocked'
-                )
+                this.parkingLot.overlay.showManeuverCheck(car, areas, 'blocked')
             }
             return false
         }
     }
 
     if (car.userFocus) {
-        this.parkingLot.overlay.showParkingCheck(car, parkingArea, 'clear')
+        this.parkingLot.overlay.showManeuverCheck(car, areas, 'clear')
     }
 
     return true
 }
-TrafficHandler.prototype.leaveSpaceAreaClear = function (car) {}
 
 TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     intersection.occupied = true

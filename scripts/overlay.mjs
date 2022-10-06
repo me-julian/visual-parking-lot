@@ -5,6 +5,7 @@
  */
 function Overlay() {
     this.wrapper = document.getElementById('lot-overlay')
+    this.timers = {}
 }
 
 /**
@@ -182,54 +183,55 @@ Overlay.prototype.showIntersectionCheck = function (car) {
     }, 1500)
 }
 
-Overlay.prototype.showTurnCheck = function (car, turnArea, state) {
-    let intersection = car.atIntersection.name
-    document.getElementById(intersection).style.display = 'initial'
-    let maneuverWrapper = document.createElement('div')
-    car.pageWrapper.append(maneuverWrapper)
+Overlay.prototype.showManeuverCheck = function (car, areas, state) {
+    // Could make this not duplicate intersections overlay els.
+    let maneuverId = car.id + '-maneuver'
+    if (!this.timers[maneuverId]) {
+        let maneuverWrapper = document.createElement('div')
+        maneuverWrapper.id = maneuverId
+        car.pageWrapper.append(maneuverWrapper)
 
-    for (let area of turnArea) {
-        let areaEl = this.createBox(maneuverWrapper, [
-            'overlay-el',
-            'maneuver-box',
-        ])
+        for (let area of areas) {
+            let areaEl = this.createBox(maneuverWrapper, [
+                'overlay-el',
+                'maneuver-box',
+            ])
 
-        let color
-        if (state === 'blocked') {
-            color = 'red'
-        } else {
-            color = 'green'
+            let color
+            if (state === 'blocked') {
+                color = 'red'
+            } else {
+                color = 'green'
+            }
+            this.drawBox(areaEl, area, {backgroundColor: color})
         }
-        this.drawBox(areaEl, area, {backgroundColor: color})
-    }
 
-    setTimeout(() => {
-        document.getElementById(intersection).style.display = ''
-        maneuverWrapper.remove()
-    }, 1500)
+        this.timers[maneuverId] = setTimeout(() => {
+            maneuverWrapper.remove()
+            delete this.timers[maneuverId]
+        }, 1500)
+    } else {
+        clearTimeout(this.timers[maneuverId])
+
+        let maneuverWrapper = document.getElementById(maneuverId)
+        this.updateManeuverColor(maneuverWrapper, state)
+
+        this.timers[maneuverId] = setTimeout(() => {
+            maneuverWrapper.remove()
+            delete this.timers[maneuverId]
+        }, 1500)
+    }
 }
-Overlay.prototype.showParkingCheck = function (car, parkingArea, state) {
-    let maneuverWrapper = document.createElement('div')
-    car.pageWrapper.append(maneuverWrapper)
-
-    for (let area of parkingArea) {
-        let areaEl = this.createBox(maneuverWrapper, [
-            'overlay-el',
-            'maneuver-box',
-        ])
-
-        let color
-        if (state === 'blocked') {
-            color = 'red'
-        } else {
-            color = 'green'
-        }
-        this.drawBox(areaEl, area, {backgroundColor: color})
+Overlay.prototype.updateManeuverColor = function (wrapper, state) {
+    let color
+    if (state === 'blocked') {
+        color = 'red'
+    } else {
+        color = 'green'
     }
-
-    setTimeout(() => {
-        maneuverWrapper.remove()
-    }, 1500)
+    for (let box of wrapper.children) {
+        box.style.backgroundColor = color
+    }
 }
 
 Overlay.prototype.updateSpaceColor = function (space, car) {

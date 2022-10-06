@@ -160,7 +160,7 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
         endDirection
     )
 
-    let orientationMod, crossNegation
+    let orientationMod
     if (turnDirection === 'left') {
         orientationMod = 90
     } else {
