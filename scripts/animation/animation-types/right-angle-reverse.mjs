@@ -51,31 +51,48 @@ RightAngleReverse.prototype.buildFortyKeyframe = function (car, endVals) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
-            leftVal = car.coords.x
-
-            topVal = car.coords.y + car.baseLength / 7
-
-            orientationVal = car.orientation + endVals.orientationMod / 6
+            // Not present
             break
         case 'east':
-            leftVal =
-                car.coords.x + (car.assignedSpace.width - car.baseWidth) / 2
-
-            topVal = car.coords.y + car.baseLength / 1.65
+            if (car.direction === 'north') {
+                leftVal =
+                    car.coords.x + (car.assignedSpace.width - car.baseWidth) / 2
+                topVal = car.coords.y + car.baseLength / 1.65
+            } else if (car.direction === 'south') {
+                leftVal =
+                    car.coords.x + (car.assignedSpace.width - car.baseWidth) / 2
+                topVal = car.coords.y - car.baseLength / 1.65
+            }
 
             orientationVal = car.orientation + endVals.orientationMod / 6
             break
         case 'north':
-            leftVal = car.coords.x + car.baseLength / 7
-
-            topVal = car.coords.y
+            if (car.direction === 'east') {
+                leftVal = car.coords.x - car.baseLength / 1.65
+                topVal =
+                    car.coords.y -
+                    (car.assignedSpace.height - car.baseWidth) / 2
+            } else if (car.direction === 'west') {
+                leftVal = car.coords.x + car.baseLength / 1.65
+                topVal =
+                    car.coords.y -
+                    (car.assignedSpace.height - car.baseWidth) / 2
+            }
 
             orientationVal = car.orientation + endVals.orientationMod / 6
             break
         case 'south':
-            leftVal = car.coords.x + car.baseWidth / 5
-
-            topVal = car.coords.y
+            if (car.direction === 'east') {
+                leftVal = car.coords.x - car.baseLength / 1.65
+                topVal =
+                    car.coords.y +
+                    (car.assignedSpace.height - car.baseWidth) / 2
+            } else if (car.direction === 'west') {
+                leftVal = car.coords.x + car.baseLength / 1.65
+                topVal =
+                    car.coords.y +
+                    (car.assignedSpace.height - car.baseWidth) / 2
+            }
 
             orientationVal = car.orientation + endVals.orientationMod / 6
             break
@@ -143,22 +160,12 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
         endDirection
     )
 
-    let orientationMod
+    let orientationMod, crossNegation
     if (turnDirection === 'left') {
         orientationMod = 90
     } else {
         orientationMod = -90
     }
-    // if (
-    //     endDirection < car.orientation ||
-    //     car.orientation - endDirection >= 270
-    // ) {
-    //     orientationMod = 90
-    // } else {
-    //     orientationMod = -90
-    // }
-
-    let crossNegation
 
     return {
         orientationMod: orientationMod,
@@ -170,28 +177,25 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
 RightAngleReverse.prototype.getAdjustedEndCoords = function (car, endVals) {
     switch (endVals.direction) {
         case 'west':
-            endVals.x += car.baseLength
-            endVals.x -= car.assignedSpace.width / 2
-
-            endVals.y -= (car.baseLength - car.baseWidth) / 2
-
-            endVals.orientation = car.orientation + endVals.orientationMod
+            // Not present
+            console.error('Car turning in unexpected/unhandled direction.')
             break
         case 'east':
-            // Adjust for setting on left
             endVals.x -= car.baseLength
-            endVals.x += car.assignedSpace.width / 2
+            endVals.x += car.assignedSpace.width / 3
 
             endVals.y -= (car.baseLength - car.baseWidth) / 2
 
-            // Need to get correct change.
             endVals.orientation = car.orientation + endVals.orientationMod
             break
         case 'north':
             endVals.x -= (car.baseLength - car.baseWidth) / 2
 
+            endVals.y -=
+                car.assignedSpace.height -
+                (car.assignedSpace.height - car.baseWidth)
             endVals.y += car.baseLength
-            endVals.y -= car.assignedSpace.width / 2
+            endVals.y -= car.assignedSpace.height / 3
 
             endVals.orientation = car.orientation + endVals.orientationMod
             break
@@ -199,7 +203,7 @@ RightAngleReverse.prototype.getAdjustedEndCoords = function (car, endVals) {
             endVals.x -= (car.baseLength - car.baseWidth) / 2
 
             endVals.y -= car.baseLength
-            endVals.y += car.assignedSpace.width / 2
+            endVals.y += car.assignedSpace.height / 3
 
             endVals.orientation = car.orientation + endVals.orientationMod
             break
