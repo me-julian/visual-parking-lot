@@ -223,13 +223,11 @@ Car.prototype.followRoute = function () {
     let carsInMinStoppingDistance =
         this.checkStoppingDistanceArea(stoppingDistanceArea)
 
-    // Do we use this to check for ability to turn/make other maneuvers
-    // or do we do that in the turn/park etc. function itself?
-    // let destinationArea =
-    //     this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
+    let destinationArea =
+        this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
     // let carsBetweenNextDestination = this.checkDestinationArea(destinationArea)
 
-    // let roadArea = this.parkingLot.trafficHandler.getAreaAlongColOrRow(this)
+    let roadArea = this.parkingLot.trafficHandler.getAreaAlongRoad(this)
     // let carsAheadOnRoad = this.checkRoadAheadArea(roadArea)
 
     let carsBetweenNextDestination = false
@@ -253,7 +251,10 @@ Car.prototype.followRoute = function () {
     }
 
     if (this.nextIntersection) {
-        this.checkIntersection()
+        if (this.checkIntersectionBlocked()) {
+            this.wait()
+            return
+        }
     }
 
     if (distanceToNextDestination <= this.minStoppingDistance) {
@@ -551,6 +552,8 @@ Car.prototype.endLeavingSpace = function (endVals) {
     this.adjustCollisionBoxesFromAnim()
     this.updateElementPosition()
     this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
+
+    this.determineIfExitRouteIsBlocked()
 }
 
 Car.prototype.exitScene = function () {
@@ -578,7 +581,14 @@ Car.prototype.setToNextSection = function (newRoute) {
     this.nextDestination = null
     this.currentSection = this.route[0]
     this.direction = this.currentSection.direction
-    this.nextIntersection = this.getNextIntersection()
+    let intersection = this.getNextIntersection()
+    if (intersection !== this.atIntersection) {
+        // Setting nextIntersection on an intersection the car is
+        // already blocking from attemptToLeaveSpace will make it
+        // block itself.
+        // This probably isn't where it needs to be right now.
+        this.nextIntersection = this.getNextIntersection()
+    }
 }
 
 Car.prototype.setPositionalVars = function () {
@@ -978,7 +988,7 @@ Car.prototype.getNextIntersection = function () {
                 ]
             }
             break
-        case 'south:':
+        case 'south':
             if (thisSection.bottomIntersection) {
                 return this.parkingLot.intersections[
                     thisSection.bottomIntersection
@@ -1001,7 +1011,8 @@ Car.prototype.getNextIntersection = function () {
 // nextIntersection and moving in the opposite direction to car's
 // desired next direction for turns/parking maneuvers to ensure
 // cars don't turn onto the same section opposing one another.
-Car.prototype.checkIntersection = function () {
+Car.prototype.checkIntersectionBlocked = function () {
+    // Should probably move to trafficHandler
     let intersection = this.nextIntersection
     let carArea = this.collisionBoxes.car
     carArea[this.symbol] += this.minStoppingDistance * this.negation
@@ -1020,11 +1031,68 @@ Car.prototype.checkIntersection = function () {
         }
 
         if (intersection.occupied) {
-            this.wait()
+            return true
         } else {
-            this.atIntersection = this.nextIntersection
-            this.nextIntersection = null
             this.parkingLot.trafficHandler.blockIntersection(this, intersection)
+            return false
+        }
+    }
+
+    return false
+}
+
+Car.prototype.determineIfExitRouteIsBlocked = function () {
+    // Top 2 only need to check if the intersection + turn area
+    // is clear to reserve.
+    // Third will get a new route if any cars below
+    // Middle spaces will just wait until there are 0 cars on the road below
+
+    // Only cars on the left column, going against traffic,
+    // need to make this check.
+    if (this.currentSection.section.col === 0 && this.direction === 'south') {
+        let roadArea = this.parkingLot.trafficHandler.getAreaAlongRoad(this)
+        let cars = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+            roadArea,
+            [this]
+        )
+
+        let makeAdjustment = false
+        if (cars.length > 0) {
+            for (let car of cars) {
+                if (car.direction === 'north') {
+                    makeAdjustment = true
+                }
+            }
+
+            if (makeAdjustment) {
+                if (this.currentSection.section.row === 0) {
+                    // Manual adjustment for third parking space from top.
+                    let secondSection =
+                        this.parkingLot.pathObject.sections.horizontal.row0col1
+                    let thirdSection =
+                        this.parkingLot.pathObject.sections.vertical.row1col2
+                    let secondRouteSection = {
+                        direction: 'east',
+                        turn: 'southtoeast',
+                        coord: secondSection.x + secondSection.len,
+                        section: secondSection,
+                    }
+                    let thirdRouteSection = {
+                        direction: 'south',
+                        turn: 'easttosouth',
+                        coord: thirdSection.y + thirdSection.len,
+                        section: thirdSection,
+                    }
+                    this.route.splice(
+                        1,
+                        2,
+                        secondRouteSection,
+                        thirdRouteSection
+                    )
+                    delete this.route[this.route.length - 1].turn
+                    this.nextDestination = this.leadingEdge
+                }
+            }
         }
     }
 }

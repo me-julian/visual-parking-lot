@@ -134,14 +134,6 @@ ParkingLot.prototype.requestRouteToSpace = function (car) {
     return route
 }
 ParkingLot.prototype.requestRouteFromSpace = function (car) {
-    // Vars:
-    // Previous route end coord (space's far edge along section)
-    // car.currentSection
-    // previous direction & current direction (space direction)
-    // Axis
-    // negation (which is opposite to what reversing will be)
-    // endVals
-
     let start = {
         section: car.assignedSpace.section,
     }

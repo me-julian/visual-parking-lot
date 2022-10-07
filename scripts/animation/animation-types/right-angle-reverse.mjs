@@ -157,7 +157,8 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
 
     let turnDirection = this.animationHandler.getLeftOrRight(
         car.direction,
-        endDirection
+        endDirection,
+        true
     )
 
     let orientationMod

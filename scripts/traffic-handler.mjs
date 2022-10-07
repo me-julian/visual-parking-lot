@@ -330,36 +330,37 @@ TrafficHandler.prototype.getOverlappingIntersections = function (areas) {
     return overlappingIntersections
 }
 
-TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
-    let roadArea
-    let axis = car.axis,
-        oppositeAxis,
-        vertOrHor
-    if (axis === 'top') {
-        axis = 'col'
-        oppositeAxis = 'row'
-        vertOrHor = 'vertical'
+TrafficHandler.prototype.getAreaAlongRoad = function (car) {
+    let roadAxis, oppositeRoadAxis, lineDirection
+    if (car.axis === 'top') {
+        roadAxis = 'col'
+        oppositeRoadAxis = 'row'
+        lineDirection = 'vertical'
     } else {
-        axis = 'row'
-        oppositeAxis = 'col'
-        vertOrHor = 'horizontal'
+        roadAxis = 'row'
+        oppositeRoadAxis = 'col'
+        lineDirection = 'horizontal'
     }
     // Could be improved
     let farthestSection
-    let allSections = this.parkingLot.pathObject.sections[vertOrHor]
-    let relevantSections = []
-    for (let section in allSections) {
-        if (allSections[section][axis] === car.currentSection[axis]) {
-            relevantSections.push(allSections[section])
+    let allSectionsOfSameDirection =
+        this.parkingLot.pathObject.sections[lineDirection]
+    let roadSections = []
+    for (let section in allSectionsOfSameDirection) {
+        if (
+            allSectionsOfSameDirection[section][roadAxis] ===
+            car.currentSection.section[roadAxis]
+        ) {
+            roadSections.push(allSectionsOfSameDirection[section])
         }
     }
-    relevantSections.sort((a, b) => {
-        return a[axis] - b[axis]
+    roadSections.sort((a, b) => {
+        return a[roadAxis] - b[roadAxis]
     })
 
     let axisLength
     if (car.negation === 1) {
-        farthestSection = relevantSections[relevantSections.length - 1]
+        farthestSection = roadSections[roadSections.length - 1]
         axisLength = Math.abs(
             farthestSection[car.symbol] +
                 farthestSection.len -
@@ -368,7 +369,7 @@ TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
                 )
         )
     } else {
-        farthestSection = relevantSections[0]
+        farthestSection = roadSections[0]
         axisLength = Math.abs(
             farthestSection[car.symbol] -
                 Math.abs(
@@ -378,28 +379,33 @@ TrafficHandler.prototype.getAreaAlongColOrRow = function (car) {
     }
 
     let x, y, w, h
-    if (axis === 'row') {
-        x = farthestSection.x
+    if (roadAxis === 'row') {
+        if (car.negation === 1) {
+            x = car.leadingEdge + car.minStoppingDistance * car.negation
+        } else {
+            x = farthestSection.x
+        }
         y = farthestSection.y - car.baseWidth / 2
         w = axisLength
         h = car.baseWidth
     } else {
         x = farthestSection.x - car.baseWidth / 2
-        y = farthestSection.y
+        if (car.negation === 1) {
+            y = car.leadingEdge + car.minStoppingDistance * car.negation
+        } else {
+            y = farthestSection.y
+        }
         w = car.baseWidth
         h = axisLength
     }
     // Could be improved
 
-    roadArea = {
+    let roadArea = {
         x: x,
         y: y,
         w: w,
         h: h,
     }
-
-    // Possibly not needed?
-    // roadArea[car.symbol] -= car.speed
 
     roadArea[car.oppSymbol] += car.baseWidth / 2
 
@@ -653,6 +659,9 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     // Cars may block an intersection within their minStoppingDistance
     // then start a turn before actually entering the intersection.
     // Parking/Parked checks ensure hasEntered won't block.
+
+    car.nextIntersection = null
+    car.atIntersection = intersection
 
     // Probably still need to work on intersectionBlocking.
     let isStillOccupiedInterval, hasEnteredInterval

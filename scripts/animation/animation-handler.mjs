@@ -153,34 +153,50 @@ AnimationHandler.prototype.getAnimationRule = function (animName) {
 
 AnimationHandler.prototype.getLeftOrRight = function (
     startDirection,
-    endDirection
+    endDirection,
+    reverse
 ) {
+    let turnDirection
     switch (startDirection) {
         case 'north':
             if (endDirection === 'east') {
-                return 'left'
+                turnDirection = 'left'
             } else {
-                return 'right'
+                turnDirection = 'right'
             }
+            break
         case 'south':
             if (endDirection === 'east') {
-                return 'right'
+                turnDirection = 'right'
             } else {
-                return 'left'
+                turnDirection = 'left'
             }
+            break
         case 'east':
             if (endDirection === 'north') {
-                return 'right'
+                turnDirection = 'right'
             } else {
-                return 'left'
+                turnDirection = 'left'
             }
+            break
         case 'west':
             if (endDirection === 'north') {
-                return 'left'
+                turnDirection = 'left'
             } else {
-                return 'right'
+                turnDirection = 'right'
             }
+            break
     }
+
+    if (reverse) {
+        if (turnDirection === 'left') {
+            turnDirection === 'right'
+        } else {
+            turnDirection === 'left'
+        }
+    }
+
+    return turnDirection
 }
 
 export {AnimationHandler}

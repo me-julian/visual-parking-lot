@@ -149,6 +149,7 @@ RightAngleTurn.prototype.getEndVals = function (car) {
     endVals.orientationMod = relationalValues.orientationMod
     endVals.endOrientation = relationalValues.endOrientation
     endVals.direction = relationalValues.direction
+    endVals.turnDirection = relationalValues.turnDirection
 
     endVals[car.oppSymbol] = car.route[1].section[car.oppSymbol]
     endVals[car.symbol] = car.route[1].section[car.symbol]
@@ -179,20 +180,34 @@ RightAngleTurn.prototype.getRelationalValues = function (car) {
             break
     }
 
+    // let orientationMod
+    // if (
+    //     endDirection < car.orientation ||
+    //     car.orientation - endDirection >= 270 ||
+    // ) {
+    //     orientationMod = 90
+    // } else {
+    //     orientationMod = -90
+    // }
+
+    let turnDirection = this.animationHandler.getLeftOrRight(
+        car.direction,
+        endDirection,
+        false
+    )
+
     let orientationMod
-    if (
-        endDirection < car.orientation ||
-        car.orientation - endDirection >= 270
-    ) {
-        orientationMod = 90
-    } else {
+    if (turnDirection === 'left') {
         orientationMod = -90
+    } else {
+        orientationMod = 90
     }
 
     return {
         orientationMod: orientationMod,
         endOrientation: endOrientation,
         direction: endDirection,
+        turnDirection: turnDirection,
     }
 }
 RightAngleTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
@@ -200,14 +215,14 @@ RightAngleTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
         case 'west':
             endVals.x = endVals.x - car.baseLength / 2
 
-            endVals.y = endVals.y + (car.baseWidth / 2) * car.negation
+            endVals.y = endVals.y - car.baseWidth / 2
 
             endVals.orientation = car.orientation + endVals.orientationMod
             break
         case 'east':
             endVals.x = endVals.x + car.baseLength / 2
 
-            endVals.y = endVals.y + (car.baseWidth / 2) * car.negation
+            endVals.y = endVals.y - car.baseWidth / 2
 
             endVals.orientation = car.orientation - endVals.orientationMod
             break
