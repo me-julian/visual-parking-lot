@@ -116,6 +116,13 @@ Car.prototype.createPageElements = function () {
 
     return carFullPageWrapper
 }
+Car.prototype.removePageElements = function () {
+    if (this.userFocus) {
+        // Currently overkill, could just null overlay.focusedCar
+        this.parkingLot.overlay.toggleCarFocus(this)
+    }
+    this.pageWrapper.remove()
+}
 
 Car.prototype.initialize = function (assignedSpace) {
     this.status = 'entering'
@@ -182,6 +189,9 @@ Car.prototype.determineAction = function () {
             break
         case 'parked':
             this.attemptToLeaveSpace()
+            break
+        case 'leaving-scene':
+            this.exitScene()
             break
     }
 }
@@ -527,23 +537,44 @@ Car.prototype.endParking = function (endVals) {
     }, this.parkingDuration)
 }
 Car.prototype.endLeavingSpace = function (endVals) {
-    console.log('Ready to drive to exit.')
-    this.status === 'leaving'
+    this.pageEl.style.animationName = 'none'
+    this.animation = undefined
 
+    this.parkingLot.cars.leaving[this.id] = this
+    delete this.parkingLot.cars.parked[this.id]
+    this.status = 'leaving'
+
+    this.setToNextSection(true)
     this.adjustPositionalVarsAfterAnim(endVals)
     this.setPositionalVars()
     this.updateCollisionBox()
     this.adjustCollisionBoxesFromAnim()
     this.updateElementPosition()
-
-    this.pageEl.style.animationName = 'none'
-    this.animation = undefined
+    this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
 }
 
-Car.prototype.exitScene = function () {}
+Car.prototype.exitScene = function () {
+    // Shouldn't be anything blocking the exit at this point, go forward
+    // at current speed until outside of scene.
+    this.status = 'leaving-scene'
+    if (this.coords.y > this.nextDestination) {
+        this.parkingLot.cars.left[this.id] = this
+        delete this.parkingLot.cars.leaving[this.id]
+        this.status = 'left'
 
-Car.prototype.setToNextSection = function () {
-    this.route.splice(0, 1)
+        this.removePageElements()
+    } else {
+        // Get and draw collision box properly
+        this.parkingLot.trafficHandler.getAreaInStoppingDistance(this)
+        this.advance(9999, this.speed)
+        this.updateCollisionBox()
+    }
+}
+
+Car.prototype.setToNextSection = function (newRoute) {
+    if (!newRoute) {
+        this.route.splice(0, 1)
+    }
     this.nextDestination = null
     this.currentSection = this.route[0]
     this.direction = this.currentSection.direction
@@ -820,14 +851,18 @@ Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
 
 Car.prototype.getNextDestination = function (currentSection, nextSection) {
     let nextPathDestination
-    if (this.route.length === 1 && this.hasParked === false) {
-        nextPathDestination =
-            currentSection.coord - this.turningRunup * this.negation
-    } else if (nextSection.turn) {
-        nextPathDestination =
-            currentSection.coord - this.turningRunup * this.negation
-    } else {
-        nextPathDestination = currentSection.coord
+    // Either going to end of section heading straight (could be exit)
+    // or turning onto another section/into a parking space.
+    nextPathDestination = currentSection.coord
+    let turnOntoSection = false
+    if (nextSection) {
+        turnOntoSection = nextSection.turn
+    }
+    if (
+        (this.route.length === 1 && this.hasParked === false) ||
+        turnOntoSection
+    ) {
+        nextPathDestination -= this.turningRunup * this.negation
     }
 
     return nextPathDestination

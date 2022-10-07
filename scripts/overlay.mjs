@@ -154,7 +154,7 @@ Overlay.prototype.toggleCarFocus = function (car) {
         this.focusedCar.userFocus = false
         this.focusedCar.pageWrapper.classList.remove('focused')
         this.toggleElement(this.focusedCar.assignedSpace.pageEl)
-        this.focusedCar = undefined
+        this.focusedCar = null
     } else {
         if (this.focusedCar) {
             this.focusedCar.userFocus = false
