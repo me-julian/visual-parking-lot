@@ -132,9 +132,6 @@ AnimationHandler.prototype.getAnimationName = function (car, type) {
         case 'right-angle-reverse':
             animName = 'space-' + car.assignedSpace.rank + '-leaving-space'
             break
-        case 'right-angle-far-reverse':
-            //
-            break
         case 'right-angle-three-point-reverse':
             //
             break

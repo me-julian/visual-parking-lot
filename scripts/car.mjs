@@ -197,8 +197,8 @@ Car.prototype.determineAction = function () {
 }
 
 Car.prototype.followRoute = function () {
-    this.setPositionalVars()
     this.updateCollisionBox()
+    this.setPositionalVars()
 
     // Could be combined
     let nextPathDestination = this.getNextDestination(
@@ -211,6 +211,19 @@ Car.prototype.followRoute = function () {
     //
 
     this.minStoppingDistance = this.calcStoppingDistance()
+
+    // Need to re-add proper detection ahead of stopping distance.
+    // Cars entering on left column will respect mid cars that need
+    // to get to bottom horizontal, but mid cars won't
+    // pull out if the cross road is occupied.
+
+    // Cars leaving spaces currently are still in ParkingLot's
+    // parked category meaning their maneuver area hitboxes don't
+    // get checked. Necessary for checking road ahead. - Fixed?
+
+    // Probably need to continue reworking intersection behaviour.
+    // Cars over 2 intersections at once, cross intersection vs forward,
+    // z turns blocking a long time, etc.
 
     let distanceToNextDestination =
         this.parkingLot.trafficHandler.returnDistanceBetween(
@@ -227,8 +240,8 @@ Car.prototype.followRoute = function () {
         this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
     // let carsBetweenNextDestination = this.checkDestinationArea(destinationArea)
 
-    let roadArea = this.parkingLot.trafficHandler.getAreaAlongRoad(this)
-    // let carsAheadOnRoad = this.checkRoadAheadArea(roadArea)
+    let roadArea = this.parkingLot.trafficHandler.getRoadAreaAhead(this)
+    let roadAheadStatus = this.checkRoadAheadArea(roadArea)
 
     let carsBetweenNextDestination = false
     let clearAhead = true
@@ -239,23 +252,42 @@ Car.prototype.followRoute = function () {
     // if (carsBetweenNextDestination.collision) {
     //     clearAhead = false
     // }
-    // if (carsAheadOnRoad.presence) {
-    //     clearAhead = false
-    // }
-
-    if (
-        distanceToNextDestination <
-        this.turningRunup + this.minStoppingDistance
-    ) {
-        this.checkFollowingDestination()
+    if (roadAheadStatus.collision) {
+        clearAhead = false
     }
 
     if (this.nextIntersection) {
-        if (this.checkIntersectionBlocked()) {
-            this.wait()
-            return
+        let intersection = this.checkAtIntersection()
+        if (intersection !== null) {
+            if (this.hasFollowingDestination()) {
+                let followingDestination = this.route[1].coord
+                let nextSection = this.route[1]
+                if (
+                    this.mustManeuverTowardsFollowingDestination(
+                        followingDestination,
+                        nextSection
+                    )
+                ) {
+                    this.park(true)
+                } else {
+                    this.adjustToFollowingDestination(
+                        followingDestination,
+                        nextSection
+                    )
+                }
+            }
+
+            this.checkIntersectionBlocked(intersection)
         }
     }
+
+    // This may need some major refactoring to work with intersections.
+    // if (
+    //     distanceToNextDestination <
+    //     this.turningRunup + this.minStoppingDistance
+    // ) {
+    //     this.checkFollowingDestination()
+    // }
 
     if (distanceToNextDestination <= this.minStoppingDistance) {
         if (this.route.length === 1) {
@@ -301,9 +333,11 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
         this.setToNextSection()
     }
 
-    this.coords[this.symbol] =
-        this.coords[this.symbol] + this.speed * this.negation
+    this.coords[this.symbol] += this.speed * this.negation
     this.pageEl.style[this.axis] = this.coords[this.symbol] + 'px'
+    this.leadingEdge += this.speed * this.negation
+
+    this.updateCollisionBox()
 }
 
 Car.prototype.turn = function () {
@@ -318,15 +352,28 @@ Car.prototype.turn = function () {
     // If we do keep it, add the intersections in
     // TrafficHandler.getManeuverArea() and need to account for it
     // in Overlay.showTurnCheck()
-    this.collisionBoxes.maneuver =
-        this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
+
+    // Can't have this set this way. It is set in collisionBoxes while
+    // only being initialized once and saved so it can be rechecked
+    // later if the area isn't clear, but the area not being clear can
+    // cause cars blocking that area to detect the collision box as
+    // blocking (colliding with) them, causing a deadlock.
+    // if (!this.collisionBoxes.maneuver) {
+    //     this.collisionBoxes.maneuver =
+    //         this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
+    // }
+
+    // Temporarily have it recreate it every time.
+    let maneuverArea = this.parkingLot.trafficHandler.getManeuverArea(
+        this,
+        this.animation
+    )
     if (
         this.status !== 'turning' &&
-        this.parkingLot.trafficHandler.maneuverAreaClear(
-            this,
-            this.collisionBoxes.maneuver
-        )
+        this.parkingLot.trafficHandler.maneuverAreaClear(this, maneuverArea)
     ) {
+        this.collisionBoxes.maneuver = maneuverArea
+
         this.status = 'turning'
 
         this.pageEl.style.animationDuration = '3s'
@@ -362,32 +409,32 @@ Car.prototype.park = function (exceptional) {
         )
     }
 
-    this.collisionBoxes.maneuver =
-        this.parkingLot.trafficHandler.getManeuverArea(this)
+    // if (!this.collisionBoxes.maneuver) {
+    //     this.collisionBoxes.maneuver =
+    //         this.parkingLot.trafficHandler.getManeuverArea(this)
+    // }
+
+    let maneuverArea = this.parkingLot.trafficHandler.getManeuverArea(this)
 
     let blockIntersection = false
     let overlappingIntersections =
-        this.parkingLot.trafficHandler.getOverlappingIntersections(
-            this.collisionBoxes.maneuver
-        )
+        this.parkingLot.trafficHandler.getOverlappingIntersections(maneuverArea)
     if (overlappingIntersections.length > 0) {
         let intersectionAreas = []
         for (let intersection of overlappingIntersections) {
             intersectionAreas.push(intersection.areas.xArea)
             intersectionAreas.push(intersection.areas.yArea)
         }
-        this.collisionBoxes.maneuver =
-            this.collisionBoxes.maneuver.concat(intersectionAreas)
+        maneuverArea = maneuverArea.concat(intersectionAreas)
         blockIntersection = true
     }
 
     if (
         this.status !== 'parking' &&
-        this.parkingLot.trafficHandler.maneuverAreaClear(
-            this,
-            this.collisionBoxes.maneuver
-        )
+        this.parkingLot.trafficHandler.maneuverAreaClear(this, maneuverArea)
     ) {
+        this.collisionBoxes.maneuver = maneuverArea
+
         this.status = 'parking'
 
         if (blockIntersection) {
@@ -423,6 +470,12 @@ Car.prototype.park = function (exceptional) {
     }
 }
 Car.prototype.attemptToLeaveSpace = function () {
+    let ids = [0, 1, 10, 13, 20, 22]
+    if (ids.includes(this.assignedSpace.rank)) {
+        this.status === 'unhandled'
+        delete this.parkingLot.cars.parked[this.id]
+        return
+    }
     if (this.hasParked) {
         if (!this.animation) {
             // Create/retrieve an animation.
@@ -432,15 +485,12 @@ Car.prototype.attemptToLeaveSpace = function () {
             )
         }
 
-        if (!this.collisionBoxes.maneuver) {
-            this.collisionBoxes.maneuver =
-                this.parkingLot.trafficHandler.getManeuverArea(this)
-        }
+        // if (!this.collisionBoxes.maneuver) {
+        let maneuverArea = this.parkingLot.trafficHandler.getManeuverArea(this)
 
-        let blockIntersection = false
         let overlappingIntersections =
             this.parkingLot.trafficHandler.getOverlappingIntersections(
-                this.collisionBoxes.maneuver
+                maneuverArea
             )
         if (overlappingIntersections.length > 0) {
             let intersectionAreas = []
@@ -448,19 +498,24 @@ Car.prototype.attemptToLeaveSpace = function () {
                 intersectionAreas.push(intersection.areas.xArea)
                 intersectionAreas.push(intersection.areas.yArea)
             }
-            this.collisionBoxes.maneuver =
-                this.collisionBoxes.maneuver.concat(intersectionAreas)
-            blockIntersection = true
+            maneuverArea = maneuverArea.concat(intersectionAreas)
+
+            // Poor solution
+            this.animation.blockIntersections = overlappingIntersections
         }
+        // }
 
         if (
             this.parkingLot.trafficHandler.maneuverAreaClear(
                 this,
-                this.collisionBoxes.maneuver
-            )
+                maneuverArea
+            ) &&
+            this.reenteredRoadClear()
         ) {
-            if (blockIntersection) {
-                for (let intersection of overlappingIntersections) {
+            this.collisionBoxes.maneuver = maneuverArea
+
+            if (this.animation.blockIntersections) {
+                for (let intersection of this.animation.blockIntersections) {
                     if (!intersection.occupied) {
                         this.parkingLot.trafficHandler.blockIntersection(
                             this,
@@ -477,6 +532,8 @@ Car.prototype.attemptToLeaveSpace = function () {
 }
 Car.prototype.leaveSpace = function () {
     if (this.status === 'parked') {
+        this.parkingLot.cars.leaving[this.id] = this
+        delete this.parkingLot.cars.parked[this.id]
         this.status = 'leavingSpace'
 
         this.pageEl.style.animationDuration = '4s'
@@ -541,8 +598,6 @@ Car.prototype.endLeavingSpace = function (endVals) {
     this.pageEl.style.animationName = 'none'
     this.animation = undefined
 
-    this.parkingLot.cars.leaving[this.id] = this
-    delete this.parkingLot.cars.parked[this.id]
     this.status = 'leaving'
 
     this.setToNextSection(true)
@@ -637,7 +692,7 @@ Car.prototype.updateElementPosition = function () {
 Car.prototype.updateCollisionBox = function () {
     this.collisionBoxes.car.x = this.coords.x
     this.collisionBoxes.car.y = this.coords.y
-    this.collisionBoxes.car[this.oppSymbol] += 90 / 2
+    this.collisionBoxes.car[this.oppSymbol] += this.baseWidth / 2
 }
 Car.prototype.adjustCollisionBoxesFromAnim = function () {
     //   Need to handle intersections
@@ -740,36 +795,126 @@ Car.prototype.checkRoadAheadArea = function (areaAhead) {
         presence = true
     }
 
-    for (let car of carsAhead) {
-        // Check direction for head-on collisions
-        // Possibly check for turning cars
-        // Check whether they're going slower than this car.
-        // if (
-        //     (this.direction === 'south' && car.direction === 'north') ||
-        //     (this.direction === 'north' && car.direction === 'south') ||
-        //     (this.direction === 'west' && car.direction === 'east') ||
-        //     (this.direction === 'east' && car.direction === 'west')
-        // ) {
-        //     // oncomingCar = UNKNOWN(car)
-        //     if (oncomingCar.concernable) {
-        //         presence = true
-        //         if (oncomingCar.distance < distance)
-        //             distance = oncomingCar.distance
-        //     }
-        //     continue
-        // }
-        // let blockingDestination = this.isBlockingDestination(car)
-        // if (blockingDestination.collision) {
-        //     presence = true
-        //     if (blockingDestination.distance < distance) {
-        //         distance = blockingDestination.distance
-        //     }
-        // }
-    }
+    carsAhead = this.splitCarsByDirection(this.direction, carsAhead)
+
+    collision = this.checkOncomingCars(carsAhead.oncoming)
+    // for (let car of carsAhead) {
+    // Check direction for head-on collisions
+    // Possibly check for turning cars
+    // Check whether they're going slower than this car.
+    // if (
+    //     (this.direction === 'south' && car.direction === 'north') ||
+    //     (this.direction === 'north' && car.direction === 'south') ||
+    //     (this.direction === 'west' && car.direction === 'east') ||
+    //     (this.direction === 'east' && car.direction === 'west')
+    // ) {
+    //     // oncomingCar = UNKNOWN(car)
+    //     if (oncomingCar.concernable) {
+    //         presence = true
+    //         if (oncomingCar.distance < distance)
+    //             distance = oncomingCar.distance
+    //     }
+    //     continue
+    // }
+    // let blockingDestination = this.isBlockingDestination(car)
+    // if (blockingDestination.collision) {
+    //     presence = true
+    //     if (blockingDestination.distance < distance) {
+    //         distance = blockingDestination.distance
+    //     }
+    // }
+    // }
 
     return {presence: presence, collision: collision, distance: distance}
 }
+Car.prototype.reenteredRoadClear = function () {
+    let clear = true
 
+    let roadArea = this.parkingLot.trafficHandler.getRoadArea(
+        this.route[0].section
+    )
+
+    let carsOnRoad = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        roadArea,
+        [this]
+    )
+
+    carsOnRoad = this.splitCarsByDirection(
+        this.animation.endVals.direction,
+        carsOnRoad
+    )
+
+    // Remove cars that have/are about to pass where the car needs to go
+    for (let car of carsOnRoad.oncoming) {
+        // Not yet accounting for negative vs positive movement.
+        if (
+            car.coords[car.symbol] < this.coords[car.symbol] ||
+            car.status === 'turning' ||
+            car.status === 'parking'
+        ) {
+            let i = carsOnRoad.oncoming.indexOf(car)
+            carsOnRoad.oncoming.splice(i, 1)
+        }
+    }
+
+    if (carsOnRoad.oncoming.length !== 0) {
+        clear = false
+    }
+
+    return clear
+}
+
+Car.prototype.splitCarsByDirection = function (referenceDir, cars) {
+    let oncoming = [],
+        sameDir = [],
+        cross = []
+    for (let car of cars) {
+        if (referenceDir === car.direction) {
+            sameDir.push(car)
+            continue
+        }
+
+        if (referenceDir === 'north' || referenceDir === 'south') {
+            if (car.direction === 'west' || car.direction === 'east') {
+                cross.push(car)
+            } else {
+                oncoming.push(car)
+            }
+        }
+        if (referenceDir === 'west' || referenceDir === 'east') {
+            if (car.direction === 'south' || car.direction === 'north') {
+                cross.push(car)
+            } else {
+                oncoming.push(car)
+            }
+        }
+    }
+
+    return {oncoming: oncoming, sameDir: sameDir, cross: cross}
+}
+Car.prototype.checkOncomingCars = function (cars) {
+    let collision = false
+    for (let car of cars) {
+        // Not checking for car.status === 'leavingSpace'
+        if (car.status === 'turning' || car.status === 'parking') {
+            continue
+        }
+
+        for (let routeSection of this.route) {
+            if (routeSection.section === car.currentSection.section) {
+                // if (car.atIntersection === car.nextIntersection) {
+                //     continue
+                // } else {
+                //     collision = true
+                // }
+                collision = true
+            }
+        }
+        // Make actual checks here
+    }
+
+    return collision
+}
 Car.prototype.checkForImmediateCollision = function (
     cars,
     collision,
@@ -880,16 +1025,17 @@ Car.prototype.getNextDestination = function (currentSection, nextSection) {
 
 // If just going forward, is following destination 'less' than next destination
 // If turning, is following destination 'less' than next destination + car length
-Car.prototype.checkFollowingDestination = function () {
-    let followingDestination
+Car.prototype.hasFollowingDestination = function () {
     if (this.route.length === 1) {
-        return
+        return false
+    } else {
+        return true
     }
-
-    followingDestination = this.route[1].coord
-    let nextSection = this.route[1]
-
-    // Turning case
+}
+Car.prototype.mustManeuverTowardsFollowingDestination = function (
+    followingDestination,
+    nextSection
+) {
     if (nextSection.turn) {
         switch (nextSection.direction) {
             case 'north':
@@ -900,7 +1046,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.park(true)
+                        return true
                     }
                 }
                 break
@@ -912,7 +1058,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.park(true)
+                        return true
                     }
                 }
                 break
@@ -924,7 +1070,7 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.park(true)
+                        return true
                     }
                 }
                 break
@@ -936,14 +1082,20 @@ Car.prototype.checkFollowingDestination = function () {
                         this.baseLength
                 ) {
                     if (!this.route[2]) {
-                        this.park(true)
+                        return true
                     }
                 }
                 break
         }
     }
-    // Straight (parking/section) case
-    else {
+
+    return false
+}
+Car.prototype.adjustToFollowingDestination = function (
+    followingDestination,
+    nextSection
+) {
+    if (!nextSection.turn) {
         switch (this.direction) {
             case 'north':
                 if (followingDestination > this.nextDestination) {
@@ -966,6 +1118,25 @@ Car.prototype.checkFollowingDestination = function () {
                 }
                 break
         }
+    }
+}
+// UNUSED
+Car.prototype.checkZTurnSection = function (section) {
+    // Cars doing Z-Turns from the bottom horizontal to mid-left column
+    // may need to wait for a car already in the section to pass to
+    // the exit, otherwise a deadlock occurs as the z-turn car has
+    // already blocked the intersection at this point.
+    let cars = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        this.collisionBoxes.maneuver,
+        [this]
+    )
+
+    cars = this.parkingLot.trafficHandler.splitCarsByDirection(cars)
+
+    if (cars.oncoming.length === 0) {
+        return true
+    } else {
+        return false
     }
 }
 
@@ -1011,10 +1182,10 @@ Car.prototype.getNextIntersection = function () {
 // nextIntersection and moving in the opposite direction to car's
 // desired next direction for turns/parking maneuvers to ensure
 // cars don't turn onto the same section opposing one another.
-Car.prototype.checkIntersectionBlocked = function () {
+Car.prototype.checkAtIntersection = function () {
     // Should probably move to trafficHandler
     let intersection = this.nextIntersection
-    let carArea = this.collisionBoxes.car
+    let carArea = structuredClone(this.collisionBoxes.car)
     carArea[this.symbol] += this.minStoppingDistance * this.negation
     if (
         this.parkingLot.trafficHandler.checkCollision(
@@ -1026,6 +1197,13 @@ Car.prototype.checkIntersectionBlocked = function () {
             intersection.areas.yArea
         )
     ) {
+        return intersection
+    } else {
+        return null
+    }
+}
+Car.prototype.checkIntersectionBlocked = function (intersection) {
+    {
         if (this.userFocus) {
             this.parkingLot.overlay.showIntersectionCheck(this)
         }
@@ -1050,7 +1228,7 @@ Car.prototype.determineIfExitRouteIsBlocked = function () {
     // Only cars on the left column, going against traffic,
     // need to make this check.
     if (this.currentSection.section.col === 0 && this.direction === 'south') {
-        let roadArea = this.parkingLot.trafficHandler.getAreaAlongRoad(this)
+        let roadArea = this.parkingLot.trafficHandler.getRoadAreaAhead(this)
         let cars = this.parkingLot.trafficHandler.returnActiveCarsInArea(
             roadArea,
             [this]

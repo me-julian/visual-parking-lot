@@ -145,6 +145,8 @@ TrafficHandler.prototype.getZParkArea = function (car) {
 
     let areas = [area]
     // Technically will always be an intersection in this case.
+    // ISSUE: Currently duplicating these areas since these same
+    // areas are added in car.mjs.
     if (intersection) {
         areas.push(intersection.areas.xArea, intersection.areas.yArea)
     } else {
@@ -330,7 +332,46 @@ TrafficHandler.prototype.getOverlappingIntersections = function (areas) {
     return overlappingIntersections
 }
 
-TrafficHandler.prototype.getAreaAlongRoad = function (car) {
+TrafficHandler.prototype.getRoadArea = function (section) {
+    let roadArea = {}
+
+    let lineDirection, roadAxis, lengthAxis
+    if (section.horizontal) {
+        lineDirection = 'horizontal'
+        roadAxis = 'row'
+        // Car.baseWidth
+        roadArea.h = 90
+
+        lengthAxis = 'w'
+    } else {
+        lineDirection = 'vertical'
+        roadAxis = 'col'
+        roadArea.w = 90
+
+        lengthAxis = 'h'
+    }
+    let roadSections = this.getAllSectionsInLine(
+        section,
+        lineDirection,
+        roadAxis
+    )
+
+    let length = (() => {
+        let len = 0
+        for (let section of roadSections) {
+            len += section.len
+        }
+        return len
+    })()
+
+    roadArea.x = roadSections[0].x
+    roadArea.y = roadSections[0].y
+    roadArea[lengthAxis] = length
+
+    return roadArea
+}
+
+TrafficHandler.prototype.getRoadAreaAhead = function (car) {
     let roadAxis, oppositeRoadAxis, lineDirection
     if (car.axis === 'top') {
         roadAxis = 'col'
@@ -342,23 +383,13 @@ TrafficHandler.prototype.getAreaAlongRoad = function (car) {
         lineDirection = 'horizontal'
     }
     // Could be improved
-    let farthestSection
-    let allSectionsOfSameDirection =
-        this.parkingLot.pathObject.sections[lineDirection]
-    let roadSections = []
-    for (let section in allSectionsOfSameDirection) {
-        if (
-            allSectionsOfSameDirection[section][roadAxis] ===
-            car.currentSection.section[roadAxis]
-        ) {
-            roadSections.push(allSectionsOfSameDirection[section])
-        }
-    }
-    roadSections.sort((a, b) => {
-        return a[roadAxis] - b[roadAxis]
-    })
+    let roadSections = this.getAllSectionsInLine(
+        car.currentSection.section,
+        lineDirection,
+        roadAxis
+    )
 
-    let axisLength
+    let farthestSection, axisLength
     if (car.negation === 1) {
         farthestSection = roadSections[roadSections.length - 1]
         axisLength = Math.abs(
@@ -420,6 +451,29 @@ TrafficHandler.prototype.getAreaAlongRoad = function (car) {
     })
 
     return roadArea
+}
+
+TrafficHandler.prototype.getAllSectionsInLine = function (
+    referenceSection,
+    lineDirection,
+    roadAxis
+) {
+    let allSectionsOfSameDirection =
+        this.parkingLot.pathObject.sections[lineDirection]
+    let roadSections = []
+    for (let section in allSectionsOfSameDirection) {
+        if (
+            allSectionsOfSameDirection[section][roadAxis] ===
+            referenceSection[roadAxis]
+        ) {
+            roadSections.push(allSectionsOfSameDirection[section])
+        }
+    }
+    roadSections.sort((a, b) => {
+        return a[roadAxis] - b[roadAxis]
+    })
+
+    return roadSections
 }
 
 TrafficHandler.prototype.getAreaBetweenDestination = function (car) {
@@ -496,7 +550,7 @@ TrafficHandler.prototype.getAreaInStoppingDistance = function (car) {
         stoppingDistanceArea.h += car.minStoppingDistance
     }
 
-    stoppingDistanceArea[car.symbol] -= car.speed
+    stoppingDistanceArea[car.symbol] += car.speed * car.negation
 
     stoppingDistanceArea[car.oppSymbol] += car.baseWidth / 2
 
@@ -553,8 +607,17 @@ TrafficHandler.prototype.checkCarCollisionBoxes = function (
 ) {
     for (let area in car.collisionBoxes) {
         area = car.collisionBoxes[area]
-        if (this.checkCollision(referenceArea, area)) {
-            return true
+
+        if (Array.isArray(area)) {
+            for (let subArea of area) {
+                if (this.checkCollision(referenceArea, subArea)) {
+                    return true
+                }
+            }
+        } else {
+            if (this.checkCollision(referenceArea, area)) {
+                return true
+            }
         }
     }
 }
