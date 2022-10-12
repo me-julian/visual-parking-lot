@@ -712,6 +712,9 @@ TrafficHandler.prototype.maneuverAreaClear = function (car, areas) {
     return true
 }
 
+// Intervals can cause an issue where a car finishes an animation,
+// removes all their maneuver collision boxes, etc. but the interval
+// hasn't fired to unblock the intersection.
 TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     intersection.occupied = true
     // Currently blocking both areas of the intersection (x and y areas)
@@ -726,15 +729,43 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     car.nextIntersection = null
     car.atIntersection = intersection
 
-    // Probably still need to work on intersectionBlocking.
+    if (car.status === 'parking') {
+        this.blockIntersectionUntilParked(car, intersection)
+    } else {
+        this.blockIntersectionUntilPassed(car, intersection)
+    }
+}
+TrafficHandler.prototype.blockIntersectionUntilParked = function (
+    car,
+    intersection
+) {
+    let hasParkedInterval
+    let hasParked = () => {
+        if (car.status === 'parked') {
+            intersection.occupied = false
+            car.atIntersection = null
+            this.parkingLot.overlay.updateIntersectionColor(intersection)
+            clearInterval(hasParkedInterval)
+        }
+    }
+
+    // Having this interval faster than loop speed seems to
+    // cause hasEntered to fire too soon and isStillOccupied
+    // to fire immediately after.
+    hasParkedInterval = setInterval(hasParked, 75)
+}
+TrafficHandler.prototype.blockIntersectionUntilPassed = function (
+    car,
+    intersection
+) {
     let isStillOccupiedInterval, hasEnteredInterval
+    // Probably still need to work on intersectionBlocking.
     let hasEntered = () => {
         if (
             this.checkCollision(
                 car.collisionBoxes.car,
                 intersection.areas[car.symbol + 'Area']
-            ) ||
-            car.status === 'parking'
+            )
         ) {
             clearInterval(hasEnteredInterval)
             isStillOccupiedInterval = setInterval(isStillOccupied, 75)
@@ -743,38 +774,31 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
 
     let isStillOccupied = () => {
         if (car.status === 'parking' || car.status === 'parked') {
-            if (car.status === 'parked') {
-                if (intersection.name == car.atIntersection) {
-                    car.atIntersection = null
-                }
-                intersection.occupied = false
-                this.parkingLot.overlay.updateIntersectionColor(intersection)
-                clearInterval(isStillOccupiedInterval)
-            }
+            this.blockIntersectionUntilParked(car, intersection)
+            clearInterval(isStillOccupiedInterval)
         } else if (
             !this.checkCollision(
                 car.collisionBoxes.car,
                 intersection.areas[car.symbol + 'Area']
             )
         ) {
-            if (intersection.name == car.atIntersection) {
+            if (intersection.name === car.atIntersection) {
                 car.atIntersection = null
             }
             intersection.occupied = false
             this.parkingLot.overlay.updateIntersectionColor(intersection)
             clearInterval(isStillOccupiedInterval)
-            // Clear car.atIntersection?
         }
     }
 
-    // Skip straight to checking if parked when parking, as the car's
-    // collisionBox may never actually enter the intersection.
-    if (car.status === 'parking') {
+    if (
+        this.checkCollision(
+            car.collisionBoxes.car,
+            intersection.areas[car.symbol + 'Area']
+        )
+    ) {
         isStillOccupiedInterval = setInterval(isStillOccupied, 75)
     } else {
-        // Having this interval faster than loop speed seems to
-        // cause hasEntered to fire too soon and isStillOccupied
-        // to fire immediately after.
         hasEnteredInterval = setInterval(hasEntered, 75)
     }
 }
