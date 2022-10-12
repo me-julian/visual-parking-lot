@@ -174,17 +174,15 @@ Overlay.prototype.toggleCarFocus = function (car) {
     }
 }
 
-Overlay.prototype.showIntersectionCheck = function (car) {
-    let intersection = car.nextIntersection.name
-    document.getElementById(intersection).style.display = 'initial'
+Overlay.prototype.showIntersectionCheck = function (intersection) {
+    document.getElementById(intersection.name).style.display = 'initial'
 
     setTimeout(() => {
-        document.getElementById(intersection).style.display = ''
+        document.getElementById(intersection.name).style.display = ''
     }, 1500)
 }
 
 Overlay.prototype.showManeuverCheck = function (car, areas, state) {
-    // Could make this not duplicate intersections overlay els.
     let maneuverId = car.id + '-maneuver'
     if (!this.timers[maneuverId]) {
         let maneuverWrapper = document.createElement('div')

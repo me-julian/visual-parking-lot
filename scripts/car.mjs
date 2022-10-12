@@ -42,7 +42,7 @@ function Car(id, parkingLot) {
     this.assignedSpace = undefined
     this.route = undefined
     this.nextIntersection = undefined
-    this.atIntersection = undefined
+    this.blockingIntersections = {}
 
     this.baseWidth = undefined
     this.baseLength = undefined
@@ -278,17 +278,16 @@ Car.prototype.followRoute = function () {
                 }
             }
 
-            this.checkIntersectionBlocked(intersection)
+            if (!this.isIntersectionBlocked(intersection)) {
+                this.parkingLot.trafficHandler.blockIntersection(
+                    this,
+                    intersection
+                )
+            } else {
+                clearAhead = false
+            }
         }
     }
-
-    // This may need some major refactoring to work with intersections.
-    // if (
-    //     distanceToNextDestination <
-    //     this.turningRunup + this.minStoppingDistance
-    // ) {
-    //     this.checkFollowingDestination()
-    // }
 
     if (distanceToNextDestination <= this.minStoppingDistance) {
         if (this.route.length === 1) {
@@ -349,33 +348,28 @@ Car.prototype.turn = function () {
         )
     }
 
-    // ISSUE: maneuver areas with intersections unnecessary?
-    // If we do keep it, add the intersections in
-    // TrafficHandler.getManeuverArea() and need to account for it
-    // in Overlay.showTurnCheck()
-
-    // Can't have this set this way. It is set in collisionBoxes while
-    // only being initialized once and saved so it can be rechecked
-    // later if the area isn't clear, but the area not being clear can
-    // cause cars blocking that area to detect the collision box as
-    // blocking (colliding with) them, causing a deadlock.
-    // if (!this.collisionBoxes.maneuver) {
-    //     this.collisionBoxes.maneuver =
-    //         this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
-    // }
-
     // Temporarily have it recreate it every time.
-    let maneuverArea = this.parkingLot.trafficHandler.getManeuverArea(
-        this,
-        this.animation
-    )
+    // Could set this as prop on animation and retrieve if initialized.
+    if (!this.animation.maneuverArea) {
+        this.animation.maneuverArea =
+            this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
+    }
+
+    if (this.animation.blockIntersections === undefined) {
+        this.animation.blockIntersections =
+            this.parkingLot.trafficHandler.getAnimationIntersections(this)
+    }
+
     if (
         this.status !== 'turning' &&
-        this.parkingLot.trafficHandler.maneuverAreaClear(this, maneuverArea)
+        this.parkingLot.trafficHandler.maneuverAreaClear(
+            this,
+            this.animation.maneuverArea
+        )
     ) {
-        this.collisionBoxes.maneuver = maneuverArea
-
         this.status = 'turning'
+
+        this.parkingLot.trafficHandler.blockManeuverArea(this)
 
         this.pageEl.style.animationDuration = '3s'
         this.pageEl.style.animationIterationCount = '1'
@@ -410,44 +404,26 @@ Car.prototype.park = function (exceptional) {
         )
     }
 
-    // if (!this.collisionBoxes.maneuver) {
-    //     this.collisionBoxes.maneuver =
-    //         this.parkingLot.trafficHandler.getManeuverArea(this)
-    // }
+    if (!this.animation.maneuverArea) {
+        this.animation.maneuverArea =
+            this.parkingLot.trafficHandler.getManeuverArea(this, this.animation)
+    }
 
-    let maneuverArea = this.parkingLot.trafficHandler.getManeuverArea(this)
-
-    let blockIntersection = false
-    let overlappingIntersections =
-        this.parkingLot.trafficHandler.getOverlappingIntersections(maneuverArea)
-    if (overlappingIntersections.length > 0) {
-        let intersectionAreas = []
-        for (let intersection of overlappingIntersections) {
-            intersectionAreas.push(intersection.areas.xArea)
-            intersectionAreas.push(intersection.areas.yArea)
-        }
-        maneuverArea = maneuverArea.concat(intersectionAreas)
-        blockIntersection = true
+    if (this.animation.blockIntersections === undefined) {
+        this.animation.blockIntersections =
+            this.parkingLot.trafficHandler.getAnimationIntersections(this)
     }
 
     if (
         this.status !== 'parking' &&
-        this.parkingLot.trafficHandler.maneuverAreaClear(this, maneuverArea)
+        this.parkingLot.trafficHandler.maneuverAreaClear(
+            this,
+            this.animation.maneuverArea
+        )
     ) {
-        this.collisionBoxes.maneuver = maneuverArea
-
         this.status = 'parking'
 
-        if (blockIntersection) {
-            for (let intersection of overlappingIntersections) {
-                if (!intersection.occupied) {
-                    this.parkingLot.trafficHandler.blockIntersection(
-                        this,
-                        intersection
-                    )
-                }
-            }
-        }
+        this.parkingLot.trafficHandler.blockManeuverArea(this)
 
         if ((this.animation.type = 'right-angle-park')) {
             this.pageEl.style.animationDuration = '4s'
@@ -468,6 +444,8 @@ Car.prototype.park = function (exceptional) {
             this.pageEl.removeEventListener('animationend', endAnimEventFunct)
         }
         this.pageEl.addEventListener('animationend', endAnimEventFunct)
+    } else {
+        this.wait()
     }
 }
 Car.prototype.attemptToLeaveSpace = function () {
@@ -486,45 +464,26 @@ Car.prototype.attemptToLeaveSpace = function () {
             )
         }
 
-        // if (!this.collisionBoxes.maneuver) {
-        let maneuverArea = this.parkingLot.trafficHandler.getManeuverArea(this)
-
-        let overlappingIntersections =
-            this.parkingLot.trafficHandler.getOverlappingIntersections(
-                maneuverArea
-            )
-        if (overlappingIntersections.length > 0) {
-            let intersectionAreas = []
-            for (let intersection of overlappingIntersections) {
-                intersectionAreas.push(intersection.areas.xArea)
-                intersectionAreas.push(intersection.areas.yArea)
-            }
-            maneuverArea = maneuverArea.concat(intersectionAreas)
-
-            // Poor solution
-            this.animation.blockIntersections = overlappingIntersections
+        if (!this.animation.maneuverArea) {
+            this.animation.maneuverArea =
+                this.parkingLot.trafficHandler.getManeuverArea(
+                    this,
+                    this.animation
+                )
         }
-        // }
+
+        if (this.animation.blockIntersections === undefined) {
+            this.animation.blockIntersections =
+                this.parkingLot.trafficHandler.getAnimationIntersections(this)
+        }
 
         if (
             this.parkingLot.trafficHandler.maneuverAreaClear(
                 this,
-                maneuverArea
+                this.animation.maneuverArea
             ) &&
             this.reenteredRoadClear()
         ) {
-            this.collisionBoxes.maneuver = maneuverArea
-
-            if (this.animation.blockIntersections) {
-                for (let intersection of this.animation.blockIntersections) {
-                    if (!intersection.occupied) {
-                        this.parkingLot.trafficHandler.blockIntersection(
-                            this,
-                            intersection
-                        )
-                    }
-                }
-            }
             this.leaveSpace()
         } else {
             this.wait()
@@ -532,23 +491,24 @@ Car.prototype.attemptToLeaveSpace = function () {
     }
 }
 Car.prototype.leaveSpace = function () {
-    if (this.status === 'parked') {
-        this.parkingLot.cars.leaving[this.id] = this
-        delete this.parkingLot.cars.parked[this.id]
-        this.status = 'leavingSpace'
+    this.status = 'leaving-space'
 
-        this.pageEl.style.animationDuration = '4s'
-        this.pageEl.style.animationIterationCount = '1'
-        this.pageEl.style.animationTimingFunction =
-            'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
-        this.pageEl.style.animationName = this.animation.ruleObject.name
+    this.parkingLot.trafficHandler.blockManeuverArea(this)
 
-        let endAnimEventFunct = () => {
-            this.endLeavingSpace(this.animation.endVals)
-            this.pageEl.removeEventListener('animationend', endAnimEventFunct)
-        }
-        this.pageEl.addEventListener('animationend', endAnimEventFunct)
+    this.parkingLot.cars.leaving[this.id] = this
+    delete this.parkingLot.cars.parked[this.id]
+
+    this.pageEl.style.animationDuration = '4s'
+    this.pageEl.style.animationIterationCount = '1'
+    this.pageEl.style.animationTimingFunction =
+        'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
+    this.pageEl.style.animationName = this.animation.ruleObject.name
+
+    let endAnimEventFunct = () => {
+        this.endLeavingSpace(this.animation.endVals)
+        this.pageEl.removeEventListener('animationend', endAnimEventFunct)
     }
+    this.pageEl.addEventListener('animationend', endAnimEventFunct)
 }
 
 Car.prototype.endTurn = function (endVals) {
@@ -638,12 +598,10 @@ Car.prototype.setToNextSection = function (newRoute) {
     this.currentSection = this.route[0]
     this.direction = this.currentSection.direction
     let intersection = this.getNextIntersection()
-    if (intersection !== this.atIntersection) {
-        // Setting nextIntersection on an intersection the car is
-        // already blocking from attemptToLeaveSpace will make it
-        // block itself.
-        // This probably isn't where it needs to be right now.
-        this.nextIntersection = this.getNextIntersection()
+    if (intersection) {
+        if (intersection !== this.blockingIntersections[intersection.name]) {
+            this.nextIntersection = this.getNextIntersection()
+        }
     }
 }
 
@@ -896,14 +854,14 @@ Car.prototype.splitCarsByDirection = function (referenceDir, cars) {
 Car.prototype.checkOncomingCars = function (cars) {
     let collision = false
     for (let car of cars) {
-        // Not checking for car.status === 'leavingSpace'
+        // Not checking for car.status === 'leaving-space'
         if (car.status === 'turning' || car.status === 'parking') {
             continue
         }
 
         for (let routeSection of this.route) {
             if (routeSection.section === car.currentSection.section) {
-                // if (car.atIntersection === car.nextIntersection) {
+                // if (car.blockingIntersections === car.nextIntersection) {
                 //     continue
                 // } else {
                 //     collision = true
@@ -1203,21 +1161,20 @@ Car.prototype.checkAtIntersection = function () {
         return null
     }
 }
-Car.prototype.checkIntersectionBlocked = function (intersection) {
+Car.prototype.isIntersectionBlocked = function (intersection) {
     {
         if (this.userFocus) {
-            this.parkingLot.overlay.showIntersectionCheck(this)
+            this.parkingLot.overlay.showIntersectionCheck(intersection)
         }
 
-        if (intersection.occupied) {
-            return true
-        } else {
-            this.parkingLot.trafficHandler.blockIntersection(this, intersection)
-            return false
+        if (!this.blockingIntersections[intersection.name]) {
+            if (intersection.occupied) {
+                return true
+            }
         }
+
+        return false
     }
-
-    return false
 }
 
 Car.prototype.determineIfExitRouteIsBlocked = function () {
