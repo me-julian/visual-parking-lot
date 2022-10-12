@@ -35,7 +35,7 @@ function Car(id, parkingLot) {
     this.overlay.betweenDestination = undefined
     this.overlay.road = undefined
 
-    this.hasParked = undefined
+    this.finishedParking = undefined
     this.status = undefined
     this.coords = {x: undefined, y: undefined}
     this.currentSection = undefined
@@ -126,7 +126,7 @@ Car.prototype.removePageElements = function () {
 
 Car.prototype.initialize = function (assignedSpace) {
     this.status = 'entering'
-    this.hasParked = false
+    this.finishedParking = false
     this.coords = {
         x: this.parkingLot.pathObject.entrance.x - 90 / 2,
         y:
@@ -269,6 +269,7 @@ Car.prototype.followRoute = function () {
                     )
                 ) {
                     this.park(true)
+                    return
                 } else {
                     this.adjustToFollowingDestination(
                         followingDestination,
@@ -476,7 +477,7 @@ Car.prototype.attemptToLeaveSpace = function () {
         delete this.parkingLot.cars.parked[this.id]
         return
     }
-    if (this.hasParked) {
+    if (this.finishedParking) {
         if (!this.animation) {
             // Create/retrieve an animation.
             this.animation = this.parkingLot.animationHandler.getAnimation(
@@ -551,7 +552,7 @@ Car.prototype.leaveSpace = function () {
 }
 
 Car.prototype.endTurn = function (endVals) {
-    if (this.hasParked) {
+    if (this.finishedParking) {
         this.status = 'leaving'
     } else {
         this.status = 'entering'
@@ -591,7 +592,7 @@ Car.prototype.endParking = function (endVals) {
         this.route = this.parkingLot.requestRouteFromSpace(this)
 
         console.log(this.id + ' is ready to leave their space.')
-        this.hasParked = true
+        this.finishedParking = true
     }, this.parkingDuration)
 }
 Car.prototype.endLeavingSpace = function (endVals) {
@@ -1014,7 +1015,7 @@ Car.prototype.getNextDestination = function (currentSection, nextSection) {
         turnOntoSection = nextSection.turn
     }
     if (
-        (this.route.length === 1 && this.hasParked === false) ||
+        (this.route.length === 1 && this.finishedParking === false) ||
         turnOntoSection
     ) {
         nextPathDestination -= this.turningRunup * this.negation
