@@ -212,18 +212,17 @@ Car.prototype.followRoute = function () {
 
     this.minStoppingDistance = this.calcStoppingDistance()
 
-    // Need to re-add proper detection ahead of stopping distance.
-    // Cars entering on left column will respect mid cars that need
-    // to get to bottom horizontal, but mid cars won't
-    // pull out if the cross road is occupied.
+    // Still some strange issues with right column intersections.
 
-    // Cars leaving spaces currently are still in ParkingLot's
-    // parked category meaning their maneuver area hitboxes don't
-    // get checked. Necessary for checking road ahead. - Fixed?
+    // Rightmost top middle row space keeps intersection blocked when
+    // it pulls out through till it moves forward to turn right?
 
-    // Probably need to continue reworking intersection behaviour.
-    // Cars over 2 intersections at once, cross intersection vs forward,
-    // z turns blocking a long time, etc.
+    // Something weird happening in bottom right. With a car in front of
+    // the entrance and a car pulling out of bottom middle row right
+    // two spaces can cause that car from going through to exit.
+
+    // Cars moving still partially moving into bottom right intersection
+    //  when they shouldn't.
 
     let distanceToNextDestination =
         this.parkingLot.trafficHandler.returnDistanceBetween(
@@ -519,6 +518,7 @@ Car.prototype.endTurn = function (endVals) {
 
     this.setToNextSection()
     this.adjustPositionalVarsAfterAnim(endVals)
+    this.setPositionalVars()
     this.updateCollisionBox()
     this.adjustCollisionBoxesFromAnim()
     this.updateElementPosition()
@@ -598,8 +598,8 @@ Car.prototype.setToNextSection = function (newRoute) {
     this.direction = this.currentSection.direction
     let intersection = this.getNextIntersection()
     if (intersection) {
-        if (intersection !== this.blockingIntersections[intersection.name]) {
-            this.nextIntersection = this.getNextIntersection()
+        if (!this.blockingIntersections[intersection.name]) {
+            this.nextIntersection = intersection
         }
     }
 }
