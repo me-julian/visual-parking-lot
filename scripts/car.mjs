@@ -200,17 +200,13 @@ Car.prototype.followRoute = function () {
     this.updateCollisionBox()
     this.setPositionalVars()
 
-    // Could be combined
-    let nextPathDestination = this.getNextDestination(
-        this.currentSection,
-        this.route[1]
-    )
     if (!this.nextDestination) {
-        this.nextDestination = nextPathDestination
+        this.nextDestination = this.getNextDestination(
+            this.currentSection,
+            this.route[1]
+        )
     }
-    //
-
-    this.minStoppingDistance = this.calcStoppingDistance()
+    this.minStoppingDistance = this.setStoppingDistance()
 
     // Still some strange issues with right column intersections.
 
@@ -235,6 +231,7 @@ Car.prototype.followRoute = function () {
     let carsInMinStoppingDistance =
         this.checkStoppingDistanceArea(stoppingDistanceArea)
 
+    // Destination area is currently only for the visual overlay.
     let destinationArea =
         this.parkingLot.trafficHandler.getAreaBetweenDestination(this)
     // let carsBetweenNextDestination = this.checkDestinationArea(destinationArea)
@@ -582,8 +579,9 @@ Car.prototype.exitScene = function () {
 
         this.removePageElements()
     } else {
-        // Get and draw collision box properly
+        // Get collision box to continue being drawn
         this.parkingLot.trafficHandler.getAreaInStoppingDistance(this)
+        // Force the car forward
         this.advance(9999, this.speed)
         this.updateCollisionBox()
     }
@@ -597,6 +595,10 @@ Car.prototype.setToNextSection = function (newRoute) {
     this.currentSection = this.route[0]
     this.direction = this.currentSection.direction
     let intersection = this.getNextIntersection()
+    // ISSUE: If a car blocks the intersection to leave space but ends
+    // up outside the area, the interval to check if it's left the
+    // intersection and should unblock hasn't run yet, keeping the
+    // intersection blocked.
     if (intersection) {
         if (!this.blockingIntersections[intersection.name]) {
             this.nextIntersection = intersection
@@ -699,46 +701,7 @@ Car.prototype.checkStoppingDistanceArea = function (areaAhead) {
 
     return {collision: collision}
 }
-Car.prototype.checkDestinationArea = function (areaAhead) {
-    let presence = false,
-        collision = false,
-        distance = 9999
 
-    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
-        areaAhead,
-        [this]
-    )
-
-    if (carsAhead.length != 0) {
-        presence = true
-    }
-
-    if (presence) {
-        let immediateCollision = this.checkForImmediateCollision(
-            carsAhead,
-            collision,
-            distance
-        )
-        collision = immediateCollision.collision
-        distance = immediateCollision.distance
-        // let blockingDestination = this.isBlockingDestination(car)
-        // if (blockingDestination.collision) {
-        //     presence = true
-        //     if (blockingDestination.distance < distance) {
-        //         distance = blockingDestination.distance
-        //     }
-        // }
-    }
-
-    return {presence: presence, collision: collision, distance: distance}
-}
-// Car.prototype.isBlockingDestination(car) {
-//     let opposingEdge
-//     if (this.negation === -1) {
-//         opposingEdge = car.coords[this.symbol] + car.baseLength
-//     } else {
-//         opposingEdge = car.coords[this.symbol]
-//     }
 Car.prototype.checkRoadAheadArea = function (areaAhead) {
     let presence = false,
         collision = false,
@@ -756,32 +719,6 @@ Car.prototype.checkRoadAheadArea = function (areaAhead) {
     carsAhead = this.splitCarsByDirection(this.direction, carsAhead)
 
     collision = this.checkOncomingCars(carsAhead.oncoming)
-    // for (let car of carsAhead) {
-    // Check direction for head-on collisions
-    // Possibly check for turning cars
-    // Check whether they're going slower than this car.
-    // if (
-    //     (this.direction === 'south' && car.direction === 'north') ||
-    //     (this.direction === 'north' && car.direction === 'south') ||
-    //     (this.direction === 'west' && car.direction === 'east') ||
-    //     (this.direction === 'east' && car.direction === 'west')
-    // ) {
-    //     // oncomingCar = UNKNOWN(car)
-    //     if (oncomingCar.concernable) {
-    //         presence = true
-    //         if (oncomingCar.distance < distance)
-    //             distance = oncomingCar.distance
-    //     }
-    //     continue
-    // }
-    // let blockingDestination = this.isBlockingDestination(car)
-    // if (blockingDestination.collision) {
-    //     presence = true
-    //     if (blockingDestination.distance < distance) {
-    //         distance = blockingDestination.distance
-    //     }
-    // }
-    // }
 
     return {presence: presence, collision: collision, distance: distance}
 }
@@ -936,32 +873,6 @@ Car.prototype.willCollideAtCurrentSpeed = function (car) {
     return {collision: collision, distance: distance}
 }
 
-Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
-    let closestCar
-    // Intial number is greater than the size of the scene.
-    let closestDist = 2000
-    for (let car of carsAhead) {
-        let opposingEdge
-        if (this.direction === 'north' || this.direction === 'west') {
-            opposingEdge = car[this.symbol] + car.height
-        } else {
-            opposingEdge = car[this.symbol]
-        }
-
-        let distance = this.parkingLot.trafficHandler.returnDistanceBetween(
-            this.leadingEdge,
-            opposingEdge
-        )
-
-        if (distance < closestDist) {
-            closestDist = distance
-            closestCar = car
-        }
-    }
-
-    return {car: closestCar, distance: closestDist}
-}
-
 Car.prototype.getNextDestination = function (currentSection, nextSection) {
     let nextPathDestination
     // Either going to end of section heading straight (could be exit)
@@ -981,8 +892,6 @@ Car.prototype.getNextDestination = function (currentSection, nextSection) {
     return nextPathDestination
 }
 
-// If just going forward, is following destination 'less' than next destination
-// If turning, is following destination 'less' than next destination + car length
 Car.prototype.hasFollowingDestination = function () {
     if (this.route.length === 1) {
         return false
@@ -1076,25 +985,6 @@ Car.prototype.adjustToFollowingDestination = function (
                 }
                 break
         }
-    }
-}
-// UNUSED
-Car.prototype.checkZTurnSection = function (section) {
-    // Cars doing Z-Turns from the bottom horizontal to mid-left column
-    // may need to wait for a car already in the section to pass to
-    // the exit, otherwise a deadlock occurs as the z-turn car has
-    // already blocked the intersection at this point.
-    let cars = this.parkingLot.trafficHandler.returnActiveCarsInArea(
-        this.collisionBoxes.maneuver,
-        [this]
-    )
-
-    cars = this.parkingLot.trafficHandler.splitCarsByDirection(cars)
-
-    if (cars.oncoming.length === 0) {
-        return true
-    } else {
-        return false
     }
 }
 
@@ -1232,17 +1122,99 @@ Car.prototype.determineIfExitRouteIsBlocked = function () {
     }
 }
 
-Car.prototype.calcStoppingDistance = function () {
+Car.prototype.setStoppingDistance = function () {
     return this.speed * 3
 }
-Car.prototype.calcAcceleration = function () {
+
+function UNUSED_Car() {}
+UNUSED_Car.prototype.checkDestinationArea = function (areaAhead) {
+    //
+    // UNUSED
+    //
+    let presence = false,
+        collision = false,
+        distance = 9999
+
+    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        areaAhead,
+        [this]
+    )
+
+    if (carsAhead.length != 0) {
+        presence = true
+    }
+
+    if (presence) {
+        let immediateCollision = this.checkForImmediateCollision(
+            carsAhead,
+            collision,
+            distance
+        )
+        collision = immediateCollision.collision
+        distance = immediateCollision.distance
+    }
+
+    return {presence: presence, collision: collision, distance: distance}
+}
+UNUSED_Car.prototype.checkZTurnSection = function (section) {
+    //
+    // UNUSED
+    //
+    // Cars doing Z-Turns from the bottom horizontal to mid-left column
+    // may need to wait for a car already in the section to pass to
+    // the exit, otherwise a deadlock occurs as the z-turn car has
+    // already blocked the intersection at this point.
+    let cars = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        this.collisionBoxes.maneuver,
+        [this]
+    )
+
+    cars = this.parkingLot.trafficHandler.splitCarsByDirection(cars)
+
+    if (cars.oncoming.length === 0) {
+        return true
+    } else {
+        return false
+    }
+}
+UNUSED_Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
+    //
+    // UNUSED
+    //
+    let closestCar
+    // Initial number is greater than the size of the scene.
+    let closestDist = 9999
+    for (let car of carsAhead) {
+        let opposingEdge
+        if (this.direction === 'north' || this.direction === 'west') {
+            opposingEdge = car[this.symbol] + car.height
+        } else {
+            opposingEdge = car[this.symbol]
+        }
+
+        let distance = this.parkingLot.trafficHandler.returnDistanceBetween(
+            this.leadingEdge,
+            opposingEdge
+        )
+
+        if (distance < closestDist) {
+            closestDist = distance
+            closestCar = car
+        }
+    }
+
+    return {car: closestCar, distance: closestDist}
+}
+UNUSED_Car.prototype.calcAcceleration = function () {
+    // Unused
     let acceleratedSpeed = this.speed + this.maxSpeed / 10
     if (acceleratedSpeed > this.maxSpeed) {
         acceleratedSpeed = this.maxSpeed
     }
     return acceleratedSpeed
 }
-Car.prototype.calcDeceleration = function (stoppingDistance) {
+UNUSED_Car.prototype.calcDeceleration = function (stoppingDistance) {
+    // Unused
     let deceleratedSpeed = this.speed - this.maxSpeed / 3
     if (deceleratedSpeed < 0) {
         deceleratedSpeed = 0
@@ -1250,6 +1222,8 @@ Car.prototype.calcDeceleration = function (stoppingDistance) {
 
     return deceleratedSpeed
 }
-Car.prototype.adjustSpeedToDestination = function () {}
+UNUSED_Car.prototype.adjustSpeedToDestination = function () {
+    // Unused
+}
 
 export {Car}

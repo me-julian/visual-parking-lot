@@ -1,9 +1,5 @@
 'use strict'
 
-// Use events to spawn transp divs to show bounding boxes of reserved
-// space, cars about to intersect until they're finished with the
-// action?
-
 /**
  * @typedef {Object} Rectangle
  * @property {Number} x
@@ -721,9 +717,6 @@ TrafficHandler.prototype.blockManeuverArea = function (car) {
     }
 }
 
-// Intervals can cause an issue where a car finishes an animation,
-// removes all their maneuver collision boxes, etc. but the interval
-// hasn't fired to unblock the intersection.
 TrafficHandler.prototype.blockIntersection = function (car, intersection) {
     intersection.occupied = true
     // Currently blocking both areas of the intersection (x and y areas)
@@ -733,10 +726,6 @@ TrafficHandler.prototype.blockIntersection = function (car, intersection) {
 
     car.nextIntersection = null
     car.blockingIntersections[intersection.name] = intersection
-
-    //
-    // Still having issues with right two intersections.
-    //
 
     if (car.status === 'parking') {
         this.blockIntersectionUntilParked(car, intersection)
@@ -768,7 +757,6 @@ TrafficHandler.prototype.blockIntersectionUntilPassed = function (
     intersection
 ) {
     let isStillOccupiedInterval, hasEnteredInterval
-    // Probably still need to work on intersectionBlocking.
     let hasEntered = () => {
         if (
             this.checkCollision(
