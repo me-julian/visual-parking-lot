@@ -164,7 +164,7 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
     switch (car.direction) {
         // Check if cars are close enough to the edge to need to make
         // a special maneuver.
-        case 'east':
+        case 'west':
             if (car.route[car.route.length - 1].coord <= 228) {
                 // Pull out south then turn east
                 // Change coord and section itself
@@ -175,7 +175,7 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
                 return null
             }
             break
-        case 'west':
+        case 'east':
             if (car.route[car.route.length - 1].coord <= 228) {
                 // Pull out south then west then turn south
                 // Change coord and section itself

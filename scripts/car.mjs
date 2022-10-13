@@ -449,8 +449,7 @@ Car.prototype.park = function (exceptional) {
     }
 }
 Car.prototype.attemptToLeaveSpace = function () {
-    let ids = [0, 1, 10, 13, 20, 22]
-    if (ids.includes(this.assignedSpace.rank)) {
+    if (this.route === undefined) {
         this.status === 'unhandled'
         delete this.parkingLot.cars.parked[this.id]
         return
