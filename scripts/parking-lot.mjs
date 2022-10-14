@@ -43,6 +43,34 @@ function ParkingLot(
     this.spawnCarCooldown = false
 }
 
+ParkingLot.prototype.initialize = function () {
+    this.initializeIntersections()
+    this.initializeWrapperPositionVals()
+}
+
+ParkingLot.prototype.initializeIntersections = function () {
+    // Intersections are currently defined manually.
+    // It's assumed all intersections are on the ends of horizontal
+    // sections.
+    let horizontalSections = this.pathObject.sections.horizontal
+
+    this.intersections =
+        this.trafficHandler.getIntersections(horizontalSections)
+
+    this.overlay.createIntersectionOverlay(this.intersections)
+}
+
+ParkingLot.prototype.initializeWrapperPositionVals = function () {
+    this.lotWrapperPositionalValues = document
+        .getElementById('wrapper')
+        .getBoundingClientRect()
+
+    // If the page is reloaded while scrolled it'll store the values
+    // accordingly, this neutralizes that.
+    this.lotWrapperPositionalValues.x += window.scrollX
+    this.lotWrapperPositionalValues.y += window.scrollY
+}
+
 ParkingLot.prototype.simulate = function () {
     if (!this.spawnCarCooldown && this.trafficHandler.isEntranceClear(this)) {
         this.spawnCar(this.carCount)
@@ -61,18 +89,6 @@ ParkingLot.prototype.simulate = function () {
     for (let car in this.cars.parked) {
         this.cars.parked[car].determineAction()
     }
-}
-
-ParkingLot.prototype.initializeIntersections = function () {
-    // Intersections are currently defined manually.
-    // It's assumed all intersections are on the ends of horizontal
-    // sections.
-    let horizontalSections = this.pathObject.sections.horizontal
-
-    this.intersections =
-        this.trafficHandler.getIntersections(horizontalSections)
-
-    this.overlay.createIntersectionOverlay(this.intersections)
 }
 
 ParkingLot.prototype.spawnCar = function () {

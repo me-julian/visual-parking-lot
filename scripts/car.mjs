@@ -145,7 +145,7 @@ Car.prototype.initialize = function (assignedSpace) {
     }
     this.direction = 'north'
     this.setPositionalVars()
-    this.updateCollisionBox()
+    this.setCarCollisionBoxCoords()
 
     this.img = this.getRandomImage()
     this.orientation = 270
@@ -182,10 +182,9 @@ Car.prototype.determineAction = function () {
             this.followRoute()
             break
         case 'turning':
-            this.turn()
-            break
         case 'parking':
         case 'leaving-space':
+            this.runAnimation()
             break
         case 'parked':
             this.attemptToLeaveSpace()
@@ -197,7 +196,7 @@ Car.prototype.determineAction = function () {
 }
 
 Car.prototype.followRoute = function () {
-    this.updateCollisionBox()
+    this.setCarCollisionBoxCoords()
     this.setPositionalVars()
 
     if (!this.nextDestination) {
@@ -212,13 +211,41 @@ Car.prototype.followRoute = function () {
 
     // Rightmost top middle row space keeps intersection blocked when
     // it pulls out through till it moves forward to turn right?
+    //      It pulls outside the area but the interval doesn't fire
+    //      to clear the intersection blocking before it re-blocks.
 
-    // Something weird happening in bottom right. With a car in front of
-    // the entrance and a car pulling out of bottom middle row right
-    // two spaces can cause that car from going through to exit.
+    // Cars on right column being stopped by cars to their left in
+    // south facing spaces pulling out.
+    //      Cars are probably detecting the main collisionBox of the
+    //      car leaving since maneuver/intersection boxes aren't
+    //      perfect. Could dial in intersectionboxes and maneuverAreas
+    //      more or just disable car.CollisionBoxes.car when parked/
+    //      leaving space.
+    // Fixed?
 
-    // Cars moving still partially moving into bottom right intersection
-    //  when they shouldn't.
+    // Cars in middle rows (only bottom middle?) being blocked by
+    // intersection ahead being blocked when its out of range.
+    //  Seems to be z-turn cars taking very long taking up half
+    // off the entire section.
+    //     Cars could ignore the main collision box in this case
+    //      since they are currently always slower.
+    //      Or, we implement incremental reduction of collision box
+    //      based on animation distance and duration.
+    // Cars now update their collisionBox dynamically during anims, but
+    // the inaccuracy of the box also block nearby leaving space cars.
+
+    // Major bug, if reloading at different scroll position the scrollX
+    // and scrollY values needed for dynamic collisionBoxes is relative
+    // to that reload position. Need an independent value/to make reload
+    // reload at top/adjust.
+
+    // Cars still partially moving into bottom right intersection
+    // when they shouldn't. Car moving through intersection to get
+    // to exit and they pull up to where they need to turn as if
+    // the intersection wasn't blocked (still blocked by maneuverArea to
+    // turn)
+
+    // Improve reenteredRoadClear
 
     let distanceToNextDestination =
         this.parkingLot.trafficHandler.returnDistanceBetween(
@@ -239,16 +266,8 @@ Car.prototype.followRoute = function () {
     let roadArea = this.parkingLot.trafficHandler.getRoadAreaAhead(this)
     let roadAheadStatus = this.checkRoadAheadArea(roadArea)
 
-    let carsBetweenNextDestination = false
     let clearAhead = true
-    if (carsInMinStoppingDistance.collision) {
-        clearAhead = false
-        carsBetweenNextDestination = true
-    }
-    // if (carsBetweenNextDestination.collision) {
-    //     clearAhead = false
-    // }
-    if (roadAheadStatus.collision) {
+    if (carsInMinStoppingDistance.collision || roadAheadStatus.collision) {
         clearAhead = false
     }
 
@@ -290,15 +309,12 @@ Car.prototype.followRoute = function () {
             if (this.status === 'leaving') {
                 this.exitScene(distanceToNextDestination)
                 return
-            } else if (
-                this.status === 'entering' &&
-                !carsBetweenNextDestination.presence
-            ) {
+            } else if (this.status === 'entering' && clearAhead) {
                 this.park(false)
                 return
             }
         }
-        if (this.route[1].turn && !carsBetweenNextDestination.presence) {
+        if (this.route[1].turn && clearAhead) {
             this.turn(distanceToNextDestination)
             return
         }
@@ -333,9 +349,28 @@ Car.prototype.advance = function (distanceToNextDestination, newSpeed) {
     this.pageEl.style[this.axis] = this.coords[this.symbol] + 'px'
     this.leadingEdge += this.speed * this.negation
 
-    this.updateCollisionBox()
+    this.setCarCollisionBoxCoords()
 }
 
+Car.prototype.runAnimation = function () {
+    // Attempt to start animation if not already running.
+    if (this.pageEl.style.animationName === 'none') {
+        switch (this.status) {
+            case 'turning':
+                this.turn()
+                break
+            case 'parking':
+            case 'leaving-space':
+                break
+            case 'parked':
+                this.attemptToLeaveSpace()
+                break
+        }
+    } else {
+        // Else update collisionBox each loop iteration.
+        this.updateCarCollisionBoxDuringAnimation()
+    }
+}
 Car.prototype.turn = function () {
     if (!this.animation) {
         this.animation = this.parkingLot.animationHandler.getAnimation(
@@ -488,6 +523,7 @@ Car.prototype.attemptToLeaveSpace = function () {
 Car.prototype.leaveSpace = function () {
     this.status = 'leaving-space'
 
+    this.reinitializeCarCollisionBox()
     this.parkingLot.trafficHandler.blockManeuverArea(this)
 
     this.parkingLot.cars.leaving[this.id] = this
@@ -516,7 +552,6 @@ Car.prototype.endTurn = function (endVals) {
     this.setToNextSection()
     this.adjustPositionalVarsAfterAnim(endVals)
     this.setPositionalVars()
-    this.updateCollisionBox()
     this.adjustCollisionBoxesFromAnim()
     this.updateElementPosition()
 
@@ -526,8 +561,7 @@ Car.prototype.endTurn = function (endVals) {
 Car.prototype.endParking = function (endVals) {
     this.adjustPositionalVarsAfterAnim(endVals)
     this.setPositionalVars()
-    this.updateCollisionBox()
-    this.adjustCollisionBoxesFromAnim()
+    this.removeCarCollisionBoxes()
     this.updateElementPosition()
 
     // Is this hiding collisionBoxes that need to be rotated?
@@ -560,7 +594,6 @@ Car.prototype.endLeavingSpace = function (endVals) {
     this.setToNextSection(true)
     this.adjustPositionalVarsAfterAnim(endVals)
     this.setPositionalVars()
-    this.updateCollisionBox()
     this.adjustCollisionBoxesFromAnim()
     this.updateElementPosition()
     this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
@@ -583,7 +616,6 @@ Car.prototype.exitScene = function () {
         this.parkingLot.trafficHandler.getAreaInStoppingDistance(this)
         // Force the car forward
         this.advance(9999, this.speed)
-        this.updateCollisionBox()
     }
 }
 
@@ -649,28 +681,24 @@ Car.prototype.updateElementPosition = function () {
     this.pageEl.style.transform = 'rotate(' + this.orientation + 'deg)'
 }
 
-Car.prototype.updateCollisionBox = function () {
+// Cars never need to check collision boxes of cars in parking spaces
+// so the main car box is removed while parked/reversing out of space
+// in case it causes problems with maneuver & intersection checking.
+Car.prototype.removeCarCollisionBoxes = function () {
+    delete this.collisionBoxes.car
+    delete this.collisionBoxes.maneuver
+}
+Car.prototype.reinitializeCarCollisionBox = function () {
+    this.collisionBoxes.car = {}
+    this.setCarCollisionBoxCoords()
+    this.setCarCollisionBoxSize()
+}
+Car.prototype.setCarCollisionBoxCoords = function () {
     this.collisionBoxes.car.x = this.coords.x
     this.collisionBoxes.car.y = this.coords.y
     this.collisionBoxes.car[this.oppSymbol] += this.baseWidth / 2
 }
-Car.prototype.adjustCollisionBoxesFromAnim = function () {
-    //   Need to handle intersections
-
-    delete this.collisionBoxes.maneuver
-    switch (this.status) {
-        case 'turning':
-            break
-        case 'parking':
-            break
-        case 'leaving-space':
-            break
-        case 'entering':
-        case 'leaving':
-            this.flipCollisionBox()
-    }
-}
-Car.prototype.flipCollisionBox = function () {
+Car.prototype.setCarCollisionBoxSize = function () {
     switch (this.direction) {
         case 'north':
         case 'south':
@@ -683,6 +711,35 @@ Car.prototype.flipCollisionBox = function () {
             this.collisionBoxes.car.w = this.baseLength
             break
     }
+}
+Car.prototype.adjustCollisionBoxesFromAnim = function () {
+    delete this.collisionBoxes.maneuver
+    this.reinitializeCarCollisionBox()
+}
+Car.prototype.updateCarCollisionBoxDuringAnimation = function () {
+    let carImg = this.pageEl.firstElementChild
+    let positionalValues = carImg.getBoundingClientRect()
+
+    // Adjust for page scroll
+    positionalValues.x += window.scrollX
+    // // Adjust for margin around parking lot itself.
+    let wrapperXOffset = this.parkingLot.lotWrapperPositionalValues.x
+    positionalValues.x -= wrapperXOffset
+
+    positionalValues.y += window.scrollY
+    let wrapperYOffset = this.parkingLot.lotWrapperPositionalValues.y
+    positionalValues.y -= wrapperYOffset
+
+    this.collisionBoxes.car.x = positionalValues.x
+    this.collisionBoxes.car.y = positionalValues.y
+    this.collisionBoxes.car.w = positionalValues.width
+    this.collisionBoxes.car.h = positionalValues.height
+
+    // Technically not stoppingDistance.
+    this.parkingLot.overlay.drawBox(
+        this.overlay.stoppingDistance,
+        this.collisionBoxes.car
+    )
 }
 
 Car.prototype.checkStoppingDistanceArea = function (areaAhead) {
@@ -740,6 +797,7 @@ Car.prototype.reenteredRoadClear = function () {
     )
 
     // Remove cars that have/are about to pass where the car needs to go
+    // (Let them be handled by maneuverArea checks)
     for (let car of carsOnRoad.oncoming) {
         // Not yet accounting for negative vs positive movement.
         if (
@@ -750,9 +808,27 @@ Car.prototype.reenteredRoadClear = function () {
             let i = carsOnRoad.oncoming.indexOf(car)
             carsOnRoad.oncoming.splice(i, 1)
         }
+
+        // Ignore cars that only just entered and go anyway.
+        // Still not really handling other directions/negative/positive
+        // movement.
+        if (
+            car.route[0].section !== this.assignedSpace.section &&
+            car.coords[this.oppSymbol] <
+                car.route[0].section[this.oppSymbol] +
+                    car.route[0].section.len * 0.75
+        ) {
+        }
     }
 
-    if (carsOnRoad.oncoming.length !== 0) {
+    // Row check lets cars in spaces far from entrance go anyway.
+    // Might be a better way considering cars in top top and bottom
+    // two of column are special cases anyway? Only really applies to
+    // the third from top left space.
+    if (
+        carsOnRoad.oncoming.length !== 0 &&
+        this.assignedSpace.section.row !== 0
+    ) {
         clear = false
     }
 

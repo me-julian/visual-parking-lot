@@ -203,9 +203,10 @@ TrafficHandler.prototype.setZParkXAxis = function (area, car) {
             area.w = car.assignedSpace.x + car.assignedSpace.width - area.x
             break
         case 'east':
-            // Good
-            area.x = car.leadingEdge
-            area.w = car.animation.endVals.forwardDistance
+            let intersectionMargin = 40 * car.negation
+
+            area.x = car.leadingEdge + intersectionMargin
+            area.w = car.animation.endVals.forwardDistance - intersectionMargin
             break
     }
 
@@ -214,9 +215,10 @@ TrafficHandler.prototype.setZParkXAxis = function (area, car) {
 TrafficHandler.prototype.setZParkYAxis = function (area, car) {
     switch (car.direction) {
         case 'north':
-            // Good
+            let intersectionMargin = 40 * car.negation
+
             area.y = car.assignedSpace.y + car.assignedSpace.height
-            area.h = car.animation.endVals.forwardDistance
+            area.h = car.animation.endVals.forwardDistance + intersectionMargin
             break
         case 'east':
             if (car.assignedSpace.y < car.coords.y + car.baseLength / 2) {

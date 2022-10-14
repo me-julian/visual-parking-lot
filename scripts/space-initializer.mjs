@@ -352,9 +352,9 @@ SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
         },
     ]
 
-    // spaces.zTurn = zTurn
+    spaces.zTurn = zTurn
     // spaces.uTurn = uTurn
-    spaces.rightAngleReverse = rightAngleReverse
+    // spaces.rightAngleReverse = rightAngleReverse
 
     return spaces
 }

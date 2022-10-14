@@ -11,13 +11,12 @@ import {ParkingLot} from './parking-lot.mjs'
 function initializeSimulation() {
     let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
+    let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
 
     // TEST limited space sets.
     // let testUnrankedSpaceList = spaceInitializer.testExceptionSpaces(pathObject)
     // let rankedSpaceList = spaceInitializer.rankSpaces(testUnrankedSpaceList)
     //
-
-    let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
 
     let routePlotter = new RoutePlotter(pathObject)
 
@@ -38,7 +37,7 @@ function initializeSimulation() {
         rankedSpaceList
     )
     parkingLot.trafficHandler = new TrafficHandler(parkingLot)
-    parkingLot.initializeIntersections()
+    parkingLot.initialize()
 
     return parkingLot
 }
