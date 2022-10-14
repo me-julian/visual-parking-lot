@@ -92,16 +92,11 @@ body {
     pointer-events: all;
 }
 
-/* Test Elements */
-#hcar {
-    display: none;
-    left: calc(20px);
-    top: calc(18px - 46px);
-}
-
-#vCar {
-    display: none;
-    transform: rotate(270deg);
-    left: calc(228px + 47px - 46px);
-    top: calc(0px);
+/* Footer - This covers cars leaving the lot. */
+footer {
+    position: relative;
+    width: 1385px;
+    height: 225px;
+    background-color: white;
+    z-index: 1000;
 }
