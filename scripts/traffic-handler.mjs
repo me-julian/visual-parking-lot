@@ -42,8 +42,8 @@ TrafficHandler.prototype.getIntersections = function (horizontalSections) {
         leftIntersection.name = leftName
         rightIntersection.name = rightName
 
-        leftIntersection.areas = this.getIntersectionArea(section.x, section.y)
-        rightIntersection.areas = this.getIntersectionArea(
+        leftIntersection.area = this.getIntersectionArea(section.x, section.y)
+        rightIntersection.area = this.getIntersectionArea(
             section.x + section.len,
             section.y
         )
@@ -56,29 +56,16 @@ TrafficHandler.prototype.getIntersections = function (horizontalSections) {
 TrafficHandler.prototype.getIntersectionArea = function (x, y) {
     // Intersection areas are comprised of two boxes which extend
     // further into the connecting roads of their respective axis.
-    let xArea, yArea
+    let area
 
-    xArea = {
+    area = {
         x: x - 45,
         y: y - 40,
         w: 182,
         h: 150,
     }
-    // Car turningSpace (30px) + 10px buffer in both directions
-    xArea.x -= 40
-    xArea.w += 80
 
-    yArea = {
-        x: x - 45,
-        y: y - 40,
-        w: 182,
-        h: 150,
-    }
-    // Car turningSpace (30px) + 10px buffer in both directions
-    yArea.y -= 40
-    yArea.h += 80
-
-    return {xArea: xArea, yArea: yArea}
+    return area
 }
 
 TrafficHandler.prototype.getManeuverArea = function (car) {
@@ -203,10 +190,8 @@ TrafficHandler.prototype.setZParkXAxis = function (area, car) {
             area.w = car.assignedSpace.x + car.assignedSpace.width - area.x
             break
         case 'east':
-            let intersectionMargin = 40 * car.negation
-
-            area.x = car.leadingEdge + intersectionMargin
-            area.w = car.animation.endVals.forwardDistance - intersectionMargin
+            area.x = car.leadingEdge
+            area.w = car.animation.endVals.forwardDistance
             break
     }
 
@@ -215,10 +200,8 @@ TrafficHandler.prototype.setZParkXAxis = function (area, car) {
 TrafficHandler.prototype.setZParkYAxis = function (area, car) {
     switch (car.direction) {
         case 'north':
-            let intersectionMargin = 40 * car.negation
-
             area.y = car.assignedSpace.y + car.assignedSpace.height
-            area.h = car.animation.endVals.forwardDistance + intersectionMargin
+            area.h = car.animation.endVals.forwardDistance
             break
         case 'east':
             if (car.assignedSpace.y < car.coords.y + car.baseLength / 2) {
@@ -300,10 +283,7 @@ TrafficHandler.prototype.getAreaOverlappingIntersections = function (areas) {
         for (let intersection in intersections) {
             intersection = intersections[intersection]
             if (!overlappingIntersections.intersection) {
-                if (
-                    this.checkCollision(area, intersection.areas.xArea) ||
-                    this.checkCollision(area, intersection.areas.yArea)
-                ) {
+                if (this.checkCollision(area, intersection.area)) {
                     overlappingIntersections[intersection.name] = intersection
                 }
             }
@@ -760,12 +740,7 @@ TrafficHandler.prototype.blockIntersectionUntilPassed = function (
 ) {
     let isStillOccupiedInterval, hasEnteredInterval
     let hasEntered = () => {
-        if (
-            this.checkCollision(
-                car.collisionBoxes.car,
-                intersection.areas[car.symbol + 'Area']
-            )
-        ) {
+        if (this.checkCollision(car.collisionBoxes.car, intersection.area)) {
             clearInterval(hasEnteredInterval)
             isStillOccupiedInterval = setInterval(isStillOccupied, 75)
         } else if (car.status === 'parking' || car.status === 'parked') {
@@ -779,10 +754,7 @@ TrafficHandler.prototype.blockIntersectionUntilPassed = function (
             this.blockIntersectionUntilParked(car, intersection)
             clearInterval(isStillOccupiedInterval)
         } else if (
-            !this.checkCollision(
-                car.collisionBoxes.car,
-                intersection.areas[car.symbol + 'Area']
-            )
+            !this.checkCollision(car.collisionBoxes.car, intersection.area)
         ) {
             if (car.blockingIntersections[intersection.name]) {
                 delete car.blockingIntersections[intersection.name]
@@ -793,12 +765,7 @@ TrafficHandler.prototype.blockIntersectionUntilPassed = function (
         }
     }
 
-    if (
-        this.checkCollision(
-            car.collisionBoxes.car,
-            intersection.areas[car.symbol + 'Area']
-        )
-    ) {
+    if (this.checkCollision(car.collisionBoxes.car, intersection.area)) {
         isStillOccupiedInterval = setInterval(isStillOccupied, 75)
     } else {
         hasEnteredInterval = setInterval(hasEntered, 75)

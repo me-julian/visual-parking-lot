@@ -207,7 +207,9 @@ Car.prototype.followRoute = function () {
     }
     this.minStoppingDistance = this.setStoppingDistance()
 
+    //
     // Refactor intersections to be one smaller box.
+    //
 
     // Make sure middle right section's top space should actually have
     // Z turn.
@@ -1101,11 +1103,7 @@ Car.prototype.checkAtIntersection = function () {
     if (
         this.parkingLot.trafficHandler.checkCollision(
             carArea,
-            intersection.areas.xArea
-        ) ||
-        this.parkingLot.trafficHandler.checkCollision(
-            carArea,
-            intersection.areas.yArea
+            intersection.area
         )
     ) {
         return intersection

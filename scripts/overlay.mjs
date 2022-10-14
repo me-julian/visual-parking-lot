@@ -37,19 +37,13 @@ Overlay.prototype.createIntersectionOverlay = function (intersections) {
     for (let intersection in intersections) {
         let intersectionObject = intersections[intersection]
 
-        let intersectionWrapper = this.createBox(
+        let intersectionEl = this.createBox(
             allIntersectionsWrapper,
-            ['intersection', 'overlay-el'],
+            ['intersection', 'overlay-el', 'area-box'],
             intersection
         )
-        let xBox = this.createBox(intersectionWrapper)
-        let yBox = this.createBox(intersectionWrapper)
-        intersectionWrapper.append(xBox, yBox)
 
-        this.drawBox(xBox, intersectionObject.areas.xArea, {
-            backgroundColor: 'green',
-        })
-        this.drawBox(yBox, intersectionObject.areas.yArea, {
+        this.drawBox(intersectionEl, intersectionObject.area, {
             backgroundColor: 'green',
         })
     }
@@ -246,7 +240,7 @@ Overlay.prototype.updateSpaceColor = function (space, car) {
     space.style['background-color'] = spaceColor
 }
 Overlay.prototype.updateIntersectionColor = function (intersection, car) {
-    let intersectionBoxes = document.getElementById(intersection.name).children
+    let intersectionBox = document.getElementById(intersection.name)
     // If the car which is blocking the intersection is userFocus,
     // keep the intersection green to show it's clear to them.
     if (car) {
@@ -256,13 +250,9 @@ Overlay.prototype.updateIntersectionColor = function (intersection, car) {
     }
 
     if (intersection.occupied) {
-        for (let box of intersectionBoxes) {
-            box.style.backgroundColor = 'red'
-        }
+        intersectionBox.style.backgroundColor = 'red'
     } else {
-        for (let box of intersectionBoxes) {
-            box.style.backgroundColor = 'green'
-        }
+        intersectionBox.style.backgroundColor = 'green'
     }
 }
 
