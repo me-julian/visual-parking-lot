@@ -234,12 +234,14 @@ Overlay.prototype.updateManeuverColor = function (wrapper, state) {
 
 Overlay.prototype.updateSpaceColor = function (space, car) {
     let spaceColor
-    if (car.status === 'parked' || car.status === 'leaving-space') {
-        spaceColor = 'red'
-    } else if (car.finishedParking) {
-        spaceColor = 'gray'
-    } else {
+    if (!car.finishedParking && car.status !== 'parked') {
         spaceColor = 'yellow'
+    } else if (car.status === 'parked' && !car.finishedParking) {
+        spaceColor = 'red'
+    } else if (car.status === 'parked' || car.status === 'leaving-space') {
+        spaceColor = 'blueviolet'
+    } else {
+        spaceColor = 'gray'
     }
     space.style['background-color'] = spaceColor
 }

@@ -207,45 +207,26 @@ Car.prototype.followRoute = function () {
     }
     this.minStoppingDistance = this.setStoppingDistance()
 
-    // Still some strange issues with right column intersections.
+    // Refactor intersections to be one smaller box.
+
+    // Make sure middle right section's top space should actually have
+    // Z turn.
 
     // Rightmost top middle row space keeps intersection blocked when
     // it pulls out through till it moves forward to turn right?
     //      It pulls outside the area but the interval doesn't fire
     //      to clear the intersection blocking before it re-blocks.
 
-    // Cars on right column being stopped by cars to their left in
-    // south facing spaces pulling out.
-    //      Cars are probably detecting the main collisionBox of the
-    //      car leaving since maneuver/intersection boxes aren't
-    //      perfect. Could dial in intersectionboxes and maneuverAreas
-    //      more or just disable car.CollisionBoxes.car when parked/
-    //      leaving space.
-    // Fixed?
-
-    // Cars in middle rows (only bottom middle?) being blocked by
-    // intersection ahead being blocked when its out of range.
-    //  Seems to be z-turn cars taking very long taking up half
-    // off the entire section.
-    //     Cars could ignore the main collision box in this case
-    //      since they are currently always slower.
-    //      Or, we implement incremental reduction of collision box
-    //      based on animation distance and duration.
     // Cars now update their collisionBox dynamically during anims, but
-    // the inaccuracy of the box also block nearby leaving space cars.
-
-    // Major bug, if reloading at different scroll position the scrollX
-    // and scrollY values needed for dynamic collisionBoxes is relative
-    // to that reload position. Need an independent value/to make reload
-    // reload at top/adjust.
-
-    // Cars still partially moving into bottom right intersection
-    // when they shouldn't. Car moving through intersection to get
-    // to exit and they pull up to where they need to turn as if
-    // the intersection wasn't blocked (still blocked by maneuverArea to
-    // turn)
+    // the inaccuracy of the box can also block nearby leaving space cars.
 
     // Improve reenteredRoadClear
+    //      General ability for cars to understand when blocked
+    // intersections and other anims are not going to affect them
+    // seems needed for real increased flow/naturalness of movement.
+
+    // Should intersections ultimately be reduced to just one square?
+    // Or is it worth it to handle cross/forward axis blocking?
 
     let distanceToNextDestination =
         this.parkingLot.trafficHandler.returnDistanceBetween(
@@ -564,7 +545,6 @@ Car.prototype.endParking = function (endVals) {
     this.removeCarCollisionBoxes()
     this.updateElementPosition()
 
-    // Is this hiding collisionBoxes that need to be rotated?
     this.parkingLot.overlay.clearCollisionBoxes(this.pageWrapper)
 
     this.pageEl.style.animationName = 'none'
@@ -583,6 +563,10 @@ Car.prototype.endParking = function (endVals) {
 
         console.log(this.id + ' is ready to leave their space.')
         this.finishedParking = true
+        this.parkingLot.overlay.updateSpaceColor(
+            this.assignedSpace.pageEl,
+            this
+        )
     }, this.parkingDuration)
 }
 Car.prototype.endLeavingSpace = function (endVals) {
@@ -812,6 +796,9 @@ Car.prototype.reenteredRoadClear = function () {
         // Ignore cars that only just entered and go anyway.
         // Still not really handling other directions/negative/positive
         // movement.
+        // At current speed (5px/iteration, 75ms iterations) doesn't
+        // seem to run much because of new cars spawning
+        // and cars blocking the intersection above in maneuverArea.
         if (
             car.route[0].section !== this.assignedSpace.section &&
             car.coords[this.oppSymbol] <
