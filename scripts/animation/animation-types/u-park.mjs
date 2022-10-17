@@ -202,42 +202,12 @@ UPark.prototype.getAdjustedEndCoords = function (car, endVals) {
     switch (endVals.direction) {
         case 'west':
             console.err('Unexpected State/Unhandled Case!')
-            //     endVals.x = endVals.x
-            //     endVals.y -=
-            //         car.baseWidth / 2 -
-            //         (car.assignedSpace.height - car.baseWidth) / 2
-
-            //     endVals.orientation = car.orientation + endVals.orientationMod
-
-            //     endVals.x += 10
             break
         case 'east':
             console.err('Unexpected State/Unhandled Case!')
-            //     endVals.x = endVals.x + (car.assignedSpace.width - car.baseLength)
-
-            //     endVals.y -=
-            //         car.baseWidth / 2 -
-            //         (car.assignedSpace.height - car.baseWidth) / 2
-
-            //     // East facing spots are the only in the lot which may
-            //     // be approached from two different directions.
-            //     // Orientation change direction may not yet be correct.
-            //     endVals.orientation =
-            //         car.orientation + endVals.orientationMod * car.negation
-
-            //     endVals.x -= 10
             break
         case 'north':
             console.err('Unexpected State/Unhandled Case!')
-            //     endVals.x -=
-            //         car.baseWidth / 2 -
-            //         (car.assignedSpace.width - car.baseWidth) / 2
-
-            //     endVals.y = endVals.y
-
-            //     endVals.orientation = car.orientation + endVals.orientationMod
-
-            //     endVals.y += 10
             break
         case 'south':
             endVals.x -=

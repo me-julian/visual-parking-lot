@@ -22,15 +22,24 @@ function AnimationHandler(animationTypes) {
 AnimationHandler.prototype.determineExceptionalAnimationType = function (car) {
     let type
     let startDirection = car.direction
-    let endDirection = car.assignedSpace.facing
 
-    if (
-        (startDirection === 'north' && endDirection === 'south') ||
-        (startDirection === 'south' && endDirection === 'north')
-    ) {
-        type = 'u-park'
+    if (!car.finishedParking) {
+        let endDirection = car.assignedSpace.facing
+        if (
+            (startDirection === 'north' && endDirection === 'south') ||
+            (startDirection === 'south' && endDirection === 'north')
+        ) {
+            type = 'u-park'
+        } else {
+            type = 'z-park'
+        }
     } else {
-        type = 'z-park'
+        let endDirection = car.route[0].direction
+        if (startDirection === endDirection) {
+            type = 'z-reverse'
+        } else {
+            type = 'right-angle-reverse'
+        }
     }
 
     return type
@@ -67,9 +76,8 @@ AnimationHandler.prototype.getAnimation = function (car, type) {
                     animName
                 )
                 break
-            case 'right-angle-far-reverse':
-                break
-            case 'right-angle-three-point-reverse':
+            case 'z-reverse':
+                animation = new this.animationTypes.ZReverse(this, animName)
                 break
         }
 
@@ -99,10 +107,8 @@ AnimationHandler.prototype.getAnimationName = function (car, type) {
                 car.route[1].turn
             break
         case 'right-angle-reverse':
+        case 'z-reverse':
             animName = 'space-' + car.assignedSpace.rank + '-leaving-space'
-            break
-        case 'right-angle-three-point-reverse':
-            // Unimplemented
             break
     }
 

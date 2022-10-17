@@ -447,10 +447,14 @@ Car.prototype.attemptToLeaveSpace = function () {
     }
     if (this.finishedParking) {
         if (!this.animation) {
+            let animationType =
+                this.parkingLot.animationHandler.determineExceptionalAnimationType(
+                    this
+                )
             // Create/retrieve an animation.
             this.animation = this.parkingLot.animationHandler.getAnimation(
                 this,
-                'right-angle-reverse'
+                animationType
             )
         }
 

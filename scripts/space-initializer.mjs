@@ -413,7 +413,7 @@ SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
     // spaces.zTurn = zTurn
     // spaces.uTurn = uTurn
     // spaces.rightAngleReverse = rightAngleReverse
-    spaces.rightAngleFarReverse = rightAngleFarReverse
+    // spaces.rightAngleFarReverse = rightAngleFarReverse
     spaces.threePointReverse = threePointReverse
 
     return spaces

@@ -86,6 +86,10 @@ TrafficHandler.prototype.getManeuverArea = function (car) {
             break
         case 'right-angle-reverse':
             maneuverArea = this.getRightAngleReverseArea(car)
+            break
+        case 'z-reverse':
+            maneuverArea = this.getZReverseArea(car)
+            break
     }
 
     return maneuverArea
@@ -132,6 +136,22 @@ TrafficHandler.prototype.getRightAngleReverseArea = function (car) {
     area = this.setRightAngleReverseYAxis(area, car)
 
     return [area]
+}
+TrafficHandler.prototype.getZReverseArea = function (car) {
+    let spaceArea = {},
+        farArea = {}
+
+    // Area needed to back out of the space
+    spaceArea = this.setZReverseSpaceXAxis(spaceArea, car)
+    spaceArea = this.setZReverseSpaceYAxis(spaceArea, car)
+
+    // Area of further section to stop and start normal movement at.
+    farArea = this.setZReverseFarXAxis(farArea, car)
+    farArea = this.setZReverseFarYAxis(farArea, car)
+
+    // Rest is covered by intersection blocking.
+
+    return [spaceArea, farArea]
 }
 TrafficHandler.prototype.setRightAngleParkXAxis = function (area, car) {
     switch (car.direction) {
@@ -260,6 +280,50 @@ TrafficHandler.prototype.setRightAngleReverseYAxis = function (area, car) {
             area.y = car.animation.endVals.y
             area.h =
                 car.assignedSpace.y + car.assignedSpace.height + 10 - area.y
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setZReverseSpaceXAxis = function (area, car) {
+    switch (car.direction) {
+        case 'east':
+            area.x = car.assignedSpace.section.x
+            area.w = car.baseWidth
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setZReverseSpaceYAxis = function (area, car) {
+    switch (car.direction) {
+        case 'east':
+            area.y = car.assignedSpace.y - 10
+            area.h = Math.abs(
+                area.y -
+                    (car.animation.endVals.y +
+                        (car.baseLength - car.baseWidth) / 2)
+            )
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setZReverseFarXAxis = function (area, car) {
+    switch (car.direction) {
+        case 'east':
+            area.x = car.animation.endVals.x
+            area.w = car.baseLength
+            break
+    }
+
+    return area
+}
+TrafficHandler.prototype.setZReverseFarYAxis = function (area, car) {
+    switch (car.direction) {
+        case 'east':
+            area.y = car.route[0].section.y
+            area.h = car.baseWidth
             break
     }
 

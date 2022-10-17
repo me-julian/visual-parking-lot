@@ -180,16 +180,6 @@ RightAngleTurn.prototype.getRelationalValues = function (car) {
             break
     }
 
-    // let orientationMod
-    // if (
-    //     endDirection < car.orientation ||
-    //     car.orientation - endDirection >= 270 ||
-    // ) {
-    //     orientationMod = 90
-    // } else {
-    //     orientationMod = -90
-    // }
-
     let turnDirection = this.animationHandler.getLeftOrRight(
         car.direction,
         endDirection,

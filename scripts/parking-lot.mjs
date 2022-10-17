@@ -184,17 +184,26 @@ ParkingLot.prototype.requestRouteFromSpace = function (car) {
     if (car.assignedSpace.section !== route[0].section) {
         let actualStart
         switch (route[0].section) {
-            // Top left two spaces.
             case this.pathObject.sections.horizontal.row0col1:
-                // Construct and add routeSection to beginning of route.
-                actualStart = this.pathObject.sections.vertical.row1col0
-                route.unshift({
-                    direction: 'north',
-                    section: actualStart,
-                    coord: actualStart.y,
-                })
-                // Add turn to what is now the second routeSection.
-                route[1].turn = 'northtoeast'
+                if (car.direction === 'west') {
+                    // Top left two spaces
+                    // Construct and add routeSection to beginning of route.
+                    actualStart = this.pathObject.sections.vertical.row1col0
+                    route.unshift({
+                        direction: 'north',
+                        section: actualStart,
+                        coord: actualStart.y,
+                    })
+                    // Add turn to what is now the second routeSection.
+                    route[1].turn = 'northtoeast'
+                } else if (car.direction === 'east') {
+                    // Top right two spaces actually start on horizontal
+                    // row0col1 section.
+                } else {
+                    console.error(
+                        'Unexpected car attempting to adjust for exceptional reverse animation.'
+                    )
+                }
                 break
             // Bottom left two spaces
             case this.pathObject.sections.horizontal.row1col1:
@@ -238,7 +247,9 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
                 // Pull out south then west then turn south
                 // Change coord and section itself
                 console.log('Top 2 Right')
-                return null
+                start.section = this.pathObject.sections.horizontal.row0col1
+                start.direction = 'east'
+                return start
             }
             break
     }

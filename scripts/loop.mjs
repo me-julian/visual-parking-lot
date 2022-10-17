@@ -52,12 +52,12 @@ import {ParkingLot} from './parking-lot.mjs'
 
 function initializeSimulation() {
     let spaceInitializer = new SpaceInitializer(pathObject)
-    // let unrankedSpaceList = spaceInitializer.initParkingSpaces()
-    // let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
+    let unrankedSpaceList = spaceInitializer.initParkingSpaces()
+    let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
 
     // TEST limited space sets.
-    let testUnrankedSpaceList = spaceInitializer.testExceptionSpaces(pathObject)
-    let rankedSpaceList = spaceInitializer.rankSpaces(testUnrankedSpaceList)
+    // let testUnrankedSpaceList = spaceInitializer.testExceptionSpaces(pathObject)
+    // let rankedSpaceList = spaceInitializer.rankSpaces(testUnrankedSpaceList)
     //
 
     let routePlotter = new RoutePlotter(pathObject)
