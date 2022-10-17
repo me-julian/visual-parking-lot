@@ -207,29 +207,6 @@ Car.prototype.followRoute = function () {
     }
     this.minStoppingDistance = this.setStoppingDistance()
 
-    //
-    // Refactor intersections to be one smaller box.
-    //
-
-    // Make sure middle right section's top space should actually have
-    // Z turn.
-
-    // Rightmost top middle row space keeps intersection blocked when
-    // it pulls out through till it moves forward to turn right?
-    //      It pulls outside the area but the interval doesn't fire
-    //      to clear the intersection blocking before it re-blocks.
-
-    // Cars now update their collisionBox dynamically during anims, but
-    // the inaccuracy of the box can also block nearby leaving space cars.
-
-    // Improve reenteredRoadClear
-    //      General ability for cars to understand when blocked
-    // intersections and other anims are not going to affect them
-    // seems needed for real increased flow/naturalness of movement.
-
-    // Should intersections ultimately be reduced to just one square?
-    // Or is it worth it to handle cross/forward axis blocking?
-
     let distanceToNextDestination =
         this.parkingLot.trafficHandler.returnDistanceBetween(
             this.leadingEdge,

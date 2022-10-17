@@ -61,6 +61,8 @@ ParkingLot.prototype.initializeIntersections = function () {
 }
 
 ParkingLot.prototype.initializeWrapperPositionVals = function () {
+    // If the lot is ever centered, responsive, etc, then this will
+    // have to be made more dynamic.
     this.lotWrapperPositionalValues = document
         .getElementById('wrapper')
         .getBoundingClientRect()
@@ -173,7 +175,41 @@ ParkingLot.prototype.requestRouteFromSpace = function (car) {
         coord: destinationSection.y + destinationSection.len,
     }
 
-    return this.routePlotter.createRoute(this.routePlotter, start, destination)
+    let route = this.routePlotter.createRoute(
+        this.routePlotter,
+        start,
+        destination
+    )
+
+    if (car.assignedSpace.section !== route[0].section) {
+        let actualStart
+        switch (route[0].section) {
+            // Top left two spaces.
+            case this.pathObject.sections.horizontal.row0col1:
+                // Construct and add routeSection to beginning of route.
+                actualStart = this.pathObject.sections.vertical.row1col0
+                route.unshift({
+                    direction: 'north',
+                    section: actualStart,
+                    coord: actualStart.y,
+                })
+                // Add turn to what is now the second routeSection.
+                route[1].turn = 'northtoeast'
+                break
+            // Bottom left two spaces
+            case this.pathObject.sections.horizontal.row1col1:
+                actualStart = this.pathObject.sections.vertical.row1col0
+                route.unshift({
+                    direction: 'south',
+                    section: actualStart,
+                    coord: actualStart.y + actualStart.len,
+                })
+                route[1].turn = 'southtoeast'
+                break
+        }
+    }
+
+    return route
 }
 // Most likely move to another object.
 ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
@@ -183,18 +219,25 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
         case 'west':
             if (car.route[car.route.length - 1].coord <= 228) {
                 // Pull out south then turn east
-                // Change coord and section itself
-                return null
+                // Change direction and section itself
+                console.log('Top 2 Left')
+                start.section = this.pathObject.sections.horizontal.row0col1
+                start.direction = 'east'
+                return start
             } else if (car.route[car.route.length - 1].coord >= 783) {
                 // Pull out north then turn east
-                // Change coord and section itself
-                return null
+                // Change direction and section itself
+                console.log('Bottom 2 Left')
+                start.section = this.pathObject.sections.horizontal.row1col1
+                start.direction = 'east'
+                return start
             }
             break
         case 'east':
             if (car.route[car.route.length - 1].coord <= 228) {
                 // Pull out south then west then turn south
                 // Change coord and section itself
+                console.log('Top 2 Right')
                 return null
             }
             break

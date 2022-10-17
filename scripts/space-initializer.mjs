@@ -351,10 +351,70 @@ SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
             animations: {},
         },
     ]
+    let rightAngleFarReverse = [
+        {
+            x: 20,
+            y: 18,
+            width: 208,
+            height: 100,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row0col0,
+            animations: {},
+        },
+        {
+            x: 20,
+            y: 128,
+            width: 208,
+            height: 97,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row0col0,
+            animations: {},
+        },
+        {
+            x: 20,
+            y: 783,
+            width: 208,
+            height: 98,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row2col0,
+            animations: {},
+        },
+        {
+            x: 20,
+            y: 891,
+            width: 208,
+            height: 100,
+            facing: 'west',
+            section: this.pathObject.sections.vertical.row2col0,
+            animations: {},
+        },
+    ]
+    let threePointReverse = [
+        {
+            x: 1140,
+            y: 18,
+            width: 212,
+            height: 100,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row0col2,
+            animations: {},
+        },
+        {
+            x: 1140,
+            y: 128,
+            width: 212,
+            height: 97,
+            facing: 'east',
+            section: this.pathObject.sections.vertical.row0col2,
+            animations: {},
+        },
+    ]
 
-    spaces.zTurn = zTurn
+    // spaces.zTurn = zTurn
     // spaces.uTurn = uTurn
     // spaces.rightAngleReverse = rightAngleReverse
+    spaces.rightAngleFarReverse = rightAngleFarReverse
+    spaces.threePointReverse = threePointReverse
 
     return spaces
 }

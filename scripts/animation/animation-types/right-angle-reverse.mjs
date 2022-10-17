@@ -13,10 +13,19 @@ function RightAngleReverse(animationHandler, animName) {
     this.endVals = undefined
 }
 
+// Need to refactor to make far vs normal version. Change endVals,
+// keyframes, etc.
+
 RightAngleReverse.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
-    let ruleString = this.buildRuleString(car, this.name, this.endVals)
+    let ruleString
+    // Check if car is making an exceptional turn.
+    if (car.route[0].section === car.assignedSpace.section) {
+        ruleString = this.buildNormalRuleString(car, this.name, this.endVals)
+    } else {
+        ruleString = this.buildFarRuleString(car, this.name, this.endVals)
+    }
 
     this.animationHandler.styleSheet.insertRule(
         ruleString,
@@ -25,18 +34,41 @@ RightAngleReverse.prototype.buildSelf = function (car) {
     this.ruleObject = this.animationHandler.getAnimationRule(this.name)
 }
 
-RightAngleReverse.prototype.buildRuleString = function (car, name, endVals) {
-    let zero, forty, hundred
-    let declaration = '@keyframes '
-    zero = this.buildZeroKeyframe(car)
-    forty = this.buildFortyKeyframe(car, endVals)
-    hundred = this.buildHundredKeyframe(endVals)
+RightAngleReverse.prototype.buildNormalRuleString = function (
+    car,
+    name,
+    endVals
+) {
+    let initial, second, last
+    initial = this.buildInitialKeyframe(car)
 
-    return declaration + name + zero + forty + hundred
+    second = this.buildSecondKeyframe(car, endVals, 40)
+    last = this.buildLastKeyframe(endVals)
+
+    return '@keyframes ' + name + initial + second + last
 }
 
-RightAngleReverse.prototype.buildZeroKeyframe = function (car) {
-    let zero =
+// For cars that need to reverse farther onto other sections.
+RightAngleReverse.prototype.buildFarRuleString = function (car, name, endVals) {
+    let initial, second, third, last
+
+    initial = this.buildInitialKeyframe(car)
+    second = this.buildSecondKeyframe(car, endVals, 20)
+    // Car finishes the actual turning partway through the anim.
+    third = this.buildThirdKeyframe(car, endVals, 70)
+    // Continue car backwards along road.
+    endVals[car.oppSymbol] =
+        car.route[0].coord - car.turningRunup * endVals.crossNegation
+    if (endVals.crossNegation === 1) {
+        endVals[car.oppSymbol] -= car.baseLength
+    }
+    last = this.buildLastKeyframe(endVals)
+
+    return '@keyframes ' + name + initial + second + third + last
+}
+
+RightAngleReverse.prototype.buildInitialKeyframe = function (car) {
+    let initial =
         '{0% {left: ' +
         car.coords.x +
         'px;top: ' +
@@ -44,10 +76,14 @@ RightAngleReverse.prototype.buildZeroKeyframe = function (car) {
         'px;transform: rotate(' +
         car.orientation +
         'deg);}'
-    return zero
+    return initial
 }
 
-RightAngleReverse.prototype.buildFortyKeyframe = function (car, endVals) {
+RightAngleReverse.prototype.buildSecondKeyframe = function (
+    car,
+    endVals,
+    keyframe
+) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -98,18 +134,35 @@ RightAngleReverse.prototype.buildFortyKeyframe = function (car, endVals) {
             break
     }
 
-    let forty =
-        '40% {left: ' +
+    let second =
+        keyframe +
+        '% {left: ' +
         leftVal +
         'px;top: ' +
         topVal +
         'px;transform: rotate(' +
         orientationVal +
         'deg);}'
-    return forty
+    return second
 }
-RightAngleReverse.prototype.buildHundredKeyframe = function (endVals) {
-    let hundred =
+RightAngleReverse.prototype.buildThirdKeyframe = function (
+    car,
+    endVals,
+    keyframe
+) {
+    let third =
+        keyframe +
+        '% {left: ' +
+        endVals.x +
+        'px;top: ' +
+        endVals.y +
+        'px;transform: rotate(' +
+        endVals.orientation +
+        'deg);}'
+    return third
+}
+RightAngleReverse.prototype.buildLastKeyframe = function (endVals) {
+    let last =
         '100% {left: ' +
         endVals.x +
         'px;top: ' +
@@ -117,17 +170,19 @@ RightAngleReverse.prototype.buildHundredKeyframe = function (endVals) {
         'px;transform: rotate(' +
         endVals.orientation +
         'deg);}}'
-    return hundred
+    return last
 }
 
 RightAngleReverse.prototype.getEndVals = function (car) {
     let endVals = {}
 
+    // Should just assign endVals here?
     let relationalValues = this.getRelationalValues(car)
     endVals.orientationMod = relationalValues.orientationMod
     endVals.endOrientation = relationalValues.endOrientation
     endVals.direction = relationalValues.direction
     endVals.turnDirection = relationalValues.turnDirection
+    endVals.crossNegation = relationalValues.crossNegation
 
     endVals[car.symbol] = car.assignedSpace.section[car.symbol]
     endVals[car.oppSymbol] = car.assignedSpace[car.oppSymbol]
@@ -140,18 +195,23 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
     let endOrientation
     let endDirection = car.route[0].direction
 
+    let crossNegation
     switch (endDirection) {
         case 'west':
             endOrientation = 180
+            crossNegation = -1
             break
         case 'east':
             endOrientation = 0
+            crossNegation = 1
             break
         case 'north':
             endOrientation = 270
+            crossNegation = -1
             break
         case 'south':
             endOrientation = 90
+            crossNegation = 1
             break
     }
 
@@ -173,6 +233,7 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
         endOrientation: endOrientation,
         direction: endDirection,
         turnDirection: turnDirection,
+        crossNegation: crossNegation,
     }
 }
 RightAngleReverse.prototype.getAdjustedEndCoords = function (car, endVals) {
