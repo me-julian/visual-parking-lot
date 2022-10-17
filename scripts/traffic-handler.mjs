@@ -223,8 +223,8 @@ TrafficHandler.prototype.setUParkXAxis = function (area, car) {
     return area
 }
 TrafficHandler.prototype.setUParkYAxis = function (area, car) {
-    area.y = car.assignedSpace.y - car.baseLength
-    area.h = car.baseLength
+    area.y = car.assignedSpace.section.y
+    area.h = car.baseWidth
 
     return area
 }
