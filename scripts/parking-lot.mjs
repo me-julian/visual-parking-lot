@@ -20,12 +20,14 @@ import {Car} from './car.mjs'
  * @property {Object} intersections
  */
 function ParkingLot(
+    loop,
     pathObject,
     routePlotter,
     overlay,
     animationHandler,
     rankedSpaceList
 ) {
+    this.loop = loop
     this.pathObject = pathObject
     this.routePlotter = routePlotter
     this.overlay = overlay

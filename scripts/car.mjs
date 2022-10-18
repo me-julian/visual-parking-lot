@@ -170,7 +170,7 @@ Car.prototype.initialize = function (assignedSpace, handicap) {
     this.nextIntersection = this.getNextIntersection()
     this.parkingDuration = 10000
 
-    this.speed = 5
+    this.speed = 4
     this.maxSpeed = 15
     this.minStoppingDistance = 0
     this.turningRunup = 30

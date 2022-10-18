@@ -15,6 +15,7 @@
  */
 function TrafficHandler(parkingLot) {
     this.parkingLot = parkingLot
+    this.LOOP_SPEED = this.parkingLot.loop.LOOP_SPEED
     this.entranceArea = {
         x: parkingLot.pathObject.entrance.x,
         y: parkingLot.pathObject.entrance.y,
@@ -793,10 +794,7 @@ TrafficHandler.prototype.blockIntersectionUntilParked = function (
         }
     }
 
-    // Having this interval faster than loop speed seems to
-    // cause hasEntered to fire too soon and isStillOccupied
-    // to fire immediately after.
-    hasParkedInterval = setInterval(hasParked, 75)
+    hasParkedInterval = setInterval(hasParked, this.LOOP_SPEED)
 }
 TrafficHandler.prototype.blockIntersectionUntilPassed = function (
     car,
@@ -806,7 +804,10 @@ TrafficHandler.prototype.blockIntersectionUntilPassed = function (
     let hasEntered = () => {
         if (this.checkCollision(car.collisionBoxes.car, intersection.area)) {
             clearInterval(hasEnteredInterval)
-            isStillOccupiedInterval = setInterval(isStillOccupied, 75)
+            isStillOccupiedInterval = setInterval(
+                isStillOccupied,
+                this.LOOP_SPEED
+            )
         } else if (car.status === 'parking' || car.status === 'parked') {
             this.blockIntersectionUntilParked(car, intersection)
             clearInterval(hasEnteredInterval)
@@ -830,9 +831,9 @@ TrafficHandler.prototype.blockIntersectionUntilPassed = function (
     }
 
     if (this.checkCollision(car.collisionBoxes.car, intersection.area)) {
-        isStillOccupiedInterval = setInterval(isStillOccupied, 75)
+        isStillOccupiedInterval = setInterval(isStillOccupied, this.LOOP_SPEED)
     } else {
-        hasEnteredInterval = setInterval(hasEntered, 75)
+        hasEnteredInterval = setInterval(hasEntered, this.LOOP_SPEED)
     }
 }
 

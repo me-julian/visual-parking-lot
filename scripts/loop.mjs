@@ -15,8 +15,6 @@ import {ParkingLot} from './parking-lot.mjs'
 
 //
 //      After satisfied with general procedure:
-// ParkingLot.spaces[assignedSpace].reserved = false
-
 // Tweak iteration speed/car spawning/random parking length.
 
 // Reorganize objects/functions, renaming, better defined
@@ -42,7 +40,7 @@ import {ParkingLot} from './parking-lot.mjs'
 // intersections and other anims are not going to affect them
 // seems needed for real increased flow/naturalness of movement.
 
-function initializeSimulation() {
+function initializeSimulation(loop) {
     let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
@@ -64,6 +62,7 @@ function initializeSimulation() {
     overlay.addGuiListeners()
 
     let parkingLot = new ParkingLot(
+        loop,
         pathObject,
         routePlotter,
         overlay,
@@ -77,7 +76,7 @@ function initializeSimulation() {
 }
 
 let loop = {
-    LOOP_SPEED: 75,
+    LOOP_SPEED: 50,
     running: false,
 
     startLoop: function (parkingLot) {
@@ -103,5 +102,5 @@ let loop = {
     },
 }
 
-let parkingLot = initializeSimulation()
+let parkingLot = initializeSimulation(loop)
 loop.startLoop(parkingLot)
