@@ -42,8 +42,6 @@ import {ParkingLot} from './parking-lot.mjs'
 
 //
 //      Nice-to-haves:
-// Make toggleCarFocus update intersection color/status
-// Handicap Space rules
 // Focus multiple cars.
 // Variable car speed/functional stopping distance.
 // Start/Stop/Pause simulation/loop.
@@ -54,11 +52,11 @@ function initializeSimulation() {
     let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
-
     // TEST limited space sets.
     // let testUnrankedSpaceList = spaceInitializer.testExceptionSpaces(pathObject)
     // let rankedSpaceList = spaceInitializer.rankSpaces(testUnrankedSpaceList)
     //
+    spaceInitializer.setHandicapSpaces(rankedSpaceList)
 
     let routePlotter = new RoutePlotter(pathObject)
 

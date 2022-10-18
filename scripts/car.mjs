@@ -25,6 +25,8 @@ function Car(id, parkingLot) {
     this.id = id
     this.parkingLot = parkingLot
 
+    this.handicap = undefined
+
     this.img = undefined
     this.orientation = undefined
     this.pageWrapper = undefined
@@ -124,7 +126,7 @@ Car.prototype.removePageElements = function () {
     this.pageWrapper.remove()
 }
 
-Car.prototype.initialize = function (assignedSpace) {
+Car.prototype.initialize = function (assignedSpace, handicap) {
     this.status = 'entering'
     this.finishedParking = false
     this.coords = {
@@ -134,6 +136,7 @@ Car.prototype.initialize = function (assignedSpace) {
             this.parkingLot.pathObject.entrance.len,
     }
     this.assignedSpace = assignedSpace
+    this.handicap = handicap
 
     this.baseWidth = 90
     this.baseLength = 182
@@ -541,16 +544,16 @@ Car.prototype.endParking = function (endVals) {
 
     this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
 
-    setTimeout(() => {
-        this.route = this.parkingLot.requestRouteFromSpace(this)
+    // setTimeout(() => {
+    //     this.route = this.parkingLot.requestRouteFromSpace(this)
 
-        console.log(this.id + ' is ready to leave their space.')
-        this.finishedParking = true
-        this.parkingLot.overlay.updateSpaceColor(
-            this.assignedSpace.pageEl,
-            this
-        )
-    }, this.parkingDuration)
+    //     console.log(this.id + ' is ready to leave their space.')
+    //     this.finishedParking = true
+    //     this.parkingLot.overlay.updateSpaceColor(
+    //         this.assignedSpace.pageEl,
+    //         this
+    //     )
+    // }, this.parkingDuration)
 }
 Car.prototype.endLeavingSpace = function (endVals) {
     this.pageEl.style.animationName = 'none'

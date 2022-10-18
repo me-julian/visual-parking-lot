@@ -177,6 +177,16 @@ SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
 
     return rankedSpaceList
 }
+SpaceInitializer.prototype.setHandicapSpaces = function (spaceList) {
+    for (let space of spaceList) {
+        if (
+            (space.x === 423 && space.y === 28) ||
+            (space.x === 1140 && space.y === 891)
+        ) {
+            space.handicap = true
+        }
+    }
+}
 
 SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
     let spaces = {}
@@ -414,7 +424,7 @@ SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
     // spaces.uTurn = uTurn
     // spaces.rightAngleReverse = rightAngleReverse
     // spaces.rightAngleFarReverse = rightAngleFarReverse
-    spaces.threePointReverse = threePointReverse
+    // spaces.threePointReverse = threePointReverse
 
     return spaces
 }

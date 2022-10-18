@@ -94,7 +94,8 @@ ParkingLot.prototype.simulate = function () {
 }
 
 ParkingLot.prototype.spawnCar = function () {
-    let assignedSpace = this.getHighestRankedSpace()
+    let handicap = this.setHandicapByChance()
+    let assignedSpace = this.getHighestRankedSpace(handicap)
     if (assignedSpace) {
         let id = this.carCount
         this.carCount += 1
@@ -103,7 +104,7 @@ ParkingLot.prototype.spawnCar = function () {
 
         assignedSpace.reserved = true
         this.overlay.updateSpaceColor(assignedSpace.pageEl, newCar)
-        newCar.initialize(assignedSpace)
+        newCar.initialize(assignedSpace, handicap)
 
         this.cars.entering[id] = newCar
     } else {
@@ -112,6 +113,14 @@ ParkingLot.prototype.spawnCar = function () {
         setTimeout(() => {
             this.spawnCarCooldown = false
         }, 5000)
+    }
+}
+ParkingLot.prototype.setHandicapByChance = function () {
+    let chance = Math.floor(Math.random() * (15 + 1))
+    if (chance === 15) {
+        return true
+    } else {
+        return false
     }
 }
 
@@ -285,11 +294,22 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
     return start
 }
 
-ParkingLot.prototype.getHighestRankedSpace = function () {
+ParkingLot.prototype.getHighestRankedSpace = function (handicap) {
     for (let space of this.spaces) {
         if (!space.reserved) {
-            return space
+            if (this.checkSpaceHandicap(space, handicap)) {
+                return space
+            } else {
+                continue
+            }
         }
+    }
+}
+ParkingLot.prototype.checkSpaceHandicap = function (space, handicap) {
+    if ((space.handicap && handicap) || !space.handicap) {
+        return true
+    } else {
+        return false
     }
 }
 
