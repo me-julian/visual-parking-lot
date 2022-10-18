@@ -8,23 +8,13 @@ import * as animation from './animation/index.mjs'
 import {Overlay} from './overlay.mjs'
 import {ParkingLot} from './parking-lot.mjs'
 //
-//      Bugs/Necessary Improvements:
-// Improve reenteredRoadClear
-//      General ability for cars to understand when blocked
-// intersections and other anims are not going to affect them
-// seems needed for real increased flow/naturalness of movement.
-
-// Should intersections ultimately be reduced to just one square?
-// Or is it worth it to handle cross/forward axis blocking?
-
+//      Bugs:
 // Cars now update their collisionBox dynamically during anims, but
 // the inaccuracy of the box can also block nearby leaving space cars.
 //      --Reconsider fixing later.
 
 //
 //      After satisfied with general procedure:
-// Create last reversing animations/route rules.
-
 // ParkingLot.spaces[assignedSpace].reserved = false
 
 // Tweak iteration speed/car spawning/random parking length.
@@ -32,7 +22,7 @@ import {ParkingLot} from './parking-lot.mjs'
 // Reorganize objects/functions, renaming, better defined
 // object responsibilities.
 
-// Improve animation quality (Z-Turns, right angle turns)
+// Improve animation quality (Z-turns, right angle turns, z-reverse)
 
 // Code commenting/JSDoc Cleanup
 
@@ -42,11 +32,15 @@ import {ParkingLot} from './parking-lot.mjs'
 
 //
 //      Nice-to-haves:
-// Focus multiple cars.
 // Variable car speed/functional stopping distance.
 // Start/Stop/Pause simulation/loop.
 // Stats (cars entering/parked/leaving/left, parking time, stuck time)
 // Let user initialize lot with normal vs test sets of spaces in GUI.
+// Slight randomization on assignedSpaces by 1-2 ranks to space out cars
+// Improve reenteredRoadClear
+//      General ability for cars to understand when blocked
+// intersections and other anims are not going to affect them
+// seems needed for real increased flow/naturalness of movement.
 
 function initializeSimulation() {
     let spaceInitializer = new SpaceInitializer(pathObject)

@@ -544,20 +544,22 @@ Car.prototype.endParking = function (endVals) {
 
     this.parkingLot.overlay.updateSpaceColor(this.assignedSpace.pageEl, this)
 
-    // setTimeout(() => {
-    //     this.route = this.parkingLot.requestRouteFromSpace(this)
+    setTimeout(() => {
+        this.route = this.parkingLot.requestRouteFromSpace(this)
 
-    //     console.log(this.id + ' is ready to leave their space.')
-    //     this.finishedParking = true
-    //     this.parkingLot.overlay.updateSpaceColor(
-    //         this.assignedSpace.pageEl,
-    //         this
-    //     )
-    // }, this.parkingDuration)
+        console.log(this.id + ' is ready to leave their space.')
+        this.finishedParking = true
+        this.parkingLot.overlay.updateSpaceColor(
+            this.assignedSpace.pageEl,
+            this
+        )
+    }, this.parkingDuration)
 }
 Car.prototype.endLeavingSpace = function (endVals) {
     this.pageEl.style.animationName = 'none'
     this.animation = undefined
+
+    this.parkingLot.spaces[this.assignedSpace.rank].reserved = false
 
     this.status = 'leaving'
 
