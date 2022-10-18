@@ -145,17 +145,15 @@ Overlay.prototype.toggleShowOverlayWrapperChildren = function (wrapper) {
 
 Overlay.prototype.toggleCarFocus = function (car) {
     if (this.focusedCar === car) {
-        this.focusedCar.userFocus = false
-        this.focusedCar.pageWrapper.classList.remove('focused')
-        this.toggleElement(this.focusedCar.assignedSpace.pageEl)
+        // Only toggling off the current car.
+        this.removeFocusedCar()
         this.focusedCar = null
     } else {
+        // Remove focus from a different focused car if set.
         if (this.focusedCar) {
-            this.focusedCar.userFocus = false
-            this.focusedCar.pageWrapper.classList.remove('focused')
-            this.toggleElement(this.focusedCar.assignedSpace.pageEl)
+            this.removeFocusedCar()
         }
-
+        // Set focus on the desired car.
         car.userFocus = true
         this.focusedCar = car
         this.focusedCar.pageWrapper.classList.add('focused')
@@ -164,7 +162,23 @@ Overlay.prototype.toggleCarFocus = function (car) {
             this.focusedCar.assignedSpace.pageEl,
             this.focusedCar
         )
+        this.updateCarsBlockedIntersections(car)
         this.toggleElement(this.focusedCar.assignedSpace.pageEl)
+    }
+}
+Overlay.prototype.removeFocusedCar = function (car) {
+    this.focusedCar.userFocus = false
+    this.focusedCar.pageWrapper.classList.remove('focused')
+    this.toggleElement(this.focusedCar.assignedSpace.pageEl)
+
+    this.updateCarsBlockedIntersections(this.focusedCar)
+}
+Overlay.prototype.updateCarsBlockedIntersections = function (car) {
+    for (let intersection in car.blockingIntersections) {
+        this.updateIntersectionColor(
+            car.blockingIntersections[intersection],
+            car
+        )
     }
 }
 
@@ -175,7 +189,6 @@ Overlay.prototype.showIntersectionCheck = function (intersection) {
         document.getElementById(intersection.name).style.display = ''
     }, 1500)
 }
-
 Overlay.prototype.showManeuverCheck = function (car, areas, state) {
     let maneuverId = car.id + '-maneuver'
     if (!this.timers[maneuverId]) {
@@ -214,6 +227,7 @@ Overlay.prototype.showManeuverCheck = function (car, areas, state) {
         }, 1500)
     }
 }
+
 Overlay.prototype.updateManeuverColor = function (wrapper, state) {
     let color
     if (state === 'blocked') {
@@ -225,7 +239,6 @@ Overlay.prototype.updateManeuverColor = function (wrapper, state) {
         box.style.backgroundColor = color
     }
 }
-
 Overlay.prototype.updateSpaceColor = function (space, car) {
     let spaceColor
     if (!car.finishedParking && car.status !== 'parked') {
@@ -245,6 +258,7 @@ Overlay.prototype.updateIntersectionColor = function (intersection, car) {
     // keep the intersection green to show it's clear to them.
     if (car) {
         if (car.userFocus) {
+            intersectionBox.style.backgroundColor = 'green'
             return
         }
     }
