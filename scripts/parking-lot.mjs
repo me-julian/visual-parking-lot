@@ -5,6 +5,8 @@ import {Car} from './car.mjs'
 /**
  *
  * @class
+ * @param {Object} config
+ * @param {Object} loop
  * @param {pathObject} pathObject
  * @param {RoutePlotter} routePlotter
  * @param {Overlay} overlay
@@ -20,6 +22,7 @@ import {Car} from './car.mjs'
  * @property {Object} intersections
  */
 function ParkingLot(
+    config,
     loop,
     pathObject,
     routePlotter,
@@ -27,6 +30,7 @@ function ParkingLot(
     animationHandler,
     rankedSpaceList
 ) {
+    this.config = config
     this.loop = loop
     this.pathObject = pathObject
     this.routePlotter = routePlotter
@@ -102,7 +106,7 @@ ParkingLot.prototype.spawnCar = function () {
         let id = this.carCount
         this.carCount += 1
 
-        let newCar = new Car(id, this)
+        let newCar = new Car(this, id)
 
         assignedSpace.reserved = true
         this.overlay.updateSpaceColor(assignedSpace.pageEl, newCar)
@@ -114,21 +118,21 @@ ParkingLot.prototype.spawnCar = function () {
         this.spawnCarCooldown = true
         setTimeout(() => {
             this.spawnCarCooldown = false
-        }, 2000)
+        }, this.config.spawnCarCooldownTime)
     }
 }
 
 ParkingLot.prototype.setHandicapByChance = function () {
-    let chance = Math.floor(Math.random() * (15 + 1))
-    if (chance === 15) {
+    let chance = Math.floor(Math.random() * (this.config.handicapChance + 1))
+    if (chance === this.config.handicapChance) {
         return true
     } else {
         return false
     }
 }
 ParkingLot.prototype.timeToNextCarArrival = function () {
-    let min = 5
-    let max = 20
+    let min = this.config.carSpawnRate.min
+    let max = this.config.carSpawnRate.max
     let time = Math.floor(Math.random() * (max - min + 1) + min)
     return time * 1000
 }

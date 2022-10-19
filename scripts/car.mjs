@@ -21,9 +21,9 @@
  * @property {Number} maxSpeed
  * @property {Number} minStoppingDistance
  */
-function Car(id, parkingLot) {
-    this.id = id
+function Car(parkingLot, id) {
     this.parkingLot = parkingLot
+    this.id = id
 
     this.handicap = undefined
 
@@ -95,8 +95,8 @@ Car.prototype.getRandomImage = function () {
 }
 
 Car.prototype.getParkingDuration = function () {
-    let min = 30
-    let max = 180
+    let min = this.parkingLot.config.carParkingDurationRange.min
+    let max = this.parkingLot.config.carParkingDurationRange.max
     let time = Math.floor(Math.random() * (max - min + 1) + min)
     return time * 1000
 }

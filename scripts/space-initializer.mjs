@@ -188,7 +188,7 @@ SpaceInitializer.prototype.setHandicapSpaces = function (spaceList) {
     }
 }
 
-SpaceInitializer.prototype.testExceptionSpaces = function (pathObject) {
+SpaceInitializer.prototype.testExceptionSpaces = function () {
     let spaces = {}
     let zTurn = [
         {

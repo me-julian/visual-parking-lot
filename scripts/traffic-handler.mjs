@@ -15,7 +15,7 @@
  */
 function TrafficHandler(parkingLot) {
     this.parkingLot = parkingLot
-    this.LOOP_SPEED = this.parkingLot.loop.LOOP_SPEED
+    this.LOOP_SPEED = this.parkingLot.config.LOOP_SPEED
     this.entranceArea = {
         x: parkingLot.pathObject.entrance.x,
         y: parkingLot.pathObject.entrance.y,

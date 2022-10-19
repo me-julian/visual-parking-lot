@@ -1,5 +1,6 @@
 'use strict'
 
+import {config} from './config.mjs'
 import {pathObject} from './path-object.mjs'
 import {SpaceInitializer} from './space-initializer.mjs'
 import {RoutePlotter} from './routing/route-plotter.mjs'
@@ -40,7 +41,7 @@ import {ParkingLot} from './parking-lot.mjs'
 // intersections and other anims are not going to affect them
 // seems needed for real increased flow/naturalness of movement.
 
-function initializeSimulation(loop) {
+function initializeSimulation(config, loop) {
     let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
@@ -62,6 +63,7 @@ function initializeSimulation(loop) {
     overlay.addGuiListeners()
 
     let parkingLot = new ParkingLot(
+        config,
         loop,
         pathObject,
         routePlotter,
@@ -76,7 +78,7 @@ function initializeSimulation(loop) {
 }
 
 let loop = {
-    LOOP_SPEED: 50,
+    LOOP_SPEED: config.LOOP_SPEED,
     running: false,
 
     startLoop: function (parkingLot) {
@@ -102,5 +104,5 @@ let loop = {
     },
 }
 
-let parkingLot = initializeSimulation(loop)
+let parkingLot = initializeSimulation(config, loop)
 loop.startLoop(parkingLot)
