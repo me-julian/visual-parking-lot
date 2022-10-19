@@ -28,8 +28,8 @@ ZPark.prototype.buildSelf = function (car) {
 ZPark.prototype.buildRuleString = function (car, name, endVals) {
     let first, second, third, fourth, last
     first = this.buildFirstKeyframe(car)
-    second = this.buildSecondKeyframe(car, endVals, 25)
-    third = this.buildThirdKeyframe(car, endVals, 40)
+    second = this.buildSecondKeyframe(car, endVals, 30)
+    third = this.buildThirdKeyframe(car, endVals, 45)
     fourth = this.buildFourthKeyframe(car, endVals, 80)
     last = this.buildLastKeyframe(endVals)
 
@@ -48,41 +48,40 @@ ZPark.prototype.buildFirstKeyframe = function (car) {
     return first
 }
 ZPark.prototype.buildSecondKeyframe = function (car, endVals, keyframe) {
-    let leftVal, topVal, orientationVal
+    let leftVal, topVal, orientationVal, orientationChange
     switch (endVals.direction) {
         case 'west':
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'east':
             leftVal =
-                car.coords.x + (endVals.forwardDistance / 1.5) * car.negation
+                endVals.spaceEntrance -
+                car.baseLength -
+                (car.baseWidth / 2) * car.negation
 
             topVal =
                 car.coords.y +
                 (endVals.crossDistance / 4) * endVals.crossNegation
-
-            orientationVal =
-                car.orientation +
-                5 +
-                (endVals.crossDistance / 10) * endVals.crossNegation
             break
         case 'north':
             leftVal =
                 car.coords.x +
                 (endVals.crossDistance / 4) * endVals.crossNegation
 
-            topVal =
-                car.coords.y + (endVals.forwardDistance / 1.5) * car.negation
-
-            orientationVal =
-                car.orientation +
-                5 +
-                (endVals.crossDistance / 10) * endVals.crossNegation
+            topVal = endVals.spaceEntrance - (car.baseWidth / 2) * car.negation
             break
         case 'south':
             console.err('Unexpected State/Unhandled Case!')
             break
     }
+
+    if (endVals.crossDistance > car.baseWidth) {
+        // Stop cars from over-rotating
+        orientationChange = 30
+    } else {
+        orientationChange = endVals.crossDistance / 4
+    }
+    orientationVal = car.orientation + orientationChange * endVals.crossNegation
 
     let second =
         keyframe +
@@ -96,44 +95,36 @@ ZPark.prototype.buildSecondKeyframe = function (car, endVals, keyframe) {
     return second
 }
 ZPark.prototype.buildThirdKeyframe = function (car, endVals, keyframe) {
-    let leftVal, topVal, orientationVal
+    let leftVal, topVal, orientationVal, orientationChange
     switch (endVals.direction) {
         case 'west':
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'east':
-            leftVal =
-                car.coords.x + (endVals.forwardDistance / 1.15) * car.negation
+            leftVal = endVals.spaceEntrance - car.baseLength
 
             topVal =
                 car.coords.y +
                 endVals.crossDistance * 0.6 * endVals.crossNegation
-
-            orientationVal =
-                car.orientation +
-                (endVals.crossDistance / car.baseWidth) *
-                    8 *
-                    endVals.crossNegation
             break
         case 'north':
             leftVal =
                 car.coords.x +
                 endVals.crossDistance * 0.6 * endVals.crossNegation
 
-            topVal =
-                car.coords.y + (endVals.forwardDistance / 1.15) * car.negation
-
-            orientationVal =
-                car.orientation +
-                8 +
-                (endVals.crossDistance / car.baseWidth) *
-                    (endVals.crossDistance / car.baseWidth) *
-                    endVals.crossNegation
+            topVal = endVals.spaceEntrance
             break
         case 'south':
             console.err('Unexpected State/Unhandled Case!')
             break
     }
+
+    orientationChange = endVals.crossDistance / 2
+    if (endVals.crossDistance > car.baseWidth) {
+        // Stop cars from over-rotating
+        orientationChange = 50
+    }
+    orientationVal = car.orientation + orientationChange * endVals.crossNegation
 
     let third =
         keyframe +
@@ -147,37 +138,35 @@ ZPark.prototype.buildThirdKeyframe = function (car, endVals, keyframe) {
     return third
 }
 ZPark.prototype.buildFourthKeyframe = function (car, endVals, keyframe) {
-    let leftVal, topVal, orientationVal
+    let leftVal, topVal, orientationVal, orientationChange
     switch (endVals.direction) {
         case 'west':
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'east':
-            leftVal = car.coords.x + endVals.forwardDistance * car.negation
+            leftVal =
+                endVals.spaceEntrance -
+                car.baseLength +
+                (car.baseWidth / 2) * car.negation
 
             topVal = endVals.y
-
-            orientationVal =
-                car.orientation +
-                (endVals.crossDistance / car.baseWidth) *
-                    3 *
-                    endVals.crossNegation
             break
         case 'north':
             leftVal = endVals.x
 
-            topVal = car.coords.y + endVals.forwardDistance * car.negation
-
-            orientationVal =
-                car.orientation +
-                (endVals.crossDistance / car.baseWidth) *
-                    3 *
-                    endVals.crossNegation
+            topVal = endVals.spaceEntrance + (car.baseWidth / 2) * car.negation
             break
         case 'south':
             console.err('Unexpected State/Unhandled Case!')
             break
     }
+
+    orientationChange = endVals.crossDistance / 6
+    if (endVals.crossDistance > car.baseWidth) {
+        // Stop cars from over-rotating
+        orientationChange = 15
+    }
+    orientationVal = car.orientation + orientationChange * endVals.crossNegation
 
     let fourth =
         keyframe +
@@ -211,6 +200,7 @@ ZPark.prototype.getEndVals = function (car) {
     endVals.crossNegation = relationalValues.crossNegation
     endVals.crossDistance = relationalValues.crossDistance
     endVals.forwardDistance = relationalValues.forwardDistance
+    endVals.spaceEntrance = relationalValues.spaceEntrance
 
     endVals.y = car.assignedSpace.y
     endVals.x = car.assignedSpace.x
@@ -248,12 +238,10 @@ ZPark.prototype.getRelationalValues = function (car) {
     let crossDistance = Math.abs(car.route[1].coord - closestEdge)
 
     let spaceEntrance = car.assignedSpace[car.symbol]
-    if (car.negation === -1) {
-        if (car.symbol === 'y') {
-            spaceEntrance -= car.assignedSpace.height * car.negation
-        } else {
-            spaceEntrance -= car.assignedSpace.width * car.negation
-        }
+    if (car.assignedSpace.facing === 'north') {
+        spaceEntrance += car.assignedSpace.height
+    } else if (car.assignedSpace.facing === 'west') {
+        spaceEntrance += car.assignedSpace.width
     }
 
     let forwardDistance = Math.abs(car.leadingEdge - spaceEntrance)
@@ -264,6 +252,7 @@ ZPark.prototype.getRelationalValues = function (car) {
         crossNegation: crossNegation,
         crossDistance: crossDistance,
         forwardDistance: forwardDistance,
+        spaceEntrance: spaceEntrance,
     }
 }
 ZPark.prototype.getAdjustedEndCoords = function (car, endVals) {
