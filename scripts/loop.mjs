@@ -13,10 +13,6 @@ import {ParkingLot} from './parking-lot.mjs'
 // the inaccuracy of the box can also block nearby leaving space cars.
 //      --Reconsider fixing later.
 
-// Some sort of issue where Car.checkSectionAheadClear fires when
-// checking car doesn't have a second route section (route[1]),
-// hasn't caused a deadlock thus far.
-
 //
 //      After satisfied with general procedure:
 // Tweak iteration speed/car spawning/random parking length.

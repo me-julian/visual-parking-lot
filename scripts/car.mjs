@@ -263,7 +263,12 @@ Car.prototype.followRoute = function () {
                 }
             }
 
-            if (this.checkSectionAheadClear(roadArea)) {
+            let waitForCarsAhead = false
+            if (this.route.length > 1) {
+                waitForCarsAhead = this.checkSectionAheadBlocked(roadArea)
+            }
+
+            if (!waitForCarsAhead) {
                 if (!this.isIntersectionBlocked(intersection)) {
                     this.parkingLot.trafficHandler.blockIntersection(
                         this,
@@ -757,7 +762,7 @@ Car.prototype.checkRoadAheadArea = function (areaAhead) {
 
     return {collision: collision, distance: distance}
 }
-Car.prototype.checkSectionAheadClear = function (areaAhead) {
+Car.prototype.checkSectionAheadBlocked = function (areaAhead) {
     let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
         areaAhead,
         [this]
@@ -767,19 +772,14 @@ Car.prototype.checkSectionAheadClear = function (areaAhead) {
 
     for (let car of carsAhead.oncoming) {
         if (this.route[1].section === car.route[0].section) {
-            return false
+            return true
         }
     }
 
-    return true
+    return false
 }
 Car.prototype.reenteredRoadClear = function () {
     let clear = true
-
-    // Check roadArea is calculated correctly
-
-    // Ensure checkAreaAhead will work. route[1] exists, if that
-    // matters, etc.
 
     let roadArea = this.parkingLot.trafficHandler.getRoadArea(
         this.route[0].section
