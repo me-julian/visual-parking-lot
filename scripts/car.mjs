@@ -383,7 +383,8 @@ Car.prototype.turn = function () {
 
         this.pageEl.style.animationDuration = '2500ms'
         this.pageEl.style.animationIterationCount = '1'
-        this.pageEl.style.animationTimingFunction = 'initial'
+        this.pageEl.style.animationTimingFunction =
+            'cubic-bezier(0.31, 0.06, 0.55, 0.71)'
 
         this.pageEl.style.animationName = this.animation.ruleObject.name
 

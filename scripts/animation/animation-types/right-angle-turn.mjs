@@ -26,16 +26,17 @@ RightAngleTurn.prototype.buildSelf = function (car) {
 }
 
 RightAngleTurn.prototype.buildRuleString = function (car, name, endVals) {
-    let zero, hundred
+    let first, second, last
     let declaration = '@keyframes '
-    zero = this.buildZeroKeyframe(car)
-    hundred = this.buildHundredKeyframe(endVals)
+    first = this.buildFirstKeyframe(car)
+    second = this.buildSecondKeyframe(car, endVals, 30)
+    last = this.buildLastKeyframe(endVals)
 
-    return declaration + name + zero + hundred
+    return declaration + name + first + second + last
 }
 
-RightAngleTurn.prototype.buildZeroKeyframe = function (car) {
-    let zero =
+RightAngleTurn.prototype.buildFirstKeyframe = function (car) {
+    let first =
         '{0% {left: ' +
         car.coords.x +
         'px;top: ' +
@@ -43,95 +44,68 @@ RightAngleTurn.prototype.buildZeroKeyframe = function (car) {
         'px;transform: rotate(' +
         car.orientation +
         'deg);}'
-    return zero
+    return first
 }
-RightAngleTurn.prototype.buildTwentyKeyframe = function (car, endVals) {
+RightAngleTurn.prototype.buildSecondKeyframe = function (
+    car,
+    endVals,
+    keyframe
+) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
-            leftVal = car.coords.x + car.baseWidth / 5
+            leftVal = car.coords.x
 
-            topVal = car.coords.y - car.baseLength / 7
+            topVal = car.coords.y + (car.baseLength / 5) * car.negation
 
-            orientationVal = car.orientation - endVals.orientationMod / 15
+            orientationVal = car.orientation
             break
         case 'east':
-            leftVal = car.coords.x - car.baseWidth / 5
+            leftVal = car.coords.x
 
-            topVal = car.coords.y + (car.baseLength / 7) * car.negation
+            topVal = car.coords.y + (car.baseLength / 5) * car.negation
+            // Car makes its turn based on where the section ends,
+            // but sections are based on left/top vals rather than
+            // physical center of intersection. Make adjustment
+            // if necessary.
+            if (car.direction === 'south') {
+                topVal += car.turningRunup * car.negation
+            }
 
-            orientationVal =
-                car.orientation - (endVals.orientationMod / 15) * car.negation
+            orientationVal = car.orientation
             break
         case 'north':
-            leftVal = car.coords.x + car.baseLength / 7
+            leftVal = car.coords.x + (car.baseLength / 5) * car.negation
 
-            topVal = car.coords.y + car.baseWidth / 5
+            topVal = car.coords.y
 
-            orientationVal = car.orientation - endVals.orientationMod / 15
+            orientationVal = car.orientation
             break
         case 'south':
-            leftVal = car.coords.x + car.baseWidth / 5
+            leftVal = car.coords.x + (car.baseLength / 5) * car.negation
+            if (car.direction === 'east') {
+                leftVal += car.turningRunup * car.negation
+            }
 
-            topVal = car.coords.y - car.baseLength / 7
+            topVal = car.coords.y
 
-            orientationVal = car.orientation + endVals.orientationMod / 15
+            orientationVal = car.orientation
             break
     }
 
-    let twenty =
-        '20% {left: ' +
+    let second =
+        keyframe +
+        '% {left: ' +
         leftVal +
         'px;top: ' +
         topVal +
         'px;transform: rotate(' +
         orientationVal +
         'deg);}'
-    return twenty
+    return second
 }
-RightAngleTurn.prototype.buildSixtyKeyframe = function (car, endVals) {
-    let forwardAxis, val, orientationVal
-    switch (endVals.direction) {
-        case 'west':
-            val = endVals.y + car.baseWidth / 2 - car.baseLength / 5
-            forwardAxis = 'top: ' + val
-
-            orientationVal = car.orientation + endVals.orientationMod / 1.65
-            break
-        case 'east':
-            val =
-                endVals.y +
-                car.baseWidth / 2 -
-                (car.baseLength / 5) * (car.negation * -1)
-            forwardAxis = 'top: ' + val
-
-            orientationVal =
-                car.orientation + (endVals.orientationMod / 1.65) * car.negation
-            break
-        case 'north':
-            val = endVals.x - car.baseWidth / 2 + car.baseLength / 5
-            forwardAxis = 'left: ' + val
-
-            orientationVal = car.orientation + endVals.orientationMod / 1.65
-            break
-        case 'south':
-            val = endVals.x - car.baseWidth / 2 + car.baseLength / 5
-            forwardAxis = 'left: ' + val
-
-            orientationVal = car.orientation - endVals.orientationMod / 1.65
-            break
-    }
-
-    let sixty =
-        '60% {' +
-        forwardAxis +
-        'px;transform: rotate(' +
-        orientationVal +
-        'deg);}'
-    return sixty
-}
-RightAngleTurn.prototype.buildHundredKeyframe = function (endVals) {
-    let hundred =
+RightAngleTurn.prototype.buildLastKeyframe = function (endVals) {
+    let last =
         '100% {left: ' +
         endVals.x +
         'px;top: ' +
@@ -139,7 +113,7 @@ RightAngleTurn.prototype.buildHundredKeyframe = function (endVals) {
         'px;transform: rotate(' +
         endVals.orientation +
         'deg);}}'
-    return hundred
+    return last
 }
 
 RightAngleTurn.prototype.getEndVals = function (car) {
