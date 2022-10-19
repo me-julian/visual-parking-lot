@@ -26,19 +26,18 @@ ZPark.prototype.buildSelf = function (car) {
 }
 
 ZPark.prototype.buildRuleString = function (car, name, endVals) {
-    let zero, second, third, fourth, hundred
-    let declaration = '@keyframes '
-    zero = this.buildZeroKeyframe(car)
-    second = this.buildSecondKeyframe(car, endVals)
-    third = this.buildThirdKeyframe(car, endVals)
-    fourth = this.buildFourthKeyframe(car, endVals)
-    hundred = this.buildHundredKeyframe(endVals)
+    let first, second, third, fourth, last
+    first = this.buildFirstKeyframe(car)
+    second = this.buildSecondKeyframe(car, endVals, 25)
+    third = this.buildThirdKeyframe(car, endVals, 40)
+    fourth = this.buildFourthKeyframe(car, endVals, 80)
+    last = this.buildLastKeyframe(endVals)
 
-    return declaration + name + zero + second + third + fourth + hundred
+    return '@keyframes ' + name + first + second + third + fourth + last
 }
 
-ZPark.prototype.buildZeroKeyframe = function (car) {
-    let zero =
+ZPark.prototype.buildFirstKeyframe = function (car) {
+    let first =
         '{0% {left: ' +
         car.coords.x +
         'px;top: ' +
@@ -46,9 +45,9 @@ ZPark.prototype.buildZeroKeyframe = function (car) {
         'px;transform: rotate(' +
         car.orientation +
         'deg);}'
-    return zero
+    return first
 }
-ZPark.prototype.buildSecondKeyframe = function (car, endVals) {
+ZPark.prototype.buildSecondKeyframe = function (car, endVals, keyframe) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -86,7 +85,8 @@ ZPark.prototype.buildSecondKeyframe = function (car, endVals) {
     }
 
     let second =
-        '25% {left: ' +
+        keyframe +
+        '% {left: ' +
         leftVal +
         'px;top: ' +
         topVal +
@@ -95,7 +95,7 @@ ZPark.prototype.buildSecondKeyframe = function (car, endVals) {
         'deg);}'
     return second
 }
-ZPark.prototype.buildThirdKeyframe = function (car, endVals) {
+ZPark.prototype.buildThirdKeyframe = function (car, endVals, keyframe) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -114,7 +114,6 @@ ZPark.prototype.buildThirdKeyframe = function (car, endVals) {
                 (endVals.crossDistance / car.baseWidth) *
                     8 *
                     endVals.crossNegation
-            // car.orientation + (90 / 1.65) * endVals.crossNegation
             break
         case 'north':
             leftVal =
@@ -137,8 +136,8 @@ ZPark.prototype.buildThirdKeyframe = function (car, endVals) {
     }
 
     let third =
-        '40% {' +
-        'left: ' +
+        keyframe +
+        '% {left: ' +
         leftVal +
         'px;top: ' +
         topVal +
@@ -147,7 +146,7 @@ ZPark.prototype.buildThirdKeyframe = function (car, endVals) {
         'deg);}'
     return third
 }
-ZPark.prototype.buildFourthKeyframe = function (car, endVals) {
+ZPark.prototype.buildFourthKeyframe = function (car, endVals, keyframe) {
     let leftVal, topVal, orientationVal
     switch (endVals.direction) {
         case 'west':
@@ -181,8 +180,8 @@ ZPark.prototype.buildFourthKeyframe = function (car, endVals) {
     }
 
     let fourth =
-        '80% {' +
-        'left: ' +
+        keyframe +
+        '% {left: ' +
         leftVal +
         'px;top: ' +
         topVal +
@@ -191,8 +190,8 @@ ZPark.prototype.buildFourthKeyframe = function (car, endVals) {
         'deg);}'
     return fourth
 }
-ZPark.prototype.buildHundredKeyframe = function (endVals) {
-    let hundred =
+ZPark.prototype.buildLastKeyframe = function (endVals) {
+    let last =
         '100% {left: ' +
         endVals.x +
         'px;top: ' +
@@ -200,7 +199,7 @@ ZPark.prototype.buildHundredKeyframe = function (endVals) {
         'px;transform: rotate(' +
         endVals.orientation +
         'deg);}}'
-    return hundred
+    return last
 }
 
 ZPark.prototype.getEndVals = function (car) {
