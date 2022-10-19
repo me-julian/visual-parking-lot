@@ -254,15 +254,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             section: this.pathObject.sections.vertical.row2col2,
             animations: {},
         },
-        {
-            x: 1140,
-            y: 891,
-            width: 212,
-            height: 100,
-            facing: 'east',
-            section: this.pathObject.sections.vertical.row2col2,
-            animations: {},
-        },
     ]
     let uTurn = [
         {
