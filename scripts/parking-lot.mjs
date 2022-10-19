@@ -81,7 +81,7 @@ ParkingLot.prototype.simulate = function () {
         this.spawnCarCooldown = true
         setTimeout(() => {
             this.spawnCarCooldown = false
-        }, 10000)
+        }, this.timeToNextCarArrival())
     }
 
     for (let car in this.cars.leaving) {
@@ -114,9 +114,10 @@ ParkingLot.prototype.spawnCar = function () {
         this.spawnCarCooldown = true
         setTimeout(() => {
             this.spawnCarCooldown = false
-        }, 5000)
+        }, 2000)
     }
 }
+
 ParkingLot.prototype.setHandicapByChance = function () {
     let chance = Math.floor(Math.random() * (15 + 1))
     if (chance === 15) {
@@ -124,6 +125,12 @@ ParkingLot.prototype.setHandicapByChance = function () {
     } else {
         return false
     }
+}
+ParkingLot.prototype.timeToNextCarArrival = function () {
+    let min = 5
+    let max = 20
+    let time = Math.floor(Math.random() * (max - min + 1) + min)
+    return time * 1000
 }
 
 ParkingLot.prototype.requestRouteToSpace = function (car) {

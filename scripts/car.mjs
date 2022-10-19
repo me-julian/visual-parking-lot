@@ -94,6 +94,13 @@ Car.prototype.getRandomImage = function () {
     return img
 }
 
+Car.prototype.getParkingDuration = function () {
+    let min = 30
+    let max = 180
+    let time = Math.floor(Math.random() * (max - min + 1) + min)
+    return time * 1000
+}
+
 Car.prototype.createPageElements = function () {
     let carFullPageWrapper = document.createElement('div')
     carFullPageWrapper.id = 'car' + this.id
@@ -168,7 +175,7 @@ Car.prototype.initialize = function (assignedSpace, handicap) {
     this.currentSection = this.route[0]
     //
     this.nextIntersection = this.getNextIntersection()
-    this.parkingDuration = 10000
+    this.parkingDuration = this.getParkingDuration()
 
     this.speed = 4
     this.maxSpeed = 15
@@ -256,11 +263,15 @@ Car.prototype.followRoute = function () {
                 }
             }
 
-            if (!this.isIntersectionBlocked(intersection)) {
-                this.parkingLot.trafficHandler.blockIntersection(
-                    this,
-                    intersection
-                )
+            if (this.checkSectionAheadClear(roadArea)) {
+                if (!this.isIntersectionBlocked(intersection)) {
+                    this.parkingLot.trafficHandler.blockIntersection(
+                        this,
+                        intersection
+                    )
+                } else {
+                    clearAhead = false
+                }
             } else {
                 clearAhead = false
             }
@@ -732,8 +743,7 @@ Car.prototype.checkStoppingDistanceArea = function (areaAhead) {
 }
 
 Car.prototype.checkRoadAheadArea = function (areaAhead) {
-    let presence = false,
-        collision = false,
+    let collision = false,
         distance = 9999
 
     let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
@@ -741,18 +751,35 @@ Car.prototype.checkRoadAheadArea = function (areaAhead) {
         [this]
     )
 
-    if (carsAhead.length != 0) {
-        presence = true
-    }
-
-    carsAhead = this.splitCarsByDirection(this.direction, carsAhead)
+    carsAhead = this.splitCarsByDirection(this, carsAhead)
 
     collision = this.checkOncomingCars(carsAhead.oncoming)
 
-    return {presence: presence, collision: collision, distance: distance}
+    return {collision: collision, distance: distance}
+}
+Car.prototype.checkSectionAheadClear = function (areaAhead) {
+    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
+        areaAhead,
+        [this]
+    )
+
+    carsAhead = this.splitCarsByDirection(this, carsAhead)
+
+    for (let car of carsAhead.oncoming) {
+        if (this.route[1].section === car.route[0].section) {
+            return false
+        }
+    }
+
+    return true
 }
 Car.prototype.reenteredRoadClear = function () {
     let clear = true
+
+    // Check roadArea is calculated correctly
+
+    // Ensure checkAreaAhead will work. route[1] exists, if that
+    // matters, etc.
 
     let roadArea = this.parkingLot.trafficHandler.getRoadArea(
         this.route[0].section
@@ -763,10 +790,7 @@ Car.prototype.reenteredRoadClear = function () {
         [this]
     )
 
-    carsOnRoad = this.splitCarsByDirection(
-        this.animation.endVals.direction,
-        carsOnRoad
-    )
+    carsOnRoad = this.splitCarsByDirection(this, carsOnRoad)
 
     // Remove cars that have/are about to pass where the car needs to go
     // (Let them be handled by maneuverArea checks)
@@ -784,16 +808,14 @@ Car.prototype.reenteredRoadClear = function () {
         // Ignore cars that only just entered and go anyway.
         // Still not really handling other directions/negative/positive
         // movement.
-        // At current speed (5px/iteration, 75ms iterations) doesn't
-        // seem to run much because of new cars spawning
-        // and cars blocking the intersection above in maneuverArea.
-        if (
-            car.route[0].section !== this.assignedSpace.section &&
-            car.coords[this.oppSymbol] <
-                car.route[0].section[this.oppSymbol] +
-                    car.route[0].section.len * 0.75
-        ) {
-        }
+        // if (
+        //     car.route[0].section !== this.assignedSpace.section &&
+        //     car.coords[this.oppSymbol] <
+        //         car.route[0].section[this.oppSymbol] +
+        //             car.route[0].section.len * 0.75
+        // ) {
+
+        // }
     }
 
     // Row check lets cars in spaces far from entrance go anyway.
@@ -810,29 +832,42 @@ Car.prototype.reenteredRoadClear = function () {
     return clear
 }
 
-Car.prototype.splitCarsByDirection = function (referenceDir, cars) {
+Car.prototype.splitCarsByDirection = function (checkingCar, cars) {
     let oncoming = [],
         sameDir = [],
         cross = []
+
+    let checkingCarSymbol, checkingCarNegation
+    if (checkingCar.status === 'parked') {
+        // Cars checking reenteredRoadClear (attempting to leave space)
+        checkingCarSymbol = checkingCar.oppSymbol
+        // Car will reverse in the direction the opposing car is moving,
+        // reverse to be in line with regular check.
+        checkingCarNegation = checkingCar.animation.endVals.crossNegation * -1
+    } else {
+        checkingCarSymbol = checkingCar.symbol
+        checkingCarNegation = checkingCar.negation
+    }
+
     for (let car of cars) {
-        if (referenceDir === car.direction) {
-            sameDir.push(car)
-            continue
+        let otherCarSymbol, otherCarNegation
+        if (car.status === 'leaving-space') {
+            // Check for cars leaving their space
+            otherCarSymbol = car.oppSymbol
+            otherCarNegation = car.animation.endVals.crossNegation * -1
+        } else {
+            otherCarSymbol = car.symbol
+            otherCarNegation = car.negation
         }
 
-        if (referenceDir === 'north' || referenceDir === 'south') {
-            if (car.direction === 'west' || car.direction === 'east') {
-                cross.push(car)
+        if (checkingCarSymbol === otherCarSymbol) {
+            if (checkingCarNegation === otherCarNegation) {
+                sameDir.push(car)
             } else {
                 oncoming.push(car)
             }
-        }
-        if (referenceDir === 'west' || referenceDir === 'east') {
-            if (car.direction === 'south' || car.direction === 'north') {
-                cross.push(car)
-            } else {
-                oncoming.push(car)
-            }
+        } else {
+            cross.push(car)
         }
     }
 
@@ -846,17 +881,9 @@ Car.prototype.checkOncomingCars = function (cars) {
             continue
         }
 
-        for (let routeSection of this.route) {
-            if (routeSection.section === car.currentSection.section) {
-                // if (car.blockingIntersections === car.nextIntersection) {
-                //     continue
-                // } else {
-                //     collision = true
-                // }
-                collision = true
-            }
+        if (this.currentSection.section === car.currentSection.section) {
+            collision = true
         }
-        // Make actual checks here
     }
 
     return collision
@@ -1109,9 +1136,14 @@ Car.prototype.isIntersectionBlocked = function (intersection) {
             }
         }
 
+        if (this.waitForCarOnNextSection()) {
+            return true
+        }
+
         return false
     }
 }
+Car.prototype.waitForCarOnNextSection = function () {}
 
 Car.prototype.determineIfExitRouteIsBlocked = function () {
     // Top 2 only need to check if the intersection + turn area
@@ -1174,56 +1206,6 @@ Car.prototype.setStoppingDistance = function () {
 }
 
 function UNUSED_Car() {}
-UNUSED_Car.prototype.checkDestinationArea = function (areaAhead) {
-    //
-    // UNUSED
-    //
-    let presence = false,
-        collision = false,
-        distance = 9999
-
-    let carsAhead = this.parkingLot.trafficHandler.returnActiveCarsInArea(
-        areaAhead,
-        [this]
-    )
-
-    if (carsAhead.length != 0) {
-        presence = true
-    }
-
-    if (presence) {
-        let immediateCollision = this.checkForImmediateCollision(
-            carsAhead,
-            collision,
-            distance
-        )
-        collision = immediateCollision.collision
-        distance = immediateCollision.distance
-    }
-
-    return {presence: presence, collision: collision, distance: distance}
-}
-UNUSED_Car.prototype.checkZTurnSection = function (section) {
-    //
-    // UNUSED
-    //
-    // Cars doing Z-Turns from the bottom horizontal to mid-left column
-    // may need to wait for a car already in the section to pass to
-    // the exit, otherwise a deadlock occurs as the z-turn car has
-    // already blocked the intersection at this point.
-    let cars = this.parkingLot.trafficHandler.returnActiveCarsInArea(
-        this.collisionBoxes.maneuver,
-        [this]
-    )
-
-    cars = this.parkingLot.trafficHandler.splitCarsByDirection(cars)
-
-    if (cars.oncoming.length === 0) {
-        return true
-    } else {
-        return false
-    }
-}
 UNUSED_Car.prototype.distanceFromClosestCarAhead = function (carsAhead) {
     //
     // UNUSED
