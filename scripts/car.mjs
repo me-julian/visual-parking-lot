@@ -381,7 +381,7 @@ Car.prototype.turn = function () {
 
         this.parkingLot.trafficHandler.blockManeuverArea(this)
 
-        this.pageEl.style.animationDuration = '3s'
+        this.pageEl.style.animationDuration = '2500ms'
         this.pageEl.style.animationIterationCount = '1'
         this.pageEl.style.animationTimingFunction = 'initial'
 
@@ -436,7 +436,7 @@ Car.prototype.park = function (exceptional) {
         this.parkingLot.trafficHandler.blockManeuverArea(this)
 
         if ((this.animation.type = 'right-angle-park')) {
-            this.pageEl.style.animationDuration = '4s'
+            this.pageEl.style.animationDuration = '3500ms'
             this.pageEl.style.animationIterationCount = '1'
             this.pageEl.style.animationTimingFunction =
                 'cubic-bezier(0.31, 0.26, 0.87, 0.76)'
