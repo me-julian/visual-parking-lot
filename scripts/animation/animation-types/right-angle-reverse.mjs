@@ -58,8 +58,8 @@ RightAngleReverse.prototype.buildFarRuleString = function (car, name, endVals) {
     third = this.buildThirdKeyframe(car, endVals, 70)
     // Continue car backwards along road.
     endVals[car.oppSymbol] =
-        car.route[0].coord - car.turningRunup * endVals.crossNegation
-    if (endVals.crossNegation === 1) {
+        car.route[0].coord + car.turningRunup * endVals.crossNegation
+    if (endVals.crossNegation === -1) {
         endVals[car.oppSymbol] -= car.baseLength
     }
     last = this.buildLastKeyframe(endVals)
@@ -199,19 +199,19 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
     switch (endDirection) {
         case 'west':
             endOrientation = 180
-            crossNegation = -1
+            crossNegation = 1
             break
         case 'east':
             endOrientation = 0
-            crossNegation = 1
+            crossNegation = -1
             break
         case 'north':
             endOrientation = 270
-            crossNegation = -1
+            crossNegation = 1
             break
         case 'south':
             endOrientation = 90
-            crossNegation = 1
+            crossNegation = -1
             break
     }
 
