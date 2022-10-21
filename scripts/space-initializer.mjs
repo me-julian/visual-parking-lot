@@ -1,5 +1,7 @@
 'use strict'
 
+import * as td from './type-defs.mjs'
+
 let SpaceInitializer = function (pathObject) {
     this.pathObject = pathObject
 }
@@ -122,7 +124,6 @@ SpaceInitializer.prototype.createSpacesColumn = function (
         space.height = spaces[i]
         space.facing = facing
         space.section = section
-        space.animations = {}
 
         column.push(space)
 
@@ -146,7 +147,6 @@ SpaceInitializer.prototype.createSpacesRow = function (
         space.width = spaces[i]
         space.facing = entranceSide
         space.section = section
-        space.animations = {}
 
         row.push(space)
 
@@ -178,6 +178,7 @@ SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
     return rankedSpaceList
 }
 SpaceInitializer.prototype.setHandicapSpaces = function (spaceList) {
+    // Manually set two spaces in lot with handicap designation.
     for (let space of spaceList) {
         if (
             (space.x === 423 && space.y === 28) ||
@@ -188,7 +189,8 @@ SpaceInitializer.prototype.setHandicapSpaces = function (spaceList) {
     }
 }
 
-SpaceInitializer.prototype.testExceptionSpaces = function () {
+// Sets of parking spaces for testing different animations.
+SpaceInitializer.prototype.returnTestExceptionSpacesSets = function () {
     let spaces = {}
     let zTurn = [
         {
@@ -198,7 +200,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 212,
             facing: 'north',
             section: this.pathObject.sections.horizontal.row0col1,
-            animations: {},
         },
         {
             x: 1140,
@@ -207,7 +208,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row0col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -216,7 +216,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 97,
             facing: 'east',
             section: this.pathObject.sections.vertical.row0col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -225,7 +224,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row0col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -234,7 +232,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row1col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -243,7 +240,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row2col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -252,7 +248,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 98,
             facing: 'east',
             section: this.pathObject.sections.vertical.row2col2,
-            animations: {},
         },
     ]
     let uTurn = [
@@ -263,7 +258,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 210,
             facing: 'south',
             section: this.pathObject.sections.horizontal.row0col1,
-            animations: {},
         },
         {
             x: 422,
@@ -272,7 +266,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 210,
             facing: 'south',
             section: this.pathObject.sections.horizontal.row1col1,
-            animations: {},
         },
     ]
     let rightAngleReverse = [
@@ -284,7 +277,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'west',
             section: this.pathObject.sections.vertical.row0col0,
-            animations: {},
         },
         {
             x: 20,
@@ -293,7 +285,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'west',
             section: this.pathObject.sections.vertical.row1col0,
-            animations: {},
         },
         {
             x: 20,
@@ -302,7 +293,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'west',
             section: this.pathObject.sections.vertical.row2col0,
-            animations: {},
         },
         // // Horizontals
         {
@@ -312,7 +302,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 212,
             facing: 'north',
             section: this.pathObject.sections.horizontal.row0col1,
-            animations: {},
         },
         {
             x: 533,
@@ -321,7 +310,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 210,
             facing: 'south',
             section: this.pathObject.sections.horizontal.row0col1,
-            animations: {},
         },
         // Right column sections
         {
@@ -331,7 +319,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row0col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -340,7 +327,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row1col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -349,10 +335,10 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row2col2,
-            animations: {},
         },
     ]
     let rightAngleFarReverse = [
+        // Top two spaces, pulling out south
         {
             x: 20,
             y: 18,
@@ -360,7 +346,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'west',
             section: this.pathObject.sections.vertical.row0col0,
-            animations: {},
         },
         {
             x: 20,
@@ -369,8 +354,8 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 97,
             facing: 'west',
             section: this.pathObject.sections.vertical.row0col0,
-            animations: {},
         },
+        // Bottom two spaces, pulling out north
         {
             x: 20,
             y: 783,
@@ -378,7 +363,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 98,
             facing: 'west',
             section: this.pathObject.sections.vertical.row2col0,
-            animations: {},
         },
         {
             x: 20,
@@ -387,10 +371,10 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'west',
             section: this.pathObject.sections.vertical.row2col0,
-            animations: {},
         },
     ]
     let threePointReverse = [
+        // Top-right corner's two spaces.
         {
             x: 1140,
             y: 18,
@@ -398,7 +382,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 100,
             facing: 'east',
             section: this.pathObject.sections.vertical.row0col2,
-            animations: {},
         },
         {
             x: 1140,
@@ -407,7 +390,6 @@ SpaceInitializer.prototype.testExceptionSpaces = function () {
             height: 97,
             facing: 'east',
             section: this.pathObject.sections.vertical.row0col2,
-            animations: {},
         },
     ]
 

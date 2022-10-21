@@ -1,8 +1,10 @@
 'use strict'
 
+import * as td from '../../type-defs.mjs'
+
 /**
  * @class
- * @param {AnimationHandler} animationHandler
+ * @param {td.AnimationHandler} animationHandler
  * @param {String} animName
  */
 function RightAngleReverse(animationHandler, animName) {
@@ -13,9 +15,10 @@ function RightAngleReverse(animationHandler, animName) {
     this.endVals = undefined
 }
 
-// Need to refactor to make far vs normal version. Change endVals,
-// keyframes, etc.
-
+/**
+ * @method
+ * @param {td.Car} car
+ */
 RightAngleReverse.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
@@ -179,7 +182,7 @@ RightAngleReverse.prototype.getEndVals = function (car) {
     // Should just assign endVals here?
     let relationalValues = this.getRelationalValues(car)
     endVals.orientationMod = relationalValues.orientationMod
-    endVals.endOrientation = relationalValues.endOrientation
+    endVals.orientation = relationalValues.orientation
     endVals.direction = relationalValues.direction
     endVals.turnDirection = relationalValues.turnDirection
     endVals.crossNegation = relationalValues.crossNegation
@@ -192,25 +195,25 @@ RightAngleReverse.prototype.getEndVals = function (car) {
     return endVals
 }
 RightAngleReverse.prototype.getRelationalValues = function (car) {
-    let endOrientation
+    let orientation
     let endDirection = car.route[0].direction
 
     let crossNegation
     switch (endDirection) {
         case 'west':
-            endOrientation = 180
+            orientation = 180
             crossNegation = 1
             break
         case 'east':
-            endOrientation = 0
+            orientation = 0
             crossNegation = -1
             break
         case 'north':
-            endOrientation = 270
+            orientation = 270
             crossNegation = 1
             break
         case 'south':
-            endOrientation = 90
+            orientation = 90
             crossNegation = -1
             break
     }
@@ -230,7 +233,7 @@ RightAngleReverse.prototype.getRelationalValues = function (car) {
 
     return {
         orientationMod: orientationMod,
-        endOrientation: endOrientation,
+        orientation: orientation,
         direction: endDirection,
         turnDirection: turnDirection,
         crossNegation: crossNegation,

@@ -4,7 +4,7 @@ import {config} from './config.mjs'
 import {pathObject} from './path-object.mjs'
 import {SpaceInitializer} from './space-initializer.mjs'
 import {RoutePlotter} from './routing/route-plotter.mjs'
-import {TrafficHandler} from './traffic-handler.mjs'
+import {CollisionBoxHandler} from './collision-box-handler.mjs'
 import * as animation from './animation/index.mjs'
 import {Overlay} from './overlay.mjs'
 import {ParkingLot} from './parking-lot.mjs'
@@ -16,12 +16,8 @@ import {ParkingLot} from './parking-lot.mjs'
 
 //
 //      After satisfied with general procedure:
-// Tweak iteration speed/car spawning/random parking length.
-
 // Reorganize objects/functions, renaming, better defined
 // object responsibilities.
-
-// Improve animation quality (Z-turns, right angle turns, z-reverse)
 
 // Code commenting/JSDoc Cleanup
 
@@ -29,13 +25,15 @@ import {ParkingLot} from './parking-lot.mjs'
 
 // GUI button for pathObject paths.
 
+// Show ability to focus cars.
+
 //
 //      Nice-to-haves:
-// Variable car speed/functional stopping distance.
-// Start/Stop/Pause simulation/loop.
 // Stats (cars entering/parked/leaving/left, parking time, stuck time)
+// Start/Stop/Pause simulation/loop.
 // Let user initialize lot with normal vs test sets of spaces in GUI.
 // Slight randomization on assignedSpaces by 1-2 ranks to space out cars
+// Variable car speed/functional stopping distance.
 // Improve reenteredRoadClear
 //      General ability for cars to understand when blocked
 // intersections and other anims are not going to affect them
@@ -45,8 +43,8 @@ function initializeSimulation(config, loop) {
     let spaceInitializer = new SpaceInitializer(pathObject)
     let unrankedSpaceList = spaceInitializer.initParkingSpaces()
     let rankedSpaceList = spaceInitializer.rankSpaces(unrankedSpaceList)
-    // TEST limited space sets.
-    // let testUnrankedSpaceList = spaceInitializer.testExceptionSpaces(pathObject)
+    // Test limited space sets.
+    // let testUnrankedSpaceList = spaceInitializer.returnTestExceptionSpacesSets()
     // let rankedSpaceList = spaceInitializer.rankSpaces(testUnrankedSpaceList)
     //
     spaceInitializer.setHandicapSpaces(rankedSpaceList)
@@ -59,7 +57,9 @@ function initializeSimulation(config, loop) {
 
     let overlay = new Overlay()
     overlay.createSpaceOverlay(rankedSpaceList)
+    // ISSUE: Put into GUI
     overlay.drawPaths(pathObject)
+    //
     overlay.addGuiListeners()
 
     let parkingLot = new ParkingLot(
@@ -71,8 +71,8 @@ function initializeSimulation(config, loop) {
         animationHandler,
         rankedSpaceList
     )
-    parkingLot.trafficHandler = new TrafficHandler(parkingLot)
-    parkingLot.initialize()
+    parkingLot.collisionBoxHandler = new CollisionBoxHandler(parkingLot)
+    parkingLot.initializeSelf()
 
     return parkingLot
 }

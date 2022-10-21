@@ -1,25 +1,17 @@
 'use strict'
 
+import * as td from './type-defs.mjs'
 import {Car} from './car.mjs'
 
 /**
- *
- * @class
+ * @type {td.ParkingLot}
  * @param {Object} config
  * @param {Object} loop
- * @param {pathObject} pathObject
- * @param {RoutePlotter} routePlotter
- * @param {Overlay} overlay
- * @param {Object} rankedSpaceList
- * @param {AnimationHandler} animationHandler
- * @property {TrafficHandler} trafficHandler
- * @property {number} carCount - Number of cars so far. Used for car IDs.
- * @property {Object} cars
- * @property {Object} cars.entering - Cars which haven't parked yet.
- * @property {Object} cars.parked - Cars which are currently parked.
- * @property {Object} cars.leaving - Cars which are leaving the lot.
- * @property {Object} cars.left - Cars which have left the lot and scene.
- * @property {Object} intersections
+ * @param {td.pathObject} pathObject
+ * @param {td.RoutePlotter} routePlotter
+ * @param {td.Overlay} overlay
+ * @param {td.AnimationHandler} animationHandler
+ * @param {Array} rankedSpaceList
  */
 function ParkingLot(
     config,
@@ -49,7 +41,7 @@ function ParkingLot(
     this.spawnCarCooldown = false
 }
 
-ParkingLot.prototype.initialize = function () {
+ParkingLot.prototype.initializeSelf = function () {
     this.initializeIntersections()
     this.initializeWrapperPositionVals()
 }
@@ -61,11 +53,10 @@ ParkingLot.prototype.initializeIntersections = function () {
     let horizontalSections = this.pathObject.sections.horizontal
 
     this.intersections =
-        this.trafficHandler.getIntersections(horizontalSections)
+        this.collisionBoxHandler.getIntersections(horizontalSections)
 
     this.overlay.createIntersectionOverlay(this.intersections)
 }
-
 ParkingLot.prototype.initializeWrapperPositionVals = function () {
     // If the lot is ever centered, responsive, etc, then this will
     // have to be made more dynamic.
@@ -80,14 +71,18 @@ ParkingLot.prototype.initializeWrapperPositionVals = function () {
 }
 
 ParkingLot.prototype.simulate = function () {
-    if (!this.spawnCarCooldown && this.trafficHandler.isEntranceClear(this)) {
+    if (
+        !this.spawnCarCooldown &&
+        this.collisionBoxHandler.isEntranceClear(this)
+    ) {
         this.spawnCar(this.carCount)
         this.spawnCarCooldown = true
         setTimeout(() => {
             this.spawnCarCooldown = false
-        }, this.timeToNextCarArrival())
+        }, this.getTimeToNextCarArrival())
     }
 
+    // Iterate through all cars to make their actions.
     for (let car in this.cars.leaving) {
         this.cars.leaving[car].determineAction()
     }
@@ -102,12 +97,16 @@ ParkingLot.prototype.simulate = function () {
 ParkingLot.prototype.spawnCar = function () {
     let handicap = this.setHandicapByChance()
     let assignedSpace = this.getHighestRankedSpace(handicap)
+    // Lot will only spawn a car if spaces are available.
+    // Cars entering and waiting for a space to become available is
+    // not supported.
     if (assignedSpace) {
         let id = this.carCount
         this.carCount += 1
 
         let newCar = new Car(this, id)
 
+        // Block space from being assigned to next spawning car.
         assignedSpace.reserved = true
         this.overlay.updateSpaceColor(assignedSpace.pageEl, newCar)
         newCar.initialize(assignedSpace, handicap)
@@ -115,6 +114,7 @@ ParkingLot.prototype.spawnCar = function () {
         this.cars.entering[id] = newCar
     } else {
         console.log('No spaces available.')
+        // Wait to try again.
         this.spawnCarCooldown = true
         setTimeout(() => {
             this.spawnCarCooldown = false
@@ -123,6 +123,7 @@ ParkingLot.prototype.spawnCar = function () {
 }
 
 ParkingLot.prototype.setHandicapByChance = function () {
+    // 1 out of handicapChance cars can park in handicap spaces.
     let chance = Math.floor(Math.random() * (this.config.handicapChance + 1))
     if (chance === this.config.handicapChance) {
         return true
@@ -130,7 +131,7 @@ ParkingLot.prototype.setHandicapByChance = function () {
         return false
     }
 }
-ParkingLot.prototype.timeToNextCarArrival = function () {
+ParkingLot.prototype.getTimeToNextCarArrival = function () {
     let min = this.config.carSpawnRate.min
     let max = this.config.carSpawnRate.max
     let time = Math.floor(Math.random() * (max - min + 1) + min)
@@ -138,6 +139,7 @@ ParkingLot.prototype.timeToNextCarArrival = function () {
 }
 
 ParkingLot.prototype.requestRouteToSpace = function (car) {
+    // Construct a routeEnd for start and end to pass to routePlotter.
     let start = {
         section: car.currentSection,
         direction: car.direction,
@@ -180,16 +182,6 @@ ParkingLot.prototype.requestRouteFromSpace = function (car) {
 
     start = this.determineSpaceExitLocation(car, start)
 
-    // Testing
-    if (start === null) {
-        console.log('Exceptional reverse situation, unhandled.')
-        return
-    } else if (start === undefined) {
-        console.error('Unexpected undefined start after determining direction.')
-        return
-    }
-    //
-
     let destinationSection = this.pathObject.exit
     let destination = {
         section: destinationSection,
@@ -203,6 +195,9 @@ ParkingLot.prototype.requestRouteFromSpace = function (car) {
         destination
     )
 
+    // Some spaces don't have space to turn out and head in the right
+    // direction towards the exit. They use special animations to pull
+    // out and need their routes adjusted manually.
     if (car.assignedSpace.section !== route[0].section) {
         let actualStart
         switch (route[0].section) {
@@ -219,8 +214,7 @@ ParkingLot.prototype.requestRouteFromSpace = function (car) {
                     // Add turn to what is now the second routeSection.
                     route[1].turn = 'northtoeast'
                 } else if (car.direction === 'east') {
-                    // Top right two spaces actually start on horizontal
-                    // row0col1 section.
+                    // Top right two spaces don't need adjustment.
                 } else {
                     console.error(
                         'Unexpected car attempting to adjust for exceptional reverse animation.'
@@ -242,7 +236,6 @@ ParkingLot.prototype.requestRouteFromSpace = function (car) {
 
     return route
 }
-// Most likely move to another object.
 ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
     switch (car.direction) {
         // Check if cars are close enough to the edge to need to make
@@ -283,7 +276,6 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
             start.direction = 'east'
             break
         // all right column cars pull out north
-
         case 'east':
             start.direction = 'south'
             break
@@ -318,8 +310,8 @@ ParkingLot.prototype.getHighestRankedSpace = function (handicap) {
         }
     }
 }
-ParkingLot.prototype.checkSpaceHandicap = function (space, handicap) {
-    if ((space.handicap && handicap) || !space.handicap) {
+ParkingLot.prototype.checkSpaceHandicap = function (space, carHandicapStatus) {
+    if ((space.handicap && carHandicapStatus) || !space.handicap) {
         return true
     } else {
         return false

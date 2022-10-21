@@ -1,8 +1,10 @@
 'use strict'
 
+import * as td from '../../type-defs.mjs'
+
 /**
  * @class
- * @param {AnimationHandler} animationHandler
+ * @param {td.AnimationHandler} animationHandler
  * @param {String} animName
  */
 function ZReverse(animationHandler, animName) {
@@ -13,6 +15,10 @@ function ZReverse(animationHandler, animName) {
     this.endVals = undefined
 }
 
+/**
+ * @method
+ * @param {td.Car} car
+ */
 ZReverse.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
@@ -152,7 +158,7 @@ ZReverse.prototype.getEndVals = function (car) {
 
     let relationalValues = this.getRelationalValues(car)
     endVals.orientationMod = relationalValues.orientationMod
-    endVals.endOrientation = relationalValues.endOrientation
+    endVals.orientation = relationalValues.orientation
     endVals.direction = relationalValues.direction
     endVals.crossNegation = relationalValues.crossNegation
     endVals.crossDistance = relationalValues.crossDistance
@@ -169,9 +175,7 @@ ZReverse.prototype.getRelationalValues = function (car) {
     let endDirection = car.route[0].direction
 
     // Only handling case present in current parking lot.
-
-    // endOrientation vs orientation needs to be cleared up.
-    let endOrientation = 0
+    let orientation = 0
     let orientationMod = -90
 
     let crossNegation = 1
@@ -189,7 +193,7 @@ ZReverse.prototype.getRelationalValues = function (car) {
 
     return {
         orientationMod: orientationMod,
-        endOrientation: endOrientation,
+        orientation: orientation,
         direction: endDirection,
         crossNegation: crossNegation,
         crossDistance: crossDistance,
@@ -208,7 +212,6 @@ ZReverse.prototype.getAdjustedEndCoords = function (car, endVals) {
 
             endVals.y -= (car.baseLength - car.baseWidth) / 2
 
-            // endOrientation vs orientation needs to be cleared up.
             endVals.orientation = car.orientation
             break
         case 'north':

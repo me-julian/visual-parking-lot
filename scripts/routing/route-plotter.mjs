@@ -1,18 +1,12 @@
 'use strict'
 
+import * as td from '../type-defs.mjs'
 import {BranchHandler} from './branch-handler.mjs'
 
-/** Object representing one of the opposite ends of a route.
- * @typedef {Object} routeEnd
- * @property {section} section
- * @property {number} coord - Exact start or destination point along section.
- * @property {string} [direction] - Cardinal direction.
- */
-
 /**
- *
  * @class
- * @param {pathObject} pathObject
+ * @type {td.RoutePlotter}
+ * @param {td.pathObject} pathObject
  */
 function RoutePlotter(pathObject) {
     this.pathObject = pathObject
@@ -20,9 +14,9 @@ function RoutePlotter(pathObject) {
     /**
      * @method
      * @param {pathObject} pathObject
-     * @param {routeEnd} start - Starting section and end coordinate with direction.
-     * @param {routeEnd} destination - Destination section and end coordinate with direction.
-     * @returns {object}
+     * @param {td.routeEnd} start - Starting section and end coordinate with direction.
+     * @param {td.routeEnd} destination - Destination section and end coordinate with direction.
+     * @returns {Object}
      */
     this.createRoute = function (routePlotter, start, destination) {
         let routeSections = routePlotter.returnRouteBySections(
@@ -136,14 +130,6 @@ function RoutePlotter(pathObject) {
 
     this.handleMultipleValidRoutes = function (routePlotter, routes) {
         routes = routePlotter.cullBadRoutes(routes)
-        // for (let potentialRouteSections of routes) {
-        //     potentialRouteSections = routePlotter.getRouteDist(
-        //         routePlotter,
-        //         potentialRouteSections,
-        //         start.coord,
-        //         end.coord
-        //     )
-        // }
         let routeSections = this.chooseRoute(routePlotter, routes)
         return routeSections
     }
@@ -190,6 +176,13 @@ function RoutePlotter(pathObject) {
         }
     }
 
+    /** Takes raw list of sections and determines directions and turns for each.
+     * @param {td.RoutePlotter} routePlotter
+     * @param {Array} routeSections
+     * @param {td.routeEnd} start
+     * @param {td.routeEnd} destination
+     * @returns {Array}
+     */
     this.initializeRouteMetaInfo = function (
         routePlotter,
         routeSections,
@@ -318,35 +311,6 @@ function RoutePlotter(pathObject) {
                 finishedRoute[i].turn =
                     current.direction + 'to' + next.direction
             }
-
-            // these could be pos or negative changes in degrees
-            // (rotation of the car/facing)
-            // switch (current.direction) {
-            // case 'north':
-            //     if (nextAxis === 'west') {
-            //         finishedRoute[i].turn = 'left'
-            //     } else {
-            //         finishedRoute[i].turn = 'right'
-            //     }
-            // case 'south':
-            //     if (nextAxis === 'west') {
-            //         finishedRoute[i].turn = 'right'
-            //     } else {
-            //         finishedRoute[i].turn = 'left'
-            //     }
-            // case 'east':
-            //     if (nextAxis === 'north') {
-            //         finishedRoute[i].turn = 'left'
-            //     } else {
-            //         finishedRoute[i].turn = 'right'
-            //     }
-            // case 'west':
-            //     if (nextAxis === 'north') {
-            //         finishedRoute[i].turn = 'right'
-            //     } else {
-            //         finishedRoute[i].turn = 'left'
-            //     }
-            // }
         }
 
         return finishedRoute

@@ -1,16 +1,6 @@
 'use strict'
 
-/**
- * PathObject section objects.
- * @typedef {Object} section
- * @property {number} row
- * @property {number} column
- * @property {Boolean} [horizontal]
- * @property {number} len - length of section in pixels (coordinates/points).
- * @property {number} x - x coordinate on page.
- * @property {number} y - y coordinate on page.
- * @property {Array} points - Array of x, y coordinates.
- */
+import * as td from './type-defs.mjs'
 
 //  Measurements for section initialization.
 let pathCoords = {
@@ -22,6 +12,7 @@ let pathCoords = {
 }
 
 function getSectionPoints(len, axis) {
+    // ISSUE: Points never used?
     let points = []
     for (let i = 0; i < len; i++) {
         points.push(axis + i)
@@ -29,6 +20,7 @@ function getSectionPoints(len, axis) {
     return points
 }
 
+// Initialization of all sections in lot.
 let parkingLotSections = {
     vertical: {
         row0col0: (function () {
@@ -219,15 +211,8 @@ let parkingLotSections = {
         })(),
     },
 }
-
 /**
- * @property {Object} sections - Path sections divided by orientation.
- * @property {Object} sections.horizontal
- * @property {section} sections.horizontal.rowxcoly
- * @property {Object} sections.vertical
- * @property {section} sections.vertical.rowxcoly
- * @property {section} entrance - Ref to section which is an entrance.
- * @property {section} exit - Ref to section which is an exit.
+ * @type {td.PathObject}
  */
 let pathObject = {
     sections: parkingLotSections,

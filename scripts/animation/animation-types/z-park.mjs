@@ -1,8 +1,10 @@
 'use strict'
 
+import * as td from '../../type-defs.mjs'
+
 /**
  * @class
- * @param {AnimationHandler} animationHandler
+ * @param {td.AnimationHandler} animationHandler
  * @param {String} animName
  */
 function ZPark(animationHandler, animName) {
@@ -13,6 +15,10 @@ function ZPark(animationHandler, animName) {
     this.endVals = undefined
 }
 
+/**
+ * @method
+ * @param {td.Car} car
+ */
 ZPark.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
@@ -195,7 +201,7 @@ ZPark.prototype.getEndVals = function (car) {
     let endVals = {}
 
     let relationalValues = this.getRelationalValues(car)
-    endVals.endOrientation = relationalValues.endOrientation
+    endVals.orientation = relationalValues.orientation
     endVals.direction = relationalValues.direction
     endVals.crossNegation = relationalValues.crossNegation
     endVals.crossDistance = relationalValues.crossDistance
@@ -210,7 +216,7 @@ ZPark.prototype.getEndVals = function (car) {
     return endVals
 }
 ZPark.prototype.getRelationalValues = function (car) {
-    let endOrientation = car.orientation
+    let orientation = car.orientation
     let endDirection = car.assignedSpace.facing
 
     // Only handling cases present in current parking lot.
@@ -247,7 +253,7 @@ ZPark.prototype.getRelationalValues = function (car) {
     let forwardDistance = Math.abs(car.leadingEdge - spaceEntrance)
 
     return {
-        endOrientation: endOrientation,
+        orientation: orientation,
         direction: endDirection,
         crossNegation: crossNegation,
         crossDistance: crossDistance,

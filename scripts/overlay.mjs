@@ -1,17 +1,20 @@
 'use strict'
 
+import * as td from './type-defs.mjs'
+
 /**
  * @class
+ * @type {td.Overlay}
  */
 function Overlay() {
     this.wrapper = document.getElementById('lot-overlay')
     this.timers = {}
 }
 
-/**
+/** Create div containing all usable parking spaces in lot.
  * @method
  * @param {Object} rankedSpaceList
- * @property {Car} focusedCar
+ * @property {td.Car} focusedCar
  */
 Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     let spacesEl = document.getElementById('spaces')
@@ -31,6 +34,10 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
     }
 }
 
+/** Create div containing all intersection areas.
+ * @method
+ * @param {Object} intersections
+ */
 Overlay.prototype.createIntersectionOverlay = function (intersections) {
     let allIntersectionsWrapper = document.getElementById('intersections')
 
@@ -69,14 +76,15 @@ Overlay.prototype.addGuiListeners = function () {
         .addEventListener('click', intersectionsFunct)
 }
 
-/**
+/** Create lines to show top-left coordinate points cars move across.
  * @method
- * @param {pathObject} pathObject
+ * @param {td.pathObject} pathObject
  */
 Overlay.prototype.drawPaths = function (pathObject) {
     let paths = document.createElement('div')
     paths.id = 'path-lines'
 
+    // Get vertical and horizontal sections.
     for (let orientation in pathObject.sections) {
         for (let sect in pathObject.sections[orientation]) {
             let sectionEl = document.createElement('div')
@@ -98,33 +106,15 @@ Overlay.prototype.drawPaths = function (pathObject) {
             paths.append(sectionEl)
         }
     }
-
     this.wrapper.append(paths)
 }
 
-/**
- * @method
- * @param {Object} box
- * @param {Object} dimensions - Top, left, height, width vals (nums)
- * @property {String} dimensions.x
- * @param {Object} [styles] - Key = style name (str), val = value string w/ suffix
- */
-Overlay.prototype.drawBox = function (box, dimensions, styles) {
-    box.style.top = dimensions.y + 'px'
-    box.style.left = dimensions.x + 'px'
-    box.style.height = dimensions.h + 'px'
-    box.style.width = dimensions.w + 'px'
-
-    for (let style in styles) {
-        box.style[style] = styles[style]
-    }
-}
-
-/**
- *
- * @param {Object} parent - HTML element
- * @param {Array} [classes]
- * @param {String} [id]
+/** Create a rectangular page element and append into DOM. Must call
+ * Overlay.drawBox() separately to set dimensions.
+ * @param {HTMLElement} parent
+ * @param {Array} [classes] Array of class name strings
+ * @param {string} [id]
+ * @returns {HTMLElement}
  */
 Overlay.prototype.createBox = function (parent, classes, id) {
     let newBox = document.createElement('div')
@@ -138,11 +128,34 @@ Overlay.prototype.createBox = function (parent, classes, id) {
     parent.append(newBox)
     return newBox
 }
+/** Set dimensions of an existent page element.
+ * @method
+ * @param {HTMLElement} box - Page element
+ * @param {td.collisionbox} dimensions - Top, left, height, width vals (Nums)
+ * @param {Object} [styles] - Key = style name (str), val = value string w/ suffix
+ */
+Overlay.prototype.drawBox = function (box, dimensions, styles) {
+    box.style.top = dimensions.y + 'px'
+    box.style.left = dimensions.x + 'px'
+    box.style.height = dimensions.h + 'px'
+    box.style.width = dimensions.w + 'px'
 
+    for (let style in styles) {
+        box.style[style] = styles[style]
+    }
+}
+/**
+ * @param {HTMLElement} wrapper - Element directly or indirectly above .overlay-el elements to be shown.
+ */
 Overlay.prototype.toggleShowOverlayWrapperChildren = function (wrapper) {
     wrapper.classList.toggle('show-overlay-children')
 }
 
+/** Show relevent areas being checked by a Car. Removes previously
+ * focused car when necessary.
+ * @method
+ * @param {td.Car} car
+ */
 Overlay.prototype.toggleCarFocus = function (car) {
     if (this.focusedCar === car) {
         // Only toggling off the current car.
@@ -173,6 +186,10 @@ Overlay.prototype.removeFocusedCar = function (car) {
 
     this.updateCarsBlockedIntersections(this.focusedCar)
 }
+/**
+ * @method
+ * @param {td.Car} car
+ */
 Overlay.prototype.updateCarsBlockedIntersections = function (car) {
     for (let intersection in car.blockingIntersections) {
         this.updateIntersectionColor(
@@ -182,6 +199,11 @@ Overlay.prototype.updateCarsBlockedIntersections = function (car) {
     }
 }
 
+/** Briefly show intersection element being checked regardless of
+ * intersection overlay being visible.
+ * @method
+ * @param {td.Intersection} intersection
+ */
 Overlay.prototype.showIntersectionCheck = function (intersection) {
     document.getElementById(intersection.name).style.display = 'initial'
 
@@ -189,8 +211,17 @@ Overlay.prototype.showIntersectionCheck = function (intersection) {
         document.getElementById(intersection.name).style.display = ''
     }, 1500)
 }
+/** Create elements for areas of maneuver being checked and show until
+ * way is clear and has made it partway through its animation.
+ * @method
+ * @param {td.Car} car
+ * @param {td.collisionbox} areas
+ * @param {string} state 'blocked' or 'clear'
+ */
 Overlay.prototype.showManeuverCheck = function (car, areas, state) {
     let maneuverId = car.id + '-maneuver'
+    // Only create elements if they haven't already been created and a
+    // timer set to remove them to avoid creating new els every iteration.
     if (!this.timers[maneuverId]) {
         let maneuverWrapper = document.createElement('div')
         maneuverWrapper.id = maneuverId
@@ -216,6 +247,8 @@ Overlay.prototype.showManeuverCheck = function (car, areas, state) {
             delete this.timers[maneuverId]
         }, 1500)
     } else {
+        // Refresh timer since car is still continuing to check and
+        // hasn't started its animation.
         clearTimeout(this.timers[maneuverId])
 
         let maneuverWrapper = document.getElementById(maneuverId)
@@ -228,6 +261,11 @@ Overlay.prototype.showManeuverCheck = function (car, areas, state) {
     }
 }
 
+/**
+ * @method
+ * @param {HTMLElement} wrapper
+ * @param {string} state - 'blocked' or 'clear'
+ */
 Overlay.prototype.updateManeuverColor = function (wrapper, state) {
     let color
     if (state === 'blocked') {
@@ -239,6 +277,11 @@ Overlay.prototype.updateManeuverColor = function (wrapper, state) {
         box.style.backgroundColor = color
     }
 }
+/**
+ * @method
+ * @param {td.Space} space
+ * @param {td.Car} car
+ */
 Overlay.prototype.updateSpaceColor = function (space, car) {
     let spaceColor
     if (!car.finishedParking && car.status !== 'parked') {
@@ -252,6 +295,11 @@ Overlay.prototype.updateSpaceColor = function (space, car) {
     }
     space.style['background-color'] = spaceColor
 }
+/**
+ * @method
+ * @param {td.intersection} intersection
+ * @param {td.Car} car
+ */
 Overlay.prototype.updateIntersectionColor = function (intersection, car) {
     let intersectionBox = document.getElementById(intersection.name)
     // If the car which is blocking the intersection is userFocus,
@@ -276,24 +324,12 @@ Overlay.prototype.clearCollisionBoxes = function (wrapper) {
         this.clearCollisionBox(box)
     }
 }
-Overlay.prototype.clearCollisionBox = function (box) {
-    box.style['background-color'] = 'initial'
+Overlay.prototype.clearCollisionBox = function (element) {
+    element.style['background-color'] = 'initial'
 }
 
 Overlay.prototype.toggleElement = function (element) {
     element.classList.toggle('visible')
-}
-Overlay.prototype.showElement = function (element) {
-    if (element.classList.includes('hidden')) {
-        element.classList.remove('hidden')
-    }
-    element.classList.add('visible')
-}
-Overlay.prototype.hideElement = function (element) {
-    if (element.classList.includes('visible')) {
-        element.classList.remove('visible')
-    }
-    element.classList.add('hidden')
 }
 
 export {Overlay}

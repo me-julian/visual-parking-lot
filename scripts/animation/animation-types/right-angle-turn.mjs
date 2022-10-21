@@ -1,8 +1,10 @@
 'use strict'
 
+import * as td from '../../type-defs.mjs'
+
 /**
  * @class
- * @param {AnimationHandler} animationHandler
+ * @param {td.AnimationHandler} animationHandler
  * @param {String} animName
  */
 function RightAngleTurn(animationHandler, animName) {
@@ -13,6 +15,10 @@ function RightAngleTurn(animationHandler, animName) {
     this.endVals = undefined
 }
 
+/**
+ * @method
+ * @param {td.Car} car
+ */
 RightAngleTurn.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
@@ -121,7 +127,7 @@ RightAngleTurn.prototype.getEndVals = function (car) {
 
     let relationalValues = this.getRelationalValues(car)
     endVals.orientationMod = relationalValues.orientationMod
-    endVals.endOrientation = relationalValues.endOrientation
+    endVals.orientation = relationalValues.orientation
     endVals.direction = relationalValues.direction
     endVals.turnDirection = relationalValues.turnDirection
 
@@ -136,21 +142,21 @@ RightAngleTurn.prototype.getEndVals = function (car) {
     return endVals
 }
 RightAngleTurn.prototype.getRelationalValues = function (car) {
-    let endOrientation
+    let orientation
     let endDirection = car.route[1].direction
 
     switch (endDirection) {
         case 'west':
-            endOrientation = 180
+            orientation = 180
             break
         case 'east':
-            endOrientation = 0
+            orientation = 0
             break
         case 'north':
-            endOrientation = 270
+            orientation = 270
             break
         case 'south':
-            endOrientation = 90
+            orientation = 90
             break
     }
 
@@ -169,7 +175,7 @@ RightAngleTurn.prototype.getRelationalValues = function (car) {
 
     return {
         orientationMod: orientationMod,
-        endOrientation: endOrientation,
+        orientation: orientation,
         direction: endDirection,
         turnDirection: turnDirection,
     }

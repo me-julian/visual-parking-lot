@@ -1,8 +1,10 @@
 'use strict'
 
+import * as td from '../../type-defs.mjs'
+
 /**
  * @class
- * @param {AnimationHandler} animationHandler
+ * @param {td.AnimationHandler} animationHandler
  * @param {String} animName
  */
 function UPark(animationHandler, animName) {
@@ -13,6 +15,10 @@ function UPark(animationHandler, animName) {
     this.endVals = undefined
 }
 
+/**
+ * @method
+ * @param {td.Car} car
+ */
 UPark.prototype.buildSelf = function (car) {
     this.endVals = this.getEndVals(car)
 
@@ -130,7 +136,7 @@ UPark.prototype.getEndVals = function (car) {
 
     let metaValues = this.turnMetaValues(car)
     endVals.orientationMod = metaValues.orientationMod
-    endVals.endOrientation = metaValues.endOrientation
+    endVals.orientation = metaValues.orientation
     endVals.direction = metaValues.direction
     endVals.crossNegation = metaValues.crossNegation
     endVals.crossDistance = metaValues.crossDistance
@@ -143,7 +149,7 @@ UPark.prototype.getEndVals = function (car) {
     return endVals
 }
 UPark.prototype.turnMetaValues = function (car) {
-    let endOrientation
+    let orientation
     let endDirection = car.assignedSpace.facing
 
     // Only handling cases present in current parking lot.
@@ -159,7 +165,7 @@ UPark.prototype.turnMetaValues = function (car) {
             console.err('Unexpected State/Unhandled Case!')
             break
         case 'south':
-            endOrientation = 90
+            orientation = 90
             break
     }
 
@@ -192,7 +198,7 @@ UPark.prototype.turnMetaValues = function (car) {
 
     return {
         orientationMod: orientationMod,
-        endOrientation: endOrientation,
+        orientation: orientation,
         direction: endDirection,
         crossNegation: crossNegation,
         crossDistance: crossDistance,

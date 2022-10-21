@@ -1,9 +1,11 @@
 'use strict'
 
+import * as td from '../type-defs.mjs'
+
 /**
  * @class
- * @typedef {Object} BranchHandler
- * @param {pathObject} pathObject
+ * @type {td.BranchHandler}
+ * @param {td.pathObject} pathObject
  * @param {number} rowDiff
  * @param {number} colDiff
  */
@@ -23,7 +25,7 @@ function BranchHandler(pathObject, rowDiff, colDiff) {
 
 /**
  * @method
- * @param {section} section
+ * @param {td.section} section
  * @returns {Array}
  */
 BranchHandler.prototype.getBranches = function (section) {
@@ -51,8 +53,8 @@ BranchHandler.prototype.getBranches = function (section) {
 
 /**
  * @method
- * @param {section} section
- * @returns {section}
+ * @param {td.section} section
+ * @returns {td.section}
  */
 BranchHandler.prototype.getBranchFromHorizontal = function (section) {
     // If turning west, else turning east
@@ -71,7 +73,7 @@ BranchHandler.prototype.getBranchFromHorizontal = function (section) {
 
 /**
  * @method
- * @param {section} section
+ * @param {td.section} section
  * @returns {Array}
  */
 BranchHandler.prototype.getBranchFromVertical = function (section) {
@@ -120,8 +122,8 @@ BranchHandler.prototype.getBranchFromVertical = function (section) {
 
 /**
  * @method
- * @param {section} section
- * @returns {section}
+ * @param {td.section} section
+ * @returns {td.section}
  */
 BranchHandler.prototype.getNextSection = function (section) {
     let type = 'vertical'

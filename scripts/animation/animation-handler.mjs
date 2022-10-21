@@ -4,6 +4,12 @@
 // Each anim is saved by its location/destination in the lot and
 // reused after being created once.
 
+import * as td from '../type-defs.mjs'
+
+/**
+ * @type {td.AnimationHandler}
+ * @param {Object} animationTypes
+ */
 function AnimationHandler(animationTypes) {
     this.styleSheet = (() => {
         for (var i = 0; i < document.styleSheets.length; i++) {
@@ -46,8 +52,8 @@ AnimationHandler.prototype.determineExceptionalAnimationType = function (car) {
 }
 AnimationHandler.prototype.getAnimation = function (car, type) {
     let animName = this.getAnimationName(car, type)
-    // Return pre-existing animation if previously initialized.
     if (this.animations[animName]) {
+        // Return pre-existing animation if previously initialized.
         return this.animations[animName]
     } else {
         let animation
@@ -90,6 +96,8 @@ AnimationHandler.prototype.getAnimation = function (car, type) {
 }
 
 AnimationHandler.prototype.getAnimationName = function (car, type) {
+    // Animations names are determined by parking space/turn location
+    // in the lot.
     let animName
     switch (type) {
         case 'right-angle-park':
