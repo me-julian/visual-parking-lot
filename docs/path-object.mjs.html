@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: path-object.mjs</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: path-object.mjs</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict'
+
+import * as td from './type-defs.mjs'
+
+//  Measurements for section initialization.
+let pathCoords = {
+    col0: 228 + (184 - 90) / 2,
+    col1: 971 + (170 - 90) / 2,
+    row0: 18,
+    row1: 18 + 232 + (155 - 90) / 2,
+    row2: 18 + 232 + 379 + (167 - 90) / 2,
+}
+
+function getSectionPoints(len, axis) {
+    // ISSUE: Points never used?
+    let points = []
+    for (let i = 0; i &lt; len; i++) {
+        points.push(axis + i)
+    }
+    return points
+}
+
+// Initialization of all sections in lot.
+let parkingLotSections = {
+    vertical: {
+        row0col0: (function () {
+            let row = 0
+            let col = 0
+            let len = 265
+            let x = pathCoords.col0
+            let y = pathCoords.row0
+
+            let topIntersection = null
+            let bottomIntersection = 'row1col0Intersection'
+
+            let points = getSectionPoints(len, y)
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
+        })(),
+        row0col2: (function () {
+            let row = 0
+            let col = 2
+            let len = 265
+            let x = pathCoords.col1
+            let y = pathCoords.row0
+
+            let topIntersection = null
+            let bottomIntersection = 'row1col2Intersection'
+
+            let points = getSectionPoints(len, y)
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
+        })(),
+        row1col0: (function () {
+            let row = 1
+            let col = 0
+            let len = 385
+            let x = pathCoords.col0
+            let y = pathCoords.row1
+
+            let topIntersection = 'row1col0Intersection'
+            let bottomIntersection = 'row2col0Intersection'
+
+            let points = getSectionPoints(len, y)
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
+        })(),
+        row1col2: (function () {
+            let row = 1
+            let col = 2
+            let len = 385
+            let x = pathCoords.col1
+            let y = pathCoords.row1
+
+            let topIntersection = 'row1col2Intersection'
+            let bottomIntersection = 'row2col2Intersection'
+
+            let points = getSectionPoints(len, y)
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+            }
+        })(),
+        row2col0: (function () {
+            let row = 2
+            let col = 0
+            let len = 367
+            let x = pathCoords.col0
+            let y = pathCoords.row2
+            let entrance = 'south'
+
+            let topIntersection = 'row2col0Intersection'
+            let bottomIntersection = null
+
+            let points = getSectionPoints(len, y)
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+                entrance,
+            }
+        })(),
+        row2col2: (function () {
+            let row = 2
+            let col = 2
+            let len = 367
+            let x = pathCoords.col1
+            let y = pathCoords.row2
+            let exit = 'south'
+
+            let topIntersection = 'row2col2Intersection'
+            let bottomIntersection = null
+
+            let points = getSectionPoints(len, y)
+            return {
+                row,
+                col,
+                len,
+                x,
+                y,
+                topIntersection,
+                bottomIntersection,
+                points,
+                exit,
+            }
+        })(),
+    },
+    horizontal: {
+        row0col1: (function () {
+            let row = 0
+            let col = 1
+            let horizontal = true
+            let len = 736
+            let x = pathCoords.col0
+            let y = pathCoords.row1
+
+            let leftIntersection = 'row1col0Intersection'
+            let rightIntersection = 'row1col2Intersection'
+
+            let points = getSectionPoints(len, x)
+            return {
+                horizontal,
+                row,
+                col,
+                len,
+                x,
+                y,
+                leftIntersection,
+                rightIntersection,
+                points,
+            }
+        })(),
+        row1col1: (function () {
+            let row = 1
+            let col = 1
+            let horizontal = true
+            let len = 736
+            let x = pathCoords.col0
+            let y = pathCoords.row2
+
+            let leftIntersection = 'row2col0Intersection'
+            let rightIntersection = 'row2col2Intersection'
+
+            let points = getSectionPoints(len, x)
+            return {
+                horizontal,
+                row,
+                col,
+                len,
+                x,
+                y,
+                leftIntersection,
+                rightIntersection,
+                points,
+            }
+        })(),
+    },
+}
+/**
+ * @type {td.pathObject}
+ */
+let pathObject = {
+    sections: parkingLotSections,
+    entrance: parkingLotSections.vertical.row2col0,
+    exit: parkingLotSections.vertical.row2col2,
+    intersections: [
+        'row1col0Intersection',
+        'row1col2Intersection',
+        'row2col0Intersection',
+        'row2col2Intersection',
+    ],
+}
+
+export {pathObject}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="global.html#AnimationHandler">AnimationHandler</a></li><li><a href="global.html#BranchHandler">BranchHandler</a></li><li><a href="global.html#Car">Car</a></li><li><a href="global.html#CollisionBoxHandler">CollisionBoxHandler</a></li><li><a href="global.html#Overlay">Overlay</a></li><li><a href="global.html#ParkingLot">ParkingLot</a></li><li><a href="RightAnglePark.html">RightAnglePark</a></li><li><a href="RightAngleReverse.html">RightAngleReverse</a></li><li><a href="RightAngleTurn.html">RightAngleTurn</a></li><li><a href="global.html#RoutePlotter">RoutePlotter</a></li><li><a href="UPark.html">UPark</a></li><li><a href="ZPark.html">ZPark</a></li><li><a href="ZReverse.html">ZReverse</a></li></ul><h3>Global</h3><ul><li><a href="global.html#pathObject">pathObject</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.11</a> on Fri Oct 21 2022 17:21:58 GMT-0500 (Central Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

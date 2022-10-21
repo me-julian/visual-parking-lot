@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: animation/animation-types/right-angle-turn.mjs</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: animation/animation-types/right-angle-turn.mjs</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict'
+
+import * as td from '../../type-defs.mjs'
+
+/**
+ * @class
+ * @param {td.AnimationHandler} animationHandler
+ * @param {String} animName
+ */
+function RightAngleTurn(animationHandler, animName) {
+    this.animationHandler = animationHandler
+    this.name = animName
+
+    this.ruleObject = undefined
+    this.endVals = undefined
+}
+
+/**
+ * @method
+ * @param {td.Car} car
+ */
+RightAngleTurn.prototype.buildSelf = function (car) {
+    this.endVals = this.getEndVals(car)
+
+    let ruleString = this.buildRuleString(car, this.name, this.endVals)
+
+    this.animationHandler.styleSheet.insertRule(
+        ruleString,
+        this.animationHandler.styleSheet.cssRules.length
+    )
+    this.ruleObject = this.animationHandler.getAnimationRule(this.name)
+}
+
+RightAngleTurn.prototype.buildRuleString = function (car, name, endVals) {
+    let first, second, last
+    let declaration = '@keyframes '
+    first = this.buildFirstKeyframe(car)
+    second = this.buildSecondKeyframe(car, endVals, 30)
+    last = this.buildLastKeyframe(endVals)
+
+    return declaration + name + first + second + last
+}
+
+RightAngleTurn.prototype.buildFirstKeyframe = function (car) {
+    let first =
+        '{0% {left: ' +
+        car.coords.x +
+        'px;top: ' +
+        car.coords.y +
+        'px;transform: rotate(' +
+        car.orientation +
+        'deg);}'
+    return first
+}
+RightAngleTurn.prototype.buildSecondKeyframe = function (
+    car,
+    endVals,
+    keyframe
+) {
+    let leftVal, topVal, orientationVal
+    switch (endVals.direction) {
+        case 'west':
+            leftVal = car.coords.x
+
+            topVal = car.coords.y + (car.baseLength / 5) * car.negation
+
+            orientationVal = car.orientation
+            break
+        case 'east':
+            leftVal = car.coords.x
+
+            topVal = car.coords.y + (car.baseLength / 5) * car.negation
+            // Car makes its turn based on where the section ends,
+            // but sections are based on left/top vals rather than
+            // physical center of intersection. Make adjustment
+            // if necessary.
+            if (car.direction === 'south') {
+                topVal += car.turningRunup * car.negation
+            }
+
+            orientationVal = car.orientation
+            break
+        case 'north':
+            leftVal = car.coords.x + (car.baseLength / 5) * car.negation
+
+            topVal = car.coords.y
+
+            orientationVal = car.orientation
+            break
+        case 'south':
+            leftVal = car.coords.x + (car.baseLength / 5) * car.negation
+            if (car.direction === 'east') {
+                leftVal += car.turningRunup * car.negation
+            }
+
+            topVal = car.coords.y
+
+            orientationVal = car.orientation
+            break
+    }
+
+    let second =
+        keyframe +
+        '% {left: ' +
+        leftVal +
+        'px;top: ' +
+        topVal +
+        'px;transform: rotate(' +
+        orientationVal +
+        'deg);}'
+    return second
+}
+RightAngleTurn.prototype.buildLastKeyframe = function (endVals) {
+    let last =
+        '100% {left: ' +
+        endVals.x +
+        'px;top: ' +
+        endVals.y +
+        'px;transform: rotate(' +
+        endVals.orientation +
+        'deg);}}'
+    return last
+}
+
+RightAngleTurn.prototype.getEndVals = function (car) {
+    let endVals = {}
+
+    let relationalValues = this.getRelationalValues(car)
+    endVals.orientationMod = relationalValues.orientationMod
+    endVals.orientation = relationalValues.orientation
+    endVals.direction = relationalValues.direction
+    endVals.turnDirection = relationalValues.turnDirection
+
+    endVals[car.oppSymbol] = car.route[1].section[car.oppSymbol]
+    endVals[car.symbol] = car.route[1].section[car.symbol]
+    if (endVals.direction === 'north' || endVals.direction === 'west') {
+        endVals[car.oppSymbol] += car.route[1].section.len
+    }
+
+    endVals = this.getAdjustedEndCoords(car, endVals)
+
+    return endVals
+}
+RightAngleTurn.prototype.getRelationalValues = function (car) {
+    let orientation
+    let endDirection = car.route[1].direction
+
+    switch (endDirection) {
+        case 'west':
+            orientation = 180
+            break
+        case 'east':
+            orientation = 0
+            break
+        case 'north':
+            orientation = 270
+            break
+        case 'south':
+            orientation = 90
+            break
+    }
+
+    let turnDirection = this.animationHandler.getLeftOrRight(
+        car.direction,
+        endDirection,
+        false
+    )
+
+    let orientationMod
+    if (turnDirection === 'left') {
+        orientationMod = -90
+    } else {
+        orientationMod = 90
+    }
+
+    return {
+        orientationMod: orientationMod,
+        orientation: orientation,
+        direction: endDirection,
+        turnDirection: turnDirection,
+    }
+}
+RightAngleTurn.prototype.getAdjustedEndCoords = function (car, endVals) {
+    switch (endVals.direction) {
+        case 'west':
+            endVals.x = endVals.x - car.baseLength / 2
+
+            endVals.y = endVals.y - car.baseWidth / 2
+
+            endVals.orientation = car.orientation + endVals.orientationMod
+            break
+        case 'east':
+            endVals.x = endVals.x + car.baseLength / 2
+
+            endVals.y = endVals.y - car.baseWidth / 2
+
+            endVals.orientation = car.orientation - endVals.orientationMod
+            break
+        case 'north':
+            endVals.x = endVals.x - car.baseWidth / 2
+
+            endVals.y = endVals.y - car.baseLength
+
+            endVals.orientation = car.orientation + endVals.orientationMod
+            break
+        case 'south':
+            endVals.x = endVals.x - car.baseWidth / 2
+
+            endVals.y = endVals.y + car.baseWidth
+
+            endVals.orientation = car.orientation - endVals.orientationMod
+            break
+    }
+
+    return endVals
+}
+
+export {RightAngleTurn}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="global.html#AnimationHandler">AnimationHandler</a></li><li><a href="global.html#BranchHandler">BranchHandler</a></li><li><a href="global.html#Car">Car</a></li><li><a href="global.html#CollisionBoxHandler">CollisionBoxHandler</a></li><li><a href="global.html#Overlay">Overlay</a></li><li><a href="global.html#ParkingLot">ParkingLot</a></li><li><a href="RightAnglePark.html">RightAnglePark</a></li><li><a href="RightAngleReverse.html">RightAngleReverse</a></li><li><a href="RightAngleTurn.html">RightAngleTurn</a></li><li><a href="global.html#RoutePlotter">RoutePlotter</a></li><li><a href="UPark.html">UPark</a></li><li><a href="ZPark.html">ZPark</a></li><li><a href="ZReverse.html">ZReverse</a></li></ul><h3>Global</h3><ul><li><a href="global.html#pathObject">pathObject</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.11</a> on Fri Oct 21 2022 17:21:58 GMT-0500 (Central Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

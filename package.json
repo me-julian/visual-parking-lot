@@ -5,5 +5,8 @@
     },
     "scripts": {
         "test": "mocha"
+    },
+    "devDependencies": {
+        "jsdoc": "^3.6.11"
     }
 }
