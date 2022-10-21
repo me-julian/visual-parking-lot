@@ -10,14 +10,10 @@ import * as td from './type-defs.mjs'
 function CollisionBoxHandler(parkingLot) {
     this.parkingLot = parkingLot
     this.LOOP_SPEED = this.parkingLot.config.LOOP_SPEED
-    // ISSUE: Should this be moved to parkingLot?
     this.entranceArea = {
         x: parkingLot.pathObject.entrance.x,
-        y: parkingLot.pathObject.entrance.y,
-        h:
-            parkingLot.pathObject.entrance.y +
-            parkingLot.pathObject.entrance.len -
-            182,
+        y: parkingLot.pathObject.entrance.y + 250,
+        h: parkingLot.pathObject.entrance.len - 250,
         w: 90 / 2,
     }
 }
