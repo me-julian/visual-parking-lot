@@ -15,17 +15,18 @@ import * as animation from './animation/index.mjs'
 // the inaccuracy of the box can also block nearby cars checking if
 // they can leave their space.
 
+// Car's roadArea and destinationArea boxes are slightly off near
+// front of car. Doesn't affect performance.
+
 //
 //      Potential Improvements:
-// Style GUI/move lot position on page.
-
-// Stats (cars entering/parked/leaving/left, parking time, stuck time)
-
-// Start/Stop/Pause simulation/loop.
-
 // Let user initialize lot with normal vs test sets of spaces in GUI.
 
+// Display stat of interval time for each iteration a car is stuck
+// while attempting to leave space to quantify efficiency.
+
 // Slight randomization on assignedSpaces by 1-2 ranks to space out cars
+
 // Variable car speed/functional stopping distance.
 
 // Improve reenteredRoadClear

@@ -44,6 +44,7 @@ function ParkingLot(
 ParkingLot.prototype.initializeSelf = function () {
     this.initializeIntersections()
     this.initializeWrapperPositionVals()
+    this.initializeStats()
 }
 
 ParkingLot.prototype.initializeIntersections = function () {
@@ -69,8 +70,23 @@ ParkingLot.prototype.initializeWrapperPositionVals = function () {
     this.lotWrapperPositionalValues.x += window.scrollX
     this.lotWrapperPositionalValues.y += window.scrollY
 }
+ParkingLot.prototype.initializeStats = function () {
+    this.stats = {}
+    this.stats.wrapper = document.getElementById('stats-wrapper')
+    this.stats.carCountEl = document.getElementById('car-counter')
+    this.stats.parkedCountEl = document.getElementById('parked-counter')
+    this.stats.leftCountEl = document.getElementById('left-counter')
+}
+
+ParkingLot.prototype.updateStats = function () {
+    this.stats.carCountEl.textContent = this.carCount
+    this.stats.parkedCountEl.textContent = Object.keys(this.cars.parked).length
+    this.stats.leftCountEl.textContent = Object.keys(this.cars.left).length
+}
 
 ParkingLot.prototype.simulate = function () {
+    this.updateStats()
+
     if (
         !this.spawnCarCooldown &&
         this.collisionBoxHandler.isEntranceClear(this)
