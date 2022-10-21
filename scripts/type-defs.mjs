@@ -38,7 +38,7 @@ import {RoutePlotter} from './routing/route-plotter.mjs'
  * @property {pathObject} pathObject
  */
 
-/** Gets branching paths from one section of a pathObject towards another.
+/** Used by RoutePlotter to find branching paths from one section towards another.
  * @typedef {Object} BranchHandler
  * @property {pathObject} pathObject
  * @property {number} rowDiff
@@ -79,7 +79,7 @@ import {RoutePlotter} from './routing/route-plotter.mjs'
  * @typedef {Object} ParkingLot
  * @property {Object} config
  * @property {Object} loop
- * @property {PathObject} pathObject
+ * @property {pathObject} pathObject
  * @property {RoutePlotter} routePlotter
  * @property {Overlay} overlay
  * @property {Array} spaces - Array of all active space objects.
@@ -92,11 +92,11 @@ import {RoutePlotter} from './routing/route-plotter.mjs'
  * @property {Object} cars.leaving - Cars which are leaving the lot.
  * @property {Object} cars.left - Cars which have left the lot and scene.
  * @property {Object} intersections
- * @property {Object} stats- Contains all HTML elements for stats
+ * @property {Object} stats - Contains all HTML elements for stats
  * @property {HTMLElement} stats.wrapper
- * @property {HTMLElement} stats.carCountEl - Cars which have entered the lot.
- * @property {HTMLElement} stats.parkedCountEl - Cars currently parked.
- * @property {HTMLElement} stats.leftCountEl - Cars which have left the lot.
+ * @property {HTMLElement} stats.carCountEl - Number of cars which have entered the lot.
+ * @property {HTMLElement} stats.parkedCountEl - Number of cars currently parked.
+ * @property {HTMLElement} stats.leftCountEl - Number of cars which have left the lot.
  */
 
 /**

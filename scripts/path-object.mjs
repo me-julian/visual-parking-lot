@@ -212,7 +212,7 @@ let parkingLotSections = {
     },
 }
 /**
- * @type {td.PathObject}
+ * @type {td.pathObject}
  */
 let pathObject = {
     sections: parkingLotSections,

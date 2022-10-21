@@ -4,6 +4,7 @@ import * as td from './type-defs.mjs'
 import {Car} from './car.mjs'
 
 /**
+ * @class
  * @type {td.ParkingLot}
  * @param {Object} config
  * @param {Object} loop

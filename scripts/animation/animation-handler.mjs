@@ -7,6 +7,7 @@
 import * as td from '../type-defs.mjs'
 
 /**
+ * @class
  * @type {td.AnimationHandler}
  * @param {Object} animationTypes
  */

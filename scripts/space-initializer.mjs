@@ -158,7 +158,7 @@ SpaceInitializer.prototype.createSpacesRow = function (
 /**
  * @method
  * @param {Object} unrankedSpaceList
- * @returns
+ * @returns {Array} rankedSpaceList
  */
 SpaceInitializer.prototype.rankSpaces = function (unrankedSpaceList) {
     let rankedSpaceList = []

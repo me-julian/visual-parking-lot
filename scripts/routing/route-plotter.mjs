@@ -39,7 +39,7 @@ function RoutePlotter(pathObject) {
      * @method
      * @param {section} startSection
      * @param {section} destinationSection
-     * @returns
+     * @returns {Array}
      */
     this.returnRouteBySections = function (
         routePlotter,
@@ -74,7 +74,7 @@ function RoutePlotter(pathObject) {
      * @param {section} end
      * @param {Array} routes
      * @param {Array} route
-     * @returns
+     * @returns {Array}
      */
     this.findValidRoutesBySections = function (
         routePlotter,
