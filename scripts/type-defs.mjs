@@ -92,6 +92,11 @@ import {RoutePlotter} from './routing/route-plotter.mjs'
  * @property {Object} cars.leaving - Cars which are leaving the lot.
  * @property {Object} cars.left - Cars which have left the lot and scene.
  * @property {Object} intersections
+ * @property {Object} stats- Contains all HTML elements for stats
+ * @property {HTMLElement} stats.wrapper
+ * @property {HTMLElement} stats.carCountEl - Cars which have entered the lot.
+ * @property {HTMLElement} stats.parkedCountEl - Cars currently parked.
+ * @property {HTMLElement} stats.leftCountEl - Cars which have left the lot.
  */
 
 /**
