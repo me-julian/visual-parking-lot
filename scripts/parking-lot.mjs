@@ -244,14 +244,12 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
             if (car.route[car.route.length - 1].coord <= 228) {
                 // Pull out south then turn east
                 // Change direction and section itself
-                console.log('Top 2 Left')
                 start.section = this.pathObject.sections.horizontal.row0col1
                 start.direction = 'east'
                 return start
             } else if (car.route[car.route.length - 1].coord >= 783) {
                 // Pull out north then turn east
                 // Change direction and section itself
-                console.log('Bottom 2 Left')
                 start.section = this.pathObject.sections.horizontal.row1col1
                 start.direction = 'east'
                 return start
@@ -261,7 +259,6 @@ ParkingLot.prototype.determineSpaceExitLocation = function (car, start) {
             if (car.route[car.route.length - 1].coord <= 228) {
                 // Pull out south then west then turn south
                 // Change coord and section itself
-                console.log('Top 2 Right')
                 start.section = this.pathObject.sections.horizontal.row0col1
                 start.direction = 'east'
                 return start
