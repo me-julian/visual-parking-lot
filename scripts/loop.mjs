@@ -57,9 +57,7 @@ function initializeSimulation(config, loop) {
 
     let overlay = new Overlay()
     overlay.createSpaceOverlay(rankedSpaceList)
-    // ISSUE: Put into GUI
-    overlay.drawPaths(pathObject)
-    //
+    overlay.createPathsOverlay(pathObject)
     overlay.addGuiListeners()
 
     let parkingLot = new ParkingLot(

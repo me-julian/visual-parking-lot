@@ -11,6 +11,38 @@ function Overlay() {
     this.timers = {}
 }
 
+/** Create lines to show top-left coordinate points cars move across.
+ * @method
+ * @param {td.pathObject} pathObject
+ */
+Overlay.prototype.createPathsOverlay = function (pathObject) {
+    let pathsWrapper = document.createElement('div')
+    pathsWrapper.id = 'path-lines'
+
+    // Get vertical and horizontal sections.
+    for (let orientation in pathObject.sections) {
+        for (let sect in pathObject.sections[orientation]) {
+            let sectionEl = document.createElement('div')
+            sectionEl.id = sect
+            sectionEl.classList.add('path-line', 'overlay-el')
+
+            let sectObj = pathObject.sections[orientation][sect]
+            if (orientation === 'horizontal') {
+                sectionEl.style.height = '2px'
+                sectionEl.style.width = sectObj.len + 'px'
+                sectionEl.style.left = sectObj.x + 'px'
+            } else {
+                sectionEl.style.height = sectObj.len + 'px'
+                sectionEl.style.width = '2px'
+                sectionEl.style.left = sectObj.x + 'px'
+            }
+            sectionEl.style.top = sectObj.y + 'px'
+
+            pathsWrapper.append(sectionEl)
+        }
+    }
+    this.wrapper.append(pathsWrapper)
+}
 /** Create div containing all usable parking spaces in lot.
  * @method
  * @param {Object} rankedSpaceList
@@ -33,7 +65,6 @@ Overlay.prototype.createSpaceOverlay = function (rankedSpaceList) {
         space.pageEl = spaceEl
     }
 }
-
 /** Create div containing all intersection areas.
  * @method
  * @param {Object} intersections
@@ -59,6 +90,14 @@ Overlay.prototype.createIntersectionOverlay = function (intersections) {
 }
 
 Overlay.prototype.addGuiListeners = function () {
+    let pathsWrapper = document.getElementById('path-lines')
+    let pathsFunct = () => {
+        this.toggleShowOverlayWrapperChildren(pathsWrapper)
+    }
+    document
+        .getElementById('show-paths-button')
+        .addEventListener('click', pathsFunct)
+
     let spacesWrapper = document.getElementById('spaces')
     let spacesFunct = () => {
         this.toggleShowOverlayWrapperChildren(spacesWrapper)
@@ -74,39 +113,6 @@ Overlay.prototype.addGuiListeners = function () {
     document
         .getElementById('show-intersections-button')
         .addEventListener('click', intersectionsFunct)
-}
-
-/** Create lines to show top-left coordinate points cars move across.
- * @method
- * @param {td.pathObject} pathObject
- */
-Overlay.prototype.drawPaths = function (pathObject) {
-    let paths = document.createElement('div')
-    paths.id = 'path-lines'
-
-    // Get vertical and horizontal sections.
-    for (let orientation in pathObject.sections) {
-        for (let sect in pathObject.sections[orientation]) {
-            let sectionEl = document.createElement('div')
-            sectionEl.id = sect
-            sectionEl.classList.add('path-line')
-
-            let sectObj = pathObject.sections[orientation][sect]
-            if (orientation === 'horizontal') {
-                sectionEl.style.height = '2px'
-                sectionEl.style.width = sectObj.len + 'px'
-                sectionEl.style.left = sectObj.x + 'px'
-            } else {
-                sectionEl.style.height = sectObj.len + 'px'
-                sectionEl.style.width = '2px'
-                sectionEl.style.left = sectObj.x + 'px'
-            }
-            sectionEl.style.top = sectObj.y + 'px'
-
-            paths.append(sectionEl)
-        }
-    }
-    this.wrapper.append(paths)
 }
 
 /** Create a rectangular page element and append into DOM. Must call
